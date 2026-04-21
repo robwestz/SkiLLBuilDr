@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-21",
+  "note": "Seed recipes. Users can save their own via the UI; custom recipes live in localStorage.",
+  "recipes": [
+    {
+      "id": "code-review-pipeline",
+      "title": "Code review pipeline",
+      "description": "Review local changes or a PR, then apply security checks, then verify tests exist.",
+      "intent": "review my code thoroughly for quality, security, and tests",
+      "slugs": [
+        "/everything-claude-code:code-review",
+        "/everything-claude-code:security-review",
+        "/everything-claude-code:tdd-workflow"
+      ]
+    },
+    {
+      "id": "prd-to-implementation",
+      "title": "PRD → plan → implement",
+      "description": "Write a PRD, produce an implementation plan, then execute with validation loops.",
+      "intent": "turn an idea into a shipped feature with validation",
+      "slugs": [
+        "/everything-claude-code:prp-prd",
+        "/everything-claude-code:prp-plan",
+        "/everything-claude-code:prp-implement",
+        "/everything-claude-code:prp-pr"
+      ]
+    },
+    {
+      "id": "onboard-unfamiliar-repo",
+      "title": "Onboard an unfamiliar repo",
+      "description": "Analyze the codebase, generate onboarding docs, propose an action plan.",
+      "intent": "I just cloned a repo I don't know; help me understand it",
+      "slugs": [
+        "/everything-claude-code:codebase-onboarding",
+        "/compound-engineering:ce-onboarding",
+        "/repo-strategy-orchestrator"
+      ]
+    },
+    {
+      "id": "security-audit",
+      "title": "Security audit pass",
+      "description": "OWASP-level review, secret scan, dependency/auth audit.",
+      "intent": "audit my app for security vulnerabilities",
+      "slugs": [
+        "/everything-claude-code:security-review",
+        "/everything-claude-code:security-scan",
+        "/everything-claude-code:security-bounty-hunter"
+      ]
+    },
+    {
+      "id": "repo-cleanup",
+      "title": "Dead code + refactor cleanup",
+      "description": "Find unused code, consolidate duplication, apply style/refactor pass.",
+      "intent": "clean up dead code and refactor duplicates",
+      "slugs": [
+        "/everything-claude-code:repo-scan",
+        "/the-cleaner",
+        "/everything-claude-code:rules-distill"
+      ]
+    },
+    {
+      "id": "e2e-testing-setup",
+      "title": "E2E testing setup",
+      "description": "Establish Playwright E2E patterns, record a demo, add regression.",
+      "intent": "set up end-to-end tests for my web app",
+      "slugs": [
+        "/everything-claude-code:e2e-testing",
+        "/everything-claude-code:browser-qa",
+        "/everything-claude-code:ui-demo"
+      ]
+    },
+    {
+      "id": "llm-observability",
+      "title": "LLM observability",
+      "description": "Instrument Claude/OpenAI calls into PostHog LLM Analytics.",
+      "intent": "observe my LLM usage and costs",
+      "slugs": [
+        "/everything-claude-code:claude-api",
+        "/posthog:instrument-llm-analytics",
+        "/posthog:exploring-llm-traces"
+      ]
+    },
+    {
+      "id": "deep-plan-compose",
+      "title": "Deep plan → compose workflow",
+      "description": "Expand a plan with parallel research, then orchestrate execution.",
+      "intent": "plan a big feature deeply and run it with multiple agents",
+      "slugs": [
+        "/everything-claude-code:prp-plan",
+        "/compound-engineering:deepen-plan",
+        "/everything-claude-code:dmux-workflows"
+      ]
+    },
+    {
+      "id": "team-factory",
+      "title": "Assemble an agent team",
+      "description": "Design a multi-agent team for a project. Roadmap first, then team composition, then phase plan.",
+      "intent": "design an autonomous agent team to build a feature",
+      "slugs": [
+        "/agent-create-roadmap",
+        "/team-architect",
+        "/agent-plan-phase"
+      ]
+    },
+    {
+      "id": "session-start",
+      "title": "Start a working session",
+      "description": "Resume prior context, budget the conversation, set today's intent.",
+      "intent": "start a productive session with full context",
+      "slugs": [
+        "/session-launcher",
+        "/everything-claude-code:resume-session",
+        "/everything-claude-code:context-budget"
+      ]
+    },
+    {
+      "id": "product-blueprint",
+      "title": "Product blueprint",
+      "description": "Turn a one-line product idea into a full technical blueprint.",
+      "intent": "design a complete product from a one-line idea",
+      "slugs": [
+        "/200k-blueprint",
+        "/everything-claude-code:blueprint",
+        "/everything-claude-code:product-capability"
+      ]
+    },
+    {
+      "id": "debug-loop",
+      "title": "Systematic debug loop",
+      "description": "Reproduce, hypothesize, isolate, fix — with agent introspection.",
+      "intent": "debug a hard problem with a structured approach",
+      "slugs": [
+        "/gsd:debug",
+        "/debug-detective",
+        "/everything-claude-code:agent-introspection-debugging"
+      ]
+    },
+    {
+      "id": "posthog-setup",
+      "title": "PostHog instrumentation",
+      "description": "Wire up PostHog: SDK + product analytics + LLM analytics + error tracking.",
+      "intent": "instrument my app with PostHog",
+      "slugs": [
+        "/posthog:instrument-integration",
+        "/posthog:instrument-product-analytics",
+        "/posthog:instrument-llm-analytics",
+        "/posthog:instrument-error-tracking"
+      ]
+    },
+    {
+      "id": "frontend-foundations",
+      "title": "Frontend foundations",
+      "description": "Set up a design system, patterns, and E2E coverage.",
+      "intent": "build a polished frontend from scratch",
+      "slugs": [
+        "/frontend-design:frontend-design",
+        "/everything-claude-code:frontend-patterns",
+        "/everything-claude-code:design-system",
+        "/everything-claude-code:e2e-testing"
+      ]
+    },
+    {
+      "id": "ship-commit-pr",
+      "title": "Commit → PR → review",
+      "description": "Natural-language commit, push, open PR, invite review.",
+      "intent": "ship my changes end-to-end",
+      "slugs": [
+        "/everything-claude-code:prp-commit",
+        "/everything-claude-code:prp-pr",
+        "/everything-claude-code:code-review"
+      ]
+    }
+  ]
+}

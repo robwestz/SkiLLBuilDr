@@ -1,0 +1,1446 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Skill Browser</title>
+    <style>
+      :root {
+        --bg: #0f1115;
+        --bg-2: #161a21;
+        --bg-3: #1e232c;
+        --border: #2a313d;
+        --fg: #e6e8ec;
+        --fg-dim: #9aa3ad;
+        --fg-mid: #c2c8d0;
+        --accent: #d97757;
+        --accent-dim: #a65236;
+        --skill: #6aa9ff;
+        --command: #b58cff;
+        --scope-plugin: #7ec07a;
+        --scope-user: #e0b341;
+        --scope-project: #ff9874;
+        --basket: #d97757;
+        --ok: #2a8f5f;
+        --row-alt: #1a1e25;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+      html.theme-light {
+        --bg: #faf8f4;
+        --bg-2: #f1ede6;
+        --bg-3: #e6e1d6;
+        --border: #d6d0c4;
+        --fg: #1a1a1a;
+        --fg-dim: #6b6b6b;
+        --fg-mid: #3d3d3d;
+        --accent: #c46040;
+        --accent-dim: #9a4a30;
+        --skill: #2a5ea8;
+        --command: #6d3ec2;
+        --scope-plugin: #3e7a3a;
+        --scope-user: #a07a12;
+        --scope-project: #c8654a;
+        --basket: #c46040;
+        --ok: #1e6b44;
+        --row-alt: #f5f2ec;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+      body { display: grid; grid-template-rows: auto auto 1fr auto; }
+
+      header {
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        background: var(--bg-2);
+      }
+      header h1 {
+        font-size: 15px; font-weight: 600; margin: 0; letter-spacing: 0.2px;
+      }
+      header .meta {
+        font-size: 12px; color: var(--fg-dim);
+      }
+      header .kbd {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-size: 11px;
+        color: var(--fg-mid);
+      }
+      .icon-btn {
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        color: var(--fg-mid);
+        width: 30px; height: 30px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .icon-btn:hover { border-color: var(--accent); color: var(--fg); }
+
+      nav.tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-2);
+        padding: 0 20px;
+        gap: 2px;
+      }
+      nav.tabs button {
+        background: transparent;
+        border: 0;
+        color: var(--fg-dim);
+        padding: 10px 16px;
+        font-size: 13px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+      }
+      nav.tabs button:hover { color: var(--fg); }
+      nav.tabs button.active {
+        color: var(--fg);
+        border-bottom-color: var(--accent);
+      }
+      nav.tabs .spacer { flex: 1; }
+      nav.tabs .basket-btn {
+        color: var(--fg-mid);
+        padding: 10px 14px;
+        position: relative;
+      }
+      nav.tabs .basket-btn.has-items { color: var(--accent); font-weight: 600; }
+      nav.tabs .basket-btn .count {
+        display: inline-block;
+        background: var(--accent);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 10px;
+        margin-left: 4px;
+        min-width: 18px;
+        text-align: center;
+      }
+
+      .pane { display: none; overflow: hidden; }
+      .pane.active { display: grid; }
+
+      /* Browse pane */
+      #browsePane { grid-template-columns: 260px 1fr; }
+      aside {
+        border-right: 1px solid var(--border);
+        background: var(--bg-2);
+        overflow-y: auto;
+        padding: 12px 10px 24px;
+      }
+      aside h2 {
+        font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+        color: var(--fg-dim); font-weight: 600;
+        margin: 12px 6px 6px;
+      }
+      .source-list { max-height: 260px; overflow-y: auto; }
+      .source-list.collapsed { max-height: 130px; }
+      .toggle-more {
+        display: block; width: calc(100% - 12px); margin: 4px 6px 0;
+        background: transparent; border: 0; color: var(--fg-dim);
+        padding: 4px; font-size: 11px; cursor: pointer;
+        border-top: 1px dashed var(--border);
+      }
+      .toggle-more:hover { color: var(--fg); }
+
+      .chip {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 5px 10px; margin: 2px 0;
+        border-radius: 5px; cursor: pointer;
+        font-size: 13px; color: var(--fg-mid);
+        transition: background 80ms;
+      }
+      .chip:hover { background: var(--bg-3); color: var(--fg); }
+      .chip.active { background: var(--accent-dim); color: #fff; }
+      .chip .count {
+        font-size: 11px; color: var(--fg-dim); font-variant-numeric: tabular-nums;
+      }
+      .chip.active .count { color: #ffe4d6; }
+
+      .list-col {
+        display: flex; flex-direction: column; overflow: hidden;
+      }
+      .search-bar {
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+      }
+      .search-bar input[type="search"] {
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg-3);
+        color: var(--fg);
+        outline: none;
+      }
+      .search-bar input:focus { border-color: var(--accent); }
+
+      .list {
+        overflow-y: auto;
+        padding: 6px 0 60px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 24px 70px minmax(200px, 260px) 1fr;
+        gap: 12px;
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--row-alt);
+        align-items: start;
+      }
+      .row:hover { background: var(--bg-2); }
+      .row.selected { background: var(--bg-3); }
+      .row .pick-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--fg-dim);
+        width: 22px; height: 22px;
+        border-radius: 5px;
+        cursor: pointer;
+        padding: 0;
+        font-size: 14px;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .row .pick-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .row .pick-btn.added { background: var(--basket); color: #fff; border-color: var(--basket); }
+      .row .slug-click {
+        cursor: pointer;
+        display: contents;
+      }
+      .badge {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 3px 7px; border-radius: 3px;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        width: fit-content;
+      }
+      .badge.skill { background: rgba(106,169,255,0.12); color: var(--skill); border: 1px solid rgba(106,169,255,0.25); }
+      .badge.command { background: rgba(181,140,255,0.12); color: var(--command); border: 1px solid rgba(181,140,255,0.25); }
+      .name-wrap { display: flex; flex-direction: column; gap: 3px; }
+      .name {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 13px;
+        color: var(--fg);
+        font-weight: 500;
+      }
+      .meta-line {
+        display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+        font-family: inherit; font-size: 10px;
+      }
+      .scope-badge {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 10px; font-weight: 600;
+        padding: 1px 5px; border-radius: 3px;
+      }
+      .scope-badge.plugin { color: var(--scope-plugin); background: rgba(126,192,122,0.09); border: 1px solid rgba(126,192,122,0.25); }
+      .scope-badge.user { color: var(--scope-user); background: rgba(224,179,65,0.09); border: 1px solid rgba(224,179,65,0.25); }
+      .scope-badge.project { color: var(--scope-project); background: rgba(255,152,116,0.09); border: 1px solid rgba(255,152,116,0.25); }
+      .cat {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 11px;
+        color: var(--fg-dim);
+      }
+      .desc {
+        font-size: 13px;
+        color: var(--fg-mid);
+        line-height: 1.45;
+      }
+      .desc .hint {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 11px;
+        color: var(--fg-dim);
+        margin-top: 3px;
+      }
+      .desc .why {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 11px;
+        color: var(--accent);
+        margin-top: 4px;
+      }
+      .score-tag {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 10px;
+        color: var(--fg-dim);
+        margin-left: 8px;
+      }
+
+      .empty { padding: 30px 20px; color: var(--fg-dim); font-style: italic; }
+      .linklike {
+        background: transparent;
+        border: 0;
+        color: var(--accent);
+        text-decoration: underline;
+        cursor: pointer;
+        font-style: normal;
+        font-size: inherit;
+        padding: 0;
+      }
+      .linklike:hover { color: var(--fg); }
+
+      /* Compose pane */
+      #composePane {
+        grid-template-rows: auto 1fr;
+        overflow: hidden;
+      }
+      .compose-head {
+        padding: 16px 24px 12px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-2);
+      }
+      .compose-head h2 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .compose-head p {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: var(--fg-dim);
+      }
+      .compose-head textarea {
+        width: 100%;
+        min-height: 72px;
+        padding: 10px 12px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg-3);
+        color: var(--fg);
+        outline: none;
+        resize: vertical;
+        font-family: inherit;
+      }
+      .compose-head textarea:focus { border-color: var(--accent); }
+      .compose-head .actions {
+        margin-top: 8px;
+        display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      }
+      .compose-head button.primary {
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .compose-head button.primary:hover { background: var(--accent-dim); }
+      .compose-head .example-chips {
+        display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto;
+      }
+      .example-chip {
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        color: var(--fg-mid);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .example-chip:hover { border-color: var(--accent); color: var(--fg); }
+
+      /* Recipes pane */
+      #recipesPane {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+      }
+      .recipes-wrap {
+        padding: 20px 24px 80px;
+        max-width: 900px;
+      }
+      .recipes-wrap h2 {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--fg-dim);
+        margin: 0 0 10px;
+      }
+      .recipe-card {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 10px;
+      }
+      .recipe-card h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg);
+      }
+      .recipe-card .recipe-desc {
+        font-size: 12px;
+        color: var(--fg-dim);
+        margin-bottom: 10px;
+      }
+      .recipe-card .recipe-slugs {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        margin-bottom: 12px;
+      }
+      .recipe-card .recipe-slug {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 12px;
+        color: var(--fg-mid);
+      }
+      .recipe-card .recipe-slug::before {
+        content: "→ ";
+        color: var(--accent);
+      }
+      .recipe-card .actions {
+        display: flex; gap: 8px;
+      }
+      .recipe-card button {
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        color: var(--fg-mid);
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .recipe-card button:hover { border-color: var(--accent); color: var(--fg); }
+      .recipe-card button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .recipe-card button.primary:hover { background: var(--accent-dim); }
+      .recipe-card .badge-seed, .recipe-card .badge-custom {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-left: 8px;
+      }
+      .recipe-card .badge-seed { background: rgba(106,169,255,0.12); color: var(--skill); }
+      .recipe-card .badge-custom { background: rgba(217,119,87,0.12); color: var(--accent); }
+
+      /* Basket drawer */
+      .basket-drawer {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: var(--bg-2);
+        border-top: 1px solid var(--border);
+        transition: transform 200ms;
+        transform: translateY(100%);
+        max-height: 60vh;
+        display: flex; flex-direction: column;
+        z-index: 100;
+        box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+      }
+      .basket-drawer.open { transform: translateY(0); }
+      .basket-head {
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      }
+      .basket-head h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .basket-head .actions {
+        margin-left: auto; display: flex; gap: 8px;
+      }
+      .basket-head button {
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        color: var(--fg-mid);
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .basket-head button:hover { border-color: var(--accent); color: var(--fg); }
+      .basket-head button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .basket-head button.primary:hover { background: var(--accent-dim); }
+      .basket-head button.danger { border-color: #8a4a4a; color: #e89a9a; }
+      .basket-body {
+        padding: 8px 20px 18px;
+        overflow-y: auto;
+      }
+      .basket-item {
+        display: grid;
+        grid-template-columns: 24px 1fr auto;
+        gap: 10px;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--row-alt);
+        align-items: center;
+      }
+      .basket-item .order {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 11px;
+        color: var(--fg-dim);
+        text-align: right;
+      }
+      .basket-item .slug {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 13px;
+        color: var(--fg);
+      }
+      .basket-item .remove {
+        background: transparent;
+        border: 0;
+        color: var(--fg-dim);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 2px 6px;
+      }
+      .basket-item .remove:hover { color: #e89a9a; }
+
+      #toast {
+        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+        background: #1f2a36;
+        border: 1px solid var(--ok);
+        color: var(--fg);
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 150ms, transform 150ms;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        z-index: 200;
+      }
+      #toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+      .type-toggle {
+        display: flex; gap: 4px; margin: 6px 6px 0;
+        background: var(--bg-3); padding: 3px; border-radius: 6px;
+      }
+      .type-toggle button {
+        flex: 1;
+        background: transparent; border: 0; color: var(--fg-mid);
+        padding: 5px; font-size: 12px; cursor: pointer;
+        border-radius: 4px;
+      }
+      .type-toggle button.active {
+        background: var(--bg);
+        color: var(--fg);
+      }
+
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #3a4554; }
+
+      /* Dialog for save-recipe + prompt preview */
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+        display: none; align-items: center; justify-content: center;
+        z-index: 300;
+      }
+      .modal-overlay.open { display: flex; }
+      .modal {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px 24px;
+        min-width: 420px;
+        max-width: 720px;
+        max-height: 85vh;
+        overflow-y: auto;
+      }
+      .modal h3 { margin: 0 0 12px; font-size: 15px; }
+      .modal label { display: block; font-size: 12px; color: var(--fg-dim); margin: 10px 0 4px; }
+      .modal input, .modal textarea {
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 13px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg-3);
+        color: var(--fg);
+        outline: none;
+        font-family: inherit;
+      }
+      .modal textarea { min-height: 140px; font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace; resize: vertical; }
+      .modal .actions { margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end; }
+      .modal button {
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        color: var(--fg);
+        padding: 7px 14px;
+        border-radius: 5px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .modal button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Skill Browser</h1>
+      <span class="meta" id="meta">loading...</span>
+      <span class="meta" style="margin-left:auto"><span class="kbd">/</span> search · <span class="kbd">B</span> basket · <span class="kbd">C</span> compose · <span class="kbd">?</span> help</span>
+      <button id="themeToggle" class="icon-btn" title="Toggle theme (T)">◐</button>
+      <button id="helpBtn" class="icon-btn" title="Keyboard shortcuts (?)">?</button>
+    </header>
+
+    <nav class="tabs">
+      <button data-tab="browse" class="active">Browse</button>
+      <button data-tab="compose">Compose</button>
+      <button data-tab="recipes">Recipes</button>
+      <div class="spacer"></div>
+      <button class="basket-btn" id="basketBtn">🧺 Basket <span class="count" id="basketCount">0</span></button>
+    </nav>
+
+    <div class="pane active" id="browsePane">
+      <aside>
+        <h2>Type</h2>
+        <div class="type-toggle" id="typeToggle">
+          <button data-type="all" class="active">All</button>
+          <button data-type="skill">Skills</button>
+          <button data-type="command">Commands</button>
+        </div>
+        <h2>Scope</h2>
+        <div id="scopes"></div>
+        <h2>Source</h2>
+        <div id="sources" class="source-list collapsed"></div>
+        <button id="toggleMore" class="toggle-more" type="button">Show all sources ▼</button>
+        <h2>Category</h2>
+        <div id="categories"></div>
+      </aside>
+      <div class="list-col">
+        <div class="search-bar">
+          <input id="search" type="search" placeholder="Search name, description, source, or category..." autofocus />
+        </div>
+        <div class="list" id="browseList"></div>
+      </div>
+    </div>
+
+    <div class="pane" id="composePane">
+      <div class="compose-head">
+        <h2>What do you want to do?</h2>
+        <p>Describe your goal in plain language. The matcher suggests relevant skills ranked by relevance. Click ➕ to add to basket; Copy as prompt when ready.</p>
+        <textarea id="intentInput" placeholder="e.g. review the Python code I just wrote, add tests, and check for security issues"></textarea>
+        <div class="actions">
+          <button class="primary" id="runIntent">Find skills →</button>
+          <div class="example-chips" id="exampleChips"></div>
+        </div>
+      </div>
+      <div class="list" id="composeList">
+        <div class="empty">Describe a goal above and press <b>Find skills</b>. Or try one of the example chips.</div>
+      </div>
+    </div>
+
+    <div class="pane" id="recipesPane">
+      <div class="recipes-wrap">
+        <h2>Ready-made recipes</h2>
+        <div id="seedRecipes"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:28px">
+          <h2 style="margin:0">Your saved recipes</h2>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button id="btnExportRecipes" class="icon-btn" style="width:auto;padding:0 10px;font-size:12px">Export ⇣</button>
+            <button id="btnImportRecipes" class="icon-btn" style="width:auto;padding:0 10px;font-size:12px">Import ⇡</button>
+            <input type="file" id="importFile" accept="application/json" style="display:none" />
+          </div>
+        </div>
+        <div id="customRecipes" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="basket-drawer" id="basketDrawer">
+      <div class="basket-head">
+        <h3>Basket</h3>
+        <span class="meta" id="basketHint">Click an item to add; reorder with ↑↓.</span>
+        <div class="actions">
+          <button id="btnCopyPrompt" class="primary">Copy as prompt</button>
+          <button id="btnCopySlugs">Copy slugs</button>
+          <button id="btnCopyLink">Copy share link</button>
+          <button id="btnSaveRecipe">Save as recipe</button>
+          <button id="btnClearBasket" class="danger">Clear</button>
+          <button id="btnCloseBasket">Close ✕</button>
+        </div>
+      </div>
+      <div class="basket-body" id="basketBody"></div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal" id="modal"></div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="recipes.js"></script>
+    <script>
+      const STORE_KEY_BASKET = "skillbrowser.basket.v1";
+      const STORE_KEY_RECIPES = "skillbrowser.customRecipes.v1";
+      const STORE_KEY_SETTINGS = "skillbrowser.settings.v1";
+
+      const settings = {
+        theme: "dark",
+        welcomeSeen: false,
+      };
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY_SETTINGS);
+          if (raw) Object.assign(settings, JSON.parse(raw));
+        } catch {}
+        applyTheme();
+      }
+      function saveSettings() {
+        try { localStorage.setItem(STORE_KEY_SETTINGS, JSON.stringify(settings)); } catch {}
+      }
+      function applyTheme() {
+        document.documentElement.classList.toggle("theme-light", settings.theme === "light");
+        const btn = document.getElementById("themeToggle");
+        if (btn) btn.textContent = settings.theme === "light" ? "☀" : "◐";
+      }
+
+      // Short-form aliases for well-known source ids; keeps the id stable while the display is friendlier
+      const SOURCE_ALIAS = {
+        "plugin:everything-claude-code": "ecc",
+        "plugin:compound-engineering": "compound",
+        "plugin:planning-with-files": "planner",
+        "plugin:claude-md-management": "claude-md",
+        "plugin:pr-review-toolkit": "pr-toolkit",
+        "plugin:learning-output-style": "learn-output",
+        "plugin:sonatype-guide": "sonatype",
+        "plugin:security-guidance": "security-g",
+      };
+      function displaySource(src) {
+        return SOURCE_ALIAS[src] || src;
+      }
+
+      const state = {
+        items: [],
+        byslug: new Map(),
+        categories: {},
+        scopes: {},
+        sourcesCount: {},
+        seedRecipes: [],
+        customRecipes: [],
+        filter: { type: "all", scope: null, source: null, category: null, query: "" },
+        selectedIndex: 0,
+        filtered: [],
+        composed: [],
+        basket: [], // ordered slugs
+        activeTab: "browse",
+      };
+
+      // ---------- load ----------
+      async function load() {
+        let data = window.__ECC_DATA__;
+        if (!data) {
+          try {
+            const res = await fetch("data.json?t=" + Date.now());
+            if (!res.ok) throw 0;
+            data = await res.json();
+          } catch {
+            throw new Error("No data loaded. Run `node build.mjs` first.");
+          }
+        }
+        state.items = data.items;
+        state.items.forEach((it) => state.byslug.set(it.slug, it));
+        state.categories = data.categories || {};
+        state.scopes = data.scopes || {};
+        state.sourcesCount = data.sourcesCount || {};
+        document.getElementById("meta").textContent =
+          `${data.counts.total} items · ${data.counts.skills} skills · ${data.counts.commands} commands · ${data.sources ? data.sources.length : 0} sources`;
+
+        const recipes = window.__ECC_RECIPES__ || { recipes: [] };
+        state.seedRecipes = recipes.recipes || [];
+        loadBasket();
+        loadCustomRecipes();
+        renderFilters();
+        applyFilter();
+        renderRecipes();
+        renderExampleChips();
+      }
+
+      function loadBasket() {
+        // URL-hash basket takes priority, e.g. #basket=<slug>,<slug>
+        const hash = location.hash.replace(/^#/, "");
+        const params = new URLSearchParams(hash);
+        if (params.has("basket")) {
+          const slugs = params.get("basket").split(",").map(decodeURIComponent).filter(Boolean);
+          if (slugs.length) {
+            state.basket = slugs;
+            updateBasketUI();
+            setTimeout(() => openBasket(), 200);
+            return;
+          }
+        }
+        try {
+          const raw = localStorage.getItem(STORE_KEY_BASKET);
+          if (raw) state.basket = JSON.parse(raw);
+        } catch { state.basket = []; }
+        updateBasketUI();
+      }
+      function saveBasket() {
+        try { localStorage.setItem(STORE_KEY_BASKET, JSON.stringify(state.basket)); } catch {}
+      }
+      function loadCustomRecipes() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY_RECIPES);
+          if (raw) state.customRecipes = JSON.parse(raw);
+        } catch { state.customRecipes = []; }
+      }
+      function saveCustomRecipes() {
+        try { localStorage.setItem(STORE_KEY_RECIPES, JSON.stringify(state.customRecipes)); } catch {}
+      }
+
+      // ---------- filters (browse) ----------
+      function renderFilters() {
+        renderScopes(); renderSources(); renderCategories();
+      }
+      function renderScopes() {
+        const host = document.getElementById("scopes");
+        host.innerHTML = "";
+        host.appendChild(chip("All", state.items.length, null, "scope"));
+        for (const [scope, count] of Object.entries(state.scopes).sort((a,b)=>b[1]-a[1])) {
+          host.appendChild(chip(scope, count, scope, "scope"));
+        }
+        updateChipActive();
+      }
+      function renderSources() {
+        const host = document.getElementById("sources");
+        host.innerHTML = "";
+        for (const [src, count] of Object.entries(state.sourcesCount).sort((a,b)=>b[1]-a[1])) {
+          host.appendChild(chip(displaySource(src), count, src, "source"));
+        }
+        updateChipActive();
+      }
+      function renderCategories() {
+        const host = document.getElementById("categories");
+        host.innerHTML = "";
+        host.appendChild(chip("All", state.items.length, null, "category"));
+        for (const [cat, count] of Object.entries(state.categories).sort((a,b)=>b[1]-a[1])) {
+          host.appendChild(chip(cat, count, cat, "category"));
+        }
+        updateChipActive();
+      }
+      function chip(label, count, value, facet) {
+        const el = document.createElement("div");
+        el.className = "chip";
+        el.dataset.facet = facet;
+        el.dataset.value = value ?? "__all__";
+        el.innerHTML = `<span>${escapeHtml(label)}</span><span class="count">${count}</span>`;
+        el.addEventListener("click", () => {
+          state.filter[facet] = value;
+          updateChipActive();
+          applyFilter();
+        });
+        return el;
+      }
+      function updateChipActive() {
+        document.querySelectorAll(".chip").forEach((c) => {
+          const facet = c.dataset.facet;
+          const target = state.filter[facet] ?? "__all__";
+          c.classList.toggle("active", c.dataset.value === target);
+        });
+      }
+
+      // ---------- browse filter + render ----------
+      function applyFilter() {
+        const q = state.filter.query.toLowerCase().trim();
+        const tokens = q ? q.split(/\s+/) : [];
+        state.filtered = state.items.filter((it) => {
+          if (state.filter.type !== "all" && it.type !== state.filter.type) return false;
+          if (state.filter.scope && it.scope !== state.filter.scope) return false;
+          if (state.filter.source && it.source !== state.filter.source) return false;
+          if (state.filter.category && it.category !== state.filter.category) return false;
+          if (tokens.length === 0) return true;
+          const hay = (it.name + " " + (it.description||"") + " " + it.category + " " + (it.source||"")).toLowerCase();
+          return tokens.every((t) => hay.includes(t));
+        });
+        state.selectedIndex = 0;
+        renderBrowseList();
+      }
+      function renderBrowseList() {
+        const host = document.getElementById("browseList");
+        if (state.filtered.length === 0) {
+          const hasFilters = state.filter.type !== "all" || state.filter.scope || state.filter.source || state.filter.category || state.filter.query;
+          host.innerHTML = `<div class="empty">
+            No matches${hasFilters ? " with the current filters" : ""}.${hasFilters ? ' <button class="linklike" id="clearAllFilters">Clear all filters</button>' : " The catalog may not have loaded — try <code>node build.mjs</code>."}
+          </div>`;
+          const btn = document.getElementById("clearAllFilters");
+          if (btn) btn.addEventListener("click", () => {
+            state.filter = { type: "all", scope: null, source: null, category: null, query: "" };
+            document.getElementById("search").value = "";
+            document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x.dataset.type === "all"));
+            updateChipActive();
+            applyFilter();
+          });
+          return;
+        }
+        host.innerHTML = state.filtered.map((it, i) => rowHtml(it, i, i === state.selectedIndex)).join("");
+        wireRow(host, (i) => state.filtered[i]);
+        const selEl = host.querySelector(".row.selected");
+        if (selEl) selEl.scrollIntoView({ block: "nearest" });
+      }
+
+      // ---------- compose ----------
+      const EXAMPLES = [
+        "review my Python code and add tests",
+        "onboard a new repo I just cloned",
+        "audit my app for security",
+        "turn an idea into a shipped feature",
+        "set up E2E tests",
+        "plan a big feature with multiple agents",
+      ];
+      function renderExampleChips() {
+        const host = document.getElementById("exampleChips");
+        host.innerHTML = "";
+        for (const ex of EXAMPLES) {
+          const b = document.createElement("span");
+          b.className = "example-chip";
+          b.textContent = ex;
+          b.addEventListener("click", () => {
+            document.getElementById("intentInput").value = ex;
+            runIntent();
+          });
+          host.appendChild(b);
+        }
+      }
+      function runIntent() {
+        const input = document.getElementById("intentInput").value.trim();
+        if (!input) return;
+        state.composed = scoreIntent(input, state.items, 15);
+        renderComposeList();
+      }
+      function renderComposeList() {
+        const host = document.getElementById("composeList");
+        if (state.composed.length === 0) {
+          host.innerHTML = `<div class="empty">No matches. Try different words — shorter, more concrete, or use the example chips above.</div>`;
+          return;
+        }
+        host.innerHTML = state.composed.map((it, i) => rowHtml(it, i, false, true)).join("");
+        wireRow(host, (i) => state.composed[i]);
+      }
+
+      // Local scoring mirror of intent.mjs (simplified)
+      const STOPWORDS = new Set("a an and are as at be but by do for from has have i if in is it its me my of on or our so that the their them then there they this to up was we were what when where which while will with you your want need should would can could how make get help please just some something thing things use using".split(" "));
+      function tokenize(text) {
+        return (text || "").toLowerCase()
+          .replace(/[^\w\s+/#.-]/g, " ")
+          .split(/\s+/)
+          .filter((t) => t.length > 1 && !STOPWORDS.has(t));
+      }
+      function scoreIntent(query, items, limit) {
+        const queryTokens = tokenize(query);
+        if (queryTokens.length === 0) return [];
+        const df = new Map();
+        const docs = items.map((it) => {
+          const toks = new Set(tokenize(`${it.name} ${it.description||""} ${it.category||""}`));
+          for (const t of toks) df.set(t, (df.get(t) ?? 0) + 1);
+          return toks;
+        });
+        const N = items.length;
+        const idf = (t) => Math.log((N + 1) / ((df.get(t) ?? 0) + 1)) + 1;
+        const textBlob = queryTokens.join(" ");
+        const catBoosts = [
+          [["test","testing","tdd","coverage","unit","e2e"], /testing/, 6],
+          [["review","audit"], /review|audit/, 5],
+          [["secur","auth","authenticat","vulnerab","exploit"], /security/, 7],
+          [["plan","roadmap","spec","phase"], /planning|agents/, 4],
+          [["deploy","docker","kubernetes","ci","cd","pipeline"], /devops/, 5],
+          [["frontend","ui","ux","accessib","component","design"], /frontend|design/, 5],
+          [["database","sql","query","schema","migrat","postgres"], /^data/, 5],
+          [["python","django"], /python/, 6],
+          [["kotlin","android"], /kotlin\/android/, 6],
+          [["rust"], /^rust$/, 6],
+          [["cpp","c++"], /c\+\+/, 6],
+          [["llm","ai","model","prompt","agent"], /agents|ai ops|ecc-meta/, 5],
+          [["post","publish","article","blog","video"], /content/, 5],
+          [["onboard","unfamiliar"], /agents|architecture|planning/, 4],
+        ];
+
+        const scored = [];
+        items.forEach((it, i) => {
+          let s = 0;
+          const name = it.name.toLowerCase();
+          const nameSet = new Set(tokenize(it.name));
+          for (const q of queryTokens) {
+            const w = idf(q);
+            if (nameSet.has(q)) s += 8 * w;
+            else if (name.includes(q)) s += 4 * w;
+            if (docs[i].has(q)) s += 2 * w;
+          }
+          const cat = (it.category || "").toLowerCase();
+          for (const [terms, catRe, bonus] of catBoosts) {
+            if (!terms.some((t) => textBlob.includes(t))) continue;
+            if (catRe.test(cat)) s += bonus;
+          }
+          if (textBlob.includes("review") && (name.endsWith("-review") || name.endsWith("review"))) s += 3;
+          if ((textBlob.includes("build") || textBlob.includes("fix")) && name.endsWith("-build")) s += 3;
+          if (s > 0) {
+            const why = [];
+            for (const q of queryTokens) {
+              if (name.includes(q)) why.push(`name:${q}`);
+              else if ((it.description||"").toLowerCase().includes(q)) why.push(`desc:${q}`);
+              else if ((it.category||"").toLowerCase().includes(q)) why.push(`cat:${q}`);
+            }
+            scored.push({ ...it, _score: Math.round(s * 10) / 10, _why: why.slice(0,4).join(" · ") });
+          }
+        });
+        scored.sort((a,b) => b._score - a._score);
+        return scored.slice(0, limit);
+      }
+
+      // ---------- row rendering (shared) ----------
+      function rowHtml(it, idx, selected, showWhy) {
+        const hint = it.argumentHint ? `<span class="hint">args: ${escapeHtml(it.argumentHint)}</span>` : "";
+        const why = showWhy && it._why ? `<span class="why">match: ${escapeHtml(it._why)}</span>` : "";
+        const score = it._score != null ? `<span class="score-tag">score ${it._score}</span>` : "";
+        const scope = it.scope || "plugin";
+        const displayLabel = displaySource(it.source || scope);
+        const scopeBadge = `<span class="scope-badge ${scope}" title="${escapeHtml(it.source || scope)}">${escapeHtml(displayLabel)}</span>`;
+        const inBasket = state.basket.includes(it.slug);
+        const pickLabel = inBasket ? "✓" : "+";
+        return `<div class="row ${selected ? "selected" : ""}" data-slug="${escapeHtml(it.slug)}" data-i="${idx}">
+          <button class="pick-btn ${inBasket ? "added" : ""}" title="${inBasket ? "Remove from basket" : "Add to basket"}" data-pick="${escapeHtml(it.slug)}">${pickLabel}</button>
+          <span class="badge ${it.type}">${it.type}</span>
+          <div class="name-wrap">
+            <div class="name">${escapeHtml(it.name)}${score}</div>
+            <div class="meta-line">${scopeBadge}<span class="cat">${escapeHtml(it.category)}</span></div>
+          </div>
+          <div class="desc">${escapeHtml(it.description || "(no description)")}${hint}${why}</div>
+        </div>`;
+      }
+      function wireRow(host, itemAt) {
+        host.querySelectorAll(".pick-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const slug = btn.dataset.pick;
+            toggleBasket(slug);
+            // Re-render whichever list this row belongs to
+            if (host.id === "browseList") renderBrowseList();
+            else if (host.id === "composeList") renderComposeList();
+          });
+        });
+        host.querySelectorAll(".row").forEach((el) => {
+          el.addEventListener("click", (e) => {
+            if (e.target.closest(".pick-btn")) return;
+            const slug = el.dataset.slug;
+            copyToClipboard(slug);
+            showToast(`Copied  ${slug}`);
+          });
+        });
+      }
+
+      // ---------- basket ----------
+      function toggleBasket(slug) {
+        const idx = state.basket.indexOf(slug);
+        if (idx >= 0) state.basket.splice(idx, 1);
+        else state.basket.push(slug);
+        saveBasket();
+        updateBasketUI();
+      }
+      function clearBasket() {
+        state.basket = []; saveBasket(); updateBasketUI();
+        if (state.activeTab === "browse") renderBrowseList();
+        if (state.activeTab === "compose") renderComposeList();
+      }
+      function loadRecipeIntoBasket(slugs, replace) {
+        if (replace) state.basket = [];
+        for (const s of slugs) if (!state.basket.includes(s)) state.basket.push(s);
+        saveBasket(); updateBasketUI();
+        openBasket();
+        if (state.activeTab === "browse") renderBrowseList();
+        if (state.activeTab === "compose") renderComposeList();
+      }
+      function updateBasketUI() {
+        const count = state.basket.length;
+        document.getElementById("basketCount").textContent = count;
+        document.getElementById("basketBtn").classList.toggle("has-items", count > 0);
+        renderBasketBody();
+      }
+      function renderBasketBody() {
+        const host = document.getElementById("basketBody");
+        if (state.basket.length === 0) {
+          host.innerHTML = `<div class="empty">Basket is empty. Use ➕ on any skill/command row to add.</div>`;
+          return;
+        }
+        host.innerHTML = state.basket.map((slug, i) => {
+          const it = state.byslug.get(slug);
+          const desc = it ? (it.description || "").replace(/\s+/g, " ").slice(0, 140) : "(unknown slug; may be stale)";
+          return `<div class="basket-item">
+            <span class="order">${i+1}.</span>
+            <div>
+              <div class="slug">${escapeHtml(slug)}</div>
+              <div class="cat" style="font-size:11px">${it ? escapeHtml(it.category + " · " + (it.source||"")) : "—"}</div>
+              <div class="desc" style="font-size:12px;margin-top:2px">${escapeHtml(desc)}</div>
+            </div>
+            <div style="display:flex;gap:4px">
+              <button class="remove" title="Move up" data-op="up" data-slug="${escapeHtml(slug)}">↑</button>
+              <button class="remove" title="Move down" data-op="down" data-slug="${escapeHtml(slug)}">↓</button>
+              <button class="remove" title="Remove" data-op="remove" data-slug="${escapeHtml(slug)}">✕</button>
+            </div>
+          </div>`;
+        }).join("");
+        host.querySelectorAll("button[data-op]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const op = btn.dataset.op;
+            const slug = btn.dataset.slug;
+            const idx = state.basket.indexOf(slug);
+            if (idx < 0) return;
+            if (op === "remove") state.basket.splice(idx, 1);
+            else if (op === "up" && idx > 0) [state.basket[idx-1], state.basket[idx]] = [state.basket[idx], state.basket[idx-1]];
+            else if (op === "down" && idx < state.basket.length-1) [state.basket[idx+1], state.basket[idx]] = [state.basket[idx], state.basket[idx+1]];
+            saveBasket(); updateBasketUI();
+            if (state.activeTab === "browse") renderBrowseList();
+            if (state.activeTab === "compose") renderComposeList();
+          });
+        });
+      }
+      function openBasket() { document.getElementById("basketDrawer").classList.add("open"); }
+      function closeBasket() { document.getElementById("basketDrawer").classList.remove("open"); }
+
+      // ---------- prompt generation ----------
+      function buildPrompt() {
+        if (state.basket.length === 0) return "";
+        const lines = [];
+        lines.push("Please work through the following skills/commands in order. After each step, briefly confirm what you did before moving on.\n");
+        state.basket.forEach((slug, i) => {
+          const it = state.byslug.get(slug);
+          const title = it ? it.name : slug.replace(/^\//, "");
+          const desc = it ? (it.description || "").replace(/\s+/g, " ").slice(0, 180) : "";
+          lines.push(`${i+1}. ${slug}  — ${title}`);
+          if (desc) lines.push(`   ${desc}`);
+          lines.push("");
+        });
+        lines.push("Start with step 1 now.");
+        return lines.join("\n");
+      }
+
+      // ---------- recipes ----------
+      function renderRecipes() {
+        const seedHost = document.getElementById("seedRecipes");
+        seedHost.innerHTML = state.seedRecipes.map((r) => recipeCardHtml(r, false)).join("") || `<div class="empty">No seed recipes.</div>`;
+        wireRecipes(seedHost, state.seedRecipes, false);
+
+        const customHost = document.getElementById("customRecipes");
+        customHost.innerHTML = state.customRecipes.length
+          ? state.customRecipes.map((r) => recipeCardHtml(r, true)).join("")
+          : `<div class="empty">No custom recipes yet. Build a basket and press <b>Save as recipe</b> to add one.</div>`;
+        wireRecipes(customHost, state.customRecipes, true);
+      }
+      function recipeCardHtml(r, custom) {
+        const slugs = (r.slugs || []).map((s) => `<div class="recipe-slug">${escapeHtml(s)}</div>`).join("");
+        const badge = custom ? '<span class="badge-custom">custom</span>' : '<span class="badge-seed">seed</span>';
+        return `<div class="recipe-card" data-id="${escapeHtml(r.id)}">
+          <h3>${escapeHtml(r.title)}${badge}</h3>
+          <div class="recipe-desc">${escapeHtml(r.description || "")}</div>
+          <div class="recipe-slugs">${slugs}</div>
+          <div class="actions">
+            <button class="primary" data-op="load">Load into basket</button>
+            <button data-op="append">Append to basket</button>
+            ${custom ? '<button data-op="delete">Delete</button>' : ''}
+          </div>
+        </div>`;
+      }
+      function wireRecipes(host, arr, custom) {
+        host.querySelectorAll(".recipe-card").forEach((card) => {
+          const id = card.dataset.id;
+          card.querySelectorAll("button[data-op]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const r = arr.find((x) => x.id === id);
+              if (!r) return;
+              if (btn.dataset.op === "load") loadRecipeIntoBasket(r.slugs, true);
+              else if (btn.dataset.op === "append") loadRecipeIntoBasket(r.slugs, false);
+              else if (btn.dataset.op === "delete" && custom) {
+                state.customRecipes = state.customRecipes.filter((x) => x.id !== id);
+                saveCustomRecipes(); renderRecipes();
+              }
+            });
+          });
+        });
+      }
+
+      // ---------- modals ----------
+      function openModal(html) {
+        const m = document.getElementById("modal");
+        m.innerHTML = html;
+        document.getElementById("modalOverlay").classList.add("open");
+      }
+      function closeModal() {
+        document.getElementById("modalOverlay").classList.remove("open");
+      }
+      document.getElementById("modalOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "modalOverlay") closeModal();
+      });
+
+      function saveAsRecipeDialog() {
+        if (state.basket.length === 0) { showToast("Basket is empty."); return; }
+        openModal(`
+          <h3>Save basket as recipe</h3>
+          <label>Title</label>
+          <input id="recipeTitle" placeholder="e.g. Pre-merge check" />
+          <label>Description</label>
+          <input id="recipeDesc" placeholder="optional" />
+          <div class="actions">
+            <button type="button" id="cancelRecipe">Cancel</button>
+            <button type="button" class="primary" id="saveRecipe">Save</button>
+          </div>
+        `);
+        setTimeout(() => document.getElementById("recipeTitle").focus(), 50);
+        document.getElementById("cancelRecipe").addEventListener("click", closeModal);
+        document.getElementById("saveRecipe").addEventListener("click", () => {
+          const title = document.getElementById("recipeTitle").value.trim();
+          if (!title) return;
+          const desc = document.getElementById("recipeDesc").value.trim();
+          const id = "custom-" + Date.now();
+          state.customRecipes.push({ id, title, description: desc, slugs: [...state.basket] });
+          saveCustomRecipes();
+          renderRecipes();
+          closeModal();
+          showToast("Saved");
+        });
+      }
+
+      function previewPromptDialog() {
+        const prompt = buildPrompt();
+        if (!prompt) { showToast("Basket is empty."); return; }
+        openModal(`
+          <h3>Prompt preview</h3>
+          <p style="font-size:12px;color:var(--fg-dim)">Copy this into a new Claude Code message.</p>
+          <textarea id="promptPreview" readonly>${escapeHtml(prompt)}</textarea>
+          <div class="actions">
+            <button type="button" id="closePreview">Close</button>
+            <button type="button" class="primary" id="copyPreview">Copy</button>
+          </div>
+        `);
+        document.getElementById("closePreview").addEventListener("click", closeModal);
+        document.getElementById("copyPreview").addEventListener("click", () => {
+          copyToClipboard(prompt);
+          showToast("Prompt copied");
+          closeModal();
+        });
+      }
+
+      // ---------- clipboard ----------
+      async function copyToClipboard(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+      }
+
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => t.classList.remove("show"), 1800);
+      }
+
+      function escapeHtml(s) {
+        return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      // ---------- tabs ----------
+      function switchTab(name) {
+        state.activeTab = name;
+        document.querySelectorAll("nav.tabs button[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+        document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("active", p.id === name + "Pane"));
+        if (name === "browse") renderBrowseList();
+        if (name === "compose") {
+          setTimeout(() => document.getElementById("intentInput").focus(), 50);
+        }
+      }
+
+      // ---------- wiring ----------
+      document.getElementById("themeToggle").addEventListener("click", () => {
+        settings.theme = settings.theme === "light" ? "dark" : "light";
+        saveSettings();
+        applyTheme();
+      });
+      document.getElementById("helpBtn").addEventListener("click", openHelpModal);
+
+      function openHelpModal() {
+        openModal(`
+          <h3>Keyboard shortcuts</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tbody>
+              <tr><td style="padding:5px 0"><span class="kbd">/</span></td><td>focus search (Browse)</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">B</span></td><td>toggle basket drawer</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">C</span></td><td>switch to Compose tab</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">R</span></td><td>switch to Recipes tab</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">T</span></td><td>toggle theme</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">?</span></td><td>this help</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">↑</span>/<span class="kbd">↓</span></td><td>navigate list</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">Esc</span></td><td>clear search / close modal</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">Ctrl+Enter</span></td><td>run Compose search</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:12px;color:var(--fg-dim);margin-top:14px">
+            <b>Basket</b>: click ➕ on any row to add, ↑/↓ on basket item to reorder, "Copy as prompt" for a paste-ready multi-step message.<br>
+            <b>Share a basket</b>: append <code>#basket=slug1,slug2</code> to the URL.<br>
+            <b>Source aliases</b>: hover a scope-badge to see the full source id.
+          </p>
+          <div class="actions">
+            <button class="primary" type="button" onclick="closeModal()">Close</button>
+          </div>
+        `);
+      }
+
+      document.querySelectorAll("nav.tabs button[data-tab]").forEach((b) => {
+        b.addEventListener("click", () => switchTab(b.dataset.tab));
+      });
+      document.getElementById("basketBtn").addEventListener("click", () => {
+        const d = document.getElementById("basketDrawer");
+        d.classList.toggle("open");
+      });
+      document.getElementById("btnCloseBasket").addEventListener("click", closeBasket);
+      document.getElementById("btnClearBasket").addEventListener("click", () => {
+        if (state.basket.length === 0) return;
+        if (confirm("Clear basket?")) clearBasket();
+      });
+      document.getElementById("btnCopyPrompt").addEventListener("click", previewPromptDialog);
+      document.getElementById("btnCopySlugs").addEventListener("click", () => {
+        if (state.basket.length === 0) { showToast("Basket is empty."); return; }
+        copyToClipboard(state.basket.join("\n"));
+        showToast("Slugs copied");
+      });
+      document.getElementById("btnCopyLink").addEventListener("click", () => {
+        if (state.basket.length === 0) { showToast("Basket is empty."); return; }
+        const params = new URLSearchParams();
+        params.set("basket", state.basket.map(encodeURIComponent).join(","));
+        const url = location.origin + location.pathname + "#" + params.toString();
+        copyToClipboard(url);
+        showToast("Share link copied");
+      });
+      document.getElementById("btnSaveRecipe").addEventListener("click", saveAsRecipeDialog);
+
+      document.getElementById("toggleMore").addEventListener("click", () => {
+        const list = document.getElementById("sources");
+        const btn = document.getElementById("toggleMore");
+        const collapsed = list.classList.toggle("collapsed");
+        btn.textContent = collapsed ? "Show all sources ▼" : "Collapse sources ▲";
+      });
+      document.getElementById("search").addEventListener("input", (e) => {
+        state.filter.query = e.target.value;
+        applyFilter();
+      });
+      document.getElementById("typeToggle").addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        state.filter.type = b.dataset.type;
+        document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x === b));
+        applyFilter();
+      });
+      document.getElementById("btnExportRecipes").addEventListener("click", () => {
+        if (state.customRecipes.length === 0) { showToast("No custom recipes to export."); return; }
+        const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), recipes: state.customRecipes }, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `skillbrowser-recipes-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 500);
+        showToast(`Exported ${state.customRecipes.length} recipe${state.customRecipes.length === 1 ? "" : "s"}`);
+      });
+      document.getElementById("btnImportRecipes").addEventListener("click", () => {
+        document.getElementById("importFile").click();
+      });
+      document.getElementById("importFile").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          const recipes = Array.isArray(data) ? data : (data.recipes || []);
+          if (!Array.isArray(recipes) || recipes.length === 0) throw new Error("No recipes in file");
+          let added = 0;
+          for (const r of recipes) {
+            if (!r.title || !Array.isArray(r.slugs)) continue;
+            const id = "custom-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+            state.customRecipes.push({ id, title: r.title, description: r.description || "", slugs: r.slugs.filter((s) => typeof s === "string" && s.startsWith("/")) });
+            added++;
+          }
+          saveCustomRecipes();
+          renderRecipes();
+          showToast(`Imported ${added} recipe${added === 1 ? "" : "s"}`);
+        } catch (err) {
+          showToast("Import failed: " + err.message);
+        } finally {
+          e.target.value = "";
+        }
+      });
+      document.getElementById("runIntent").addEventListener("click", runIntent);
+      document.getElementById("intentInput").addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); runIntent(); }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+          if (e.key === "Escape") {
+            if (e.target.id === "search") { e.target.value = ""; state.filter.query = ""; applyFilter(); }
+          }
+          return;
+        }
+        if (e.key === "/") { e.preventDefault(); switchTab("browse"); setTimeout(() => document.getElementById("search").focus(), 0); }
+        else if (e.key.toLowerCase() === "b") { e.preventDefault(); document.getElementById("basketDrawer").classList.toggle("open"); }
+        else if (e.key.toLowerCase() === "c") { e.preventDefault(); switchTab("compose"); }
+        else if (e.key.toLowerCase() === "r") { e.preventDefault(); switchTab("recipes"); }
+        else if (e.key.toLowerCase() === "t") { e.preventDefault(); document.getElementById("themeToggle").click(); }
+        else if (e.key === "?") { e.preventDefault(); openHelpModal(); }
+        else if (e.key === "Escape") { closeModal(); }
+        else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          state.selectedIndex = Math.min(state.filtered.length - 1, state.selectedIndex + 1);
+          renderBrowseList();
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          state.selectedIndex = Math.max(0, state.selectedIndex - 1);
+          renderBrowseList();
+        }
+      });
+
+      function openWelcomeModal() {
+        openModal(`
+          <h3>Welcome to Skill Browser</h3>
+          <p style="font-size:13px;color:var(--fg-mid);line-height:1.5">
+            A local tool for discovering skills and slash-commands across every plugin you've installed.
+          </p>
+          <ul style="font-size:13px;color:var(--fg-mid);line-height:1.7;padding-left:20px">
+            <li><b>Browse</b> — filter the full catalog by type, scope, source, or category</li>
+            <li><b>Compose</b> — describe a goal in plain language, get ranked skill suggestions</li>
+            <li><b>Recipes</b> — ready-made skill chains + save-your-own</li>
+            <li><b>Basket</b> — combine skills into a paste-ready prompt</li>
+          </ul>
+          <p style="font-size:12px;color:var(--fg-dim);margin-top:12px">
+            Click ➕ on any row to add to basket. Press <span class="kbd">?</span> for shortcuts.
+          </p>
+          <div class="actions">
+            <button type="button" class="primary" id="welcomeGotIt">Got it →</button>
+          </div>
+        `);
+        document.getElementById("welcomeGotIt").addEventListener("click", () => {
+          settings.welcomeSeen = true;
+          saveSettings();
+          closeModal();
+        });
+      }
+
+      loadSettings();
+      load().then(() => {
+        if (!settings.welcomeSeen) openWelcomeModal();
+      }).catch((e) => {
+        document.getElementById("browseList").innerHTML =
+          `<div class="empty">Error: ${escapeHtml(e.message)}. Run <code>node build.mjs</code> first.</div>`;
+      });
+    </script>
+  </body>
+</html>

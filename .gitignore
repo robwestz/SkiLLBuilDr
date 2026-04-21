@@ -1,0 +1,11 @@
+node_modules/
+dist/
+data.json
+data.js
+recipes.js
+.DS_Store
+*.log
+.env
+.vscode/
+.idea/
+coverage/

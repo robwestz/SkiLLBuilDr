@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skill Browser - Find the right Claude Code skill for any task</title>
+<meta name="description" content="Local, offline browser for Claude Code skills and slash-commands. Unified catalog across every installed plugin plus your global user skills. 500+ skills, Compose mode, Recipes, paste-ready prompts." />
+<meta name="author" content="Robin Westerlund" />
+<meta name="theme-color" content="#faf8f4" />
+<style>
+  :root {
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --surface-alt: #f3efe7;
+    --ink: #111111;
+    --ink-soft: #2a2a2a;
+    --body: #4a4a4a;
+    --muted: #7b7773;
+    --line: #e6e1d6;
+    --line-strong: #d6cfbf;
+    --accent: #d97757;
+    --accent-ink: #b85a3c;
+    --code-bg: #0f1115;
+    --code-ink: #e7e4dc;
+    --code-dim: #8a8f9a;
+    --code-accent: #f0a584;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow-sm: 0 1px 2px rgba(17, 17, 17, 0.04), 0 1px 1px rgba(17, 17, 17, 0.03);
+    --shadow-md: 0 8px 24px -12px rgba(17, 17, 17, 0.12), 0 2px 6px rgba(17, 17, 17, 0.04);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--body);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  a {
+    color: var(--accent-ink);
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  a:hover { color: var(--accent); }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- Header ---------- */
+  header.site {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(250, 248, 244, 0.82);
+    backdrop-filter: saturate(140%) blur(8px);
+    -webkit-backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .site .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .brand .mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, var(--accent) 0%, #c2502f 100%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 1px 2px rgba(0,0,0,0.08);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .brand .name {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand .sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-left: 6px;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .nav a.quiet {
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .nav a.quiet:hover { color: var(--accent-ink); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .btn.primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+  .btn.primary:hover {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+  }
+  .btn .arr { transition: transform 150ms ease; }
+  .btn:hover .arr { transform: translateX(2px); }
+
+  @media (max-width: 560px) {
+    .nav a.quiet { display: none; }
+  }
+
+  /* ---------- Hero ---------- */
+  section.hero {
+    padding: 72px 0 48px;
+    position: relative;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    margin-bottom: 22px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.18);
+  }
+
+  h1.hero-title {
+    color: var(--ink);
+    font-size: clamp(34px, 5.2vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    margin: 0 0 18px;
+    font-weight: 650;
+  }
+  h1.hero-title .accent { color: var(--accent-ink); }
+
+  p.hero-lede {
+    font-size: clamp(17px, 2vw, 19px);
+    color: var(--ink-soft);
+    max-width: 680px;
+    margin: 0 0 28px;
+  }
+
+  ul.hero-points {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 36px;
+    display: grid;
+    gap: 10px;
+    max-width: 680px;
+  }
+  ul.hero-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: var(--ink-soft);
+    font-size: 15.5px;
+  }
+  ul.hero-points li .chk {
+    flex: 0 0 auto;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(217, 119, 87, 0.12);
+    color: var(--accent-ink);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* ---------- Screenshot placeholder ---------- */
+  .screenshot-placeholder {
+    margin: 24px 0 8px;
+    background: #0f1115;
+    border-radius: var(--radius-lg);
+    border: 1px solid #1b1f27;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    position: relative;
+  }
+  .ss-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(180deg, #171a21 0%, #13161c 100%);
+    border-bottom: 1px solid #1b1f27;
+  }
+  .ss-bar .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #2a2f3a;
+  }
+  .ss-bar .dot.r { background: #e26c5a; }
+  .ss-bar .dot.y { background: #d4a24c; }
+  .ss-bar .dot.g { background: #6aa26a; }
+  .ss-bar .title {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #8a8f9a;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .ss-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 320px;
+  }
+  .ss-side {
+    border-right: 1px solid #1b1f27;
+    padding: 16px 14px;
+    background: #0c0e13;
+  }
+  .ss-side h4 {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6a6f7a;
+    margin: 0 0 10px;
+    font-weight: 600;
+  }
+  .ss-side ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    display: grid;
+    gap: 4px;
+  }
+  .ss-side li {
+    font-size: 13px;
+    color: #c9c7c1;
+    padding: 6px 8px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .ss-side li.active {
+    background: rgba(217, 119, 87, 0.14);
+    color: var(--code-accent);
+  }
+  .ss-side li .ct {
+    color: #6a6f7a;
+    font-size: 11px;
+  }
+  .ss-main {
+    padding: 16px 18px;
+  }
+  .ss-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding: 3px;
+    background: #14171e;
+    border-radius: 8px;
+    width: fit-content;
+    border: 1px solid #1b1f27;
+  }
+  .ss-tabs span {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: #8a8f9a;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .ss-tabs span.on {
+    background: #1f232c;
+    color: var(--code-accent);
+  }
+  .ss-search {
+    background: #14171e;
+    border: 1px solid #1b1f27;
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #6a6f7a;
+    font-size: 13px;
+    margin-bottom: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .ss-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+  }
+  .ss-card {
+    background: #14171e;
+    border: 1px solid #1b1f27;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 82px;
+  }
+  .ss-card .t {
+    color: #e7e4dc;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .ss-card .d {
+    color: #7a7e88;
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
+  .ss-card .tag {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--code-accent);
+    background: rgba(217, 119, 87, 0.12);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .ss-caption {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 14px;
+    letter-spacing: 0.02em;
+  }
+  @media (max-width: 640px) {
+    .ss-body { grid-template-columns: 1fr; }
+    .ss-side { border-right: 0; border-bottom: 1px solid #1b1f27; }
+  }
+
+  /* ---------- Section headers ---------- */
+  section { padding: 64px 0; }
+  section.tight { padding: 40px 0; }
+
+  h2.section-title {
+    color: var(--ink);
+    font-size: clamp(26px, 3.4vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 10px;
+    font-weight: 650;
+  }
+  p.section-lede {
+    color: var(--body);
+    font-size: 17px;
+    max-width: 640px;
+    margin: 0 0 32px;
+  }
+  .kicker {
+    color: var(--accent-ink);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+  }
+
+  /* ---------- Features grid ---------- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 860px) { .features { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .features { grid-template-columns: 1fr; } }
+
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 22px 20px;
+    transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+  .feature:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .feature:hover::before { opacity: 1; }
+
+  .feature .icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    margin-bottom: 14px;
+  }
+  .feature h3 {
+    margin: 0 0 6px;
+    font-size: 15.5px;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .feature p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--body);
+    line-height: 1.55;
+  }
+
+  /* ---------- How it works ---------- */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    counter-reset: step;
+  }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 24px 22px;
+    position: relative;
+  }
+  .step .n {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .step h3 {
+    margin: 0 0 6px;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .step p {
+    margin: 0;
+    color: var(--body);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  /* ---------- CLI preview ---------- */
+  .cli {
+    background: var(--code-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid #1b1f27;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .cli-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #13161c;
+    border-bottom: 1px solid #1b1f27;
+  }
+  .cli-head .dot { width: 10px; height: 10px; border-radius: 50%; background: #2a2f3a; }
+  .cli-head .dot.r { background: #e26c5a; }
+  .cli-head .dot.y { background: #d4a24c; }
+  .cli-head .dot.g { background: #6aa26a; }
+  .cli-head .label {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #8a8f9a;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .cli pre {
+    margin: 0;
+    padding: 18px 20px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--code-ink);
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .cli .prompt { color: var(--code-accent); }
+  .cli .cmd { color: #e7e4dc; }
+  .cli .str { color: #c8e0a9; }
+  .cli .dim { color: var(--code-dim); }
+  .cli .rank { color: var(--code-accent); }
+  .cli .kw { color: #9cb8ff; }
+  .cli .ok { color: #78c69b; }
+
+  /* ---------- Agents section ---------- */
+  .agents-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: center;
+  }
+  @media (max-width: 760px) { .agents-card { grid-template-columns: 1fr; padding: 22px; } }
+  .agents-card h3 {
+    margin: 0 0 8px;
+    color: var(--ink);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .agents-card p {
+    margin: 0 0 10px;
+    color: var(--body);
+    font-size: 14.5px;
+  }
+  .agents-card code {
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .agents-flow {
+    background: var(--code-bg);
+    border-radius: 10px;
+    padding: 18px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--code-ink);
+    line-height: 1.8;
+    border: 1px solid #1b1f27;
+  }
+  .agents-flow .arrow { color: var(--code-accent); }
+  .agents-flow .tag { color: #9cb8ff; }
+  .agents-flow .dim { color: var(--code-dim); }
+
+  /* ---------- OSS strip ---------- */
+  .oss {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 24px 26px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+    justify-content: space-between;
+  }
+  .oss .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .oss .item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--body);
+  }
+  .oss .item strong {
+    color: var(--ink);
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+  }
+  .oss .install {
+    background: var(--code-bg);
+    color: var(--code-accent);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    border: 1px solid #1b1f27;
+  }
+
+  /* ---------- Final CTA ---------- */
+  .final-cta {
+    text-align: center;
+    padding: 72px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--bg) 0%, var(--surface-alt) 100%);
+  }
+  .final-cta h2 {
+    color: var(--ink);
+    font-size: clamp(26px, 3.6vw, 34px);
+    margin: 0 0 10px;
+    letter-spacing: -0.02em;
+  }
+  .final-cta p {
+    color: var(--body);
+    max-width: 520px;
+    margin: 0 auto 24px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer.site {
+    padding: 36px 0 48px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  footer .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer .links { display: flex; gap: 18px; }
+  footer a { color: var(--ink-soft); }
+  footer a:hover { color: var(--accent-ink); }
+
+  /* ---------- Subtle reveal ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: rise 600ms ease forwards;
+    }
+    .reveal.d1 { animation-delay: 80ms; }
+    .reveal.d2 { animation-delay: 160ms; }
+    .reveal.d3 { animation-delay: 240ms; }
+    @keyframes rise {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+
+  ::selection { background: rgba(217, 119, 87, 0.28); color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">SB</div>
+      <span class="name">Skill Browser</span>
+      <span class="sub">by buildr</span>
+    </div>
+    <nav class="nav">
+      <a class="quiet" href="#features">Features</a>
+      <a class="quiet" href="#how">How it works</a>
+      <a class="quiet" href="#cli">CLI</a>
+      <a class="btn" href="./index.html">Open the app <span class="arr">&rarr;</span></a>
+    </nav>
+  </div>
+</header>
+
+<!-- ====================== HERO ====================== -->
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow reveal"><span class="dot"></span> Local &middot; Offline &middot; Zero-dep</span>
+    <h1 class="hero-title reveal d1">
+      Find the right Claude Code skill for <span class="accent">any task</span> &mdash; across every plugin you've installed.
+    </h1>
+    <p class="hero-lede reveal d2">
+      Skill Browser unifies your entire Claude Code catalog &mdash; skills, slash-commands, and agents &mdash;
+      from every plugin plus your global user directory, in one fast, keyboard-first interface.
+    </p>
+
+    <ul class="hero-points reveal d2">
+      <li><span class="chk">&#10003;</span> <span><strong style="color:var(--ink)">500+ skills</strong> indexed across 35+ plugins &mdash; no hunting through folders.</span></li>
+      <li><span class="chk">&#10003;</span> <span><strong style="color:var(--ink)">Compose mode:</strong> describe a goal in plain language, get ranked skill suggestions.</span></li>
+      <li><span class="chk">&#10003;</span> <span><strong style="color:var(--ink)">Basket &rarr; paste-ready prompt</strong> for any workflow, agent, or session kickoff.</span></li>
+    </ul>
+
+    <div class="cta-row reveal d3">
+      <a class="btn primary" href="./index.html">Open Skill Browser <span class="arr">&rarr;</span></a>
+      <a class="btn" href="#how">See how it works</a>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== SCREENSHOT ====================== -->
+<section class="tight">
+  <div class="wrap">
+    <div class="screenshot-placeholder" role="img" aria-label="Skill Browser interface preview">
+      <div class="ss-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="title">skill-browser &mdash; local</span>
+      </div>
+      <div class="ss-body">
+        <aside class="ss-side">
+          <h4>Sources</h4>
+          <ul>
+            <li class="active">All <span class="ct">512</span></li>
+            <li>User <span class="ct">47</span></li>
+            <li>Plugins <span class="ct">438</span></li>
+            <li>Project <span class="ct">27</span></li>
+          </ul>
+          <h4>Mode</h4>
+          <ul>
+            <li>Browse</li>
+            <li class="active">Compose</li>
+            <li>Recipes</li>
+          </ul>
+        </aside>
+        <div class="ss-main">
+          <div class="ss-tabs">
+            <span>Browse</span>
+            <span class="on">Compose</span>
+            <span>Recipes</span>
+          </div>
+          <div class="ss-search">&gt; review my code for security issues before shipping</div>
+          <div class="ss-cards">
+            <div class="ss-card">
+              <div class="t">security-review</div>
+              <div class="d">Audit pending changes for secrets, injection, and auth gaps.</div>
+              <span class="tag">match 0.94</span>
+            </div>
+            <div class="ss-card">
+              <div class="t">code-review</div>
+              <div class="d">Multi-agent PR review with convention checks.</div>
+              <span class="tag">match 0.88</span>
+            </div>
+            <div class="ss-card">
+              <div class="t">security-scan</div>
+              <div class="d">Static scan of .claude/ configuration for risks.</div>
+              <span class="tag">match 0.81</span>
+            </div>
+            <div class="ss-card">
+              <div class="t">verification-loop</div>
+              <div class="d">Run lint, tests, and type-checks until green.</div>
+              <span class="tag">match 0.72</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ss-caption">Browse &middot; Compose &middot; Recipes</div>
+  </div>
+</section>
+
+<!-- ====================== FEATURES ====================== -->
+<section id="features">
+  <div class="wrap">
+    <p class="kicker">Features</p>
+    <h2 class="section-title">Everything your catalog, nothing you don't need.</h2>
+    <p class="section-lede">
+      Skill Browser reads your <code style="background:var(--surface-alt);padding:1px 6px;border-radius:4px;border:1px solid var(--line);font-size:14px">.claude/</code>
+      tree and plugin marketplace locally, then gives you six ways to work with it.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="icon" aria-hidden="true">&#128269;</div>
+        <h3>Browse all sources</h3>
+        <p>Plugins, user-global, and project-local skills in one unified filterable list.</p>
+      </div>
+      <div class="feature">
+        <div class="icon" aria-hidden="true">&#9881;</div>
+        <h3>Compose mode</h3>
+        <p>Describe intent in plain language; get ranked matches with confidence scores.</p>
+      </div>
+      <div class="feature">
+        <div class="icon" aria-hidden="true">&#128220;</div>
+        <h3>Recipes</h3>
+        <p>Save skill chains as reusable, share-ready recipes &mdash; version-controllable.</p>
+      </div>
+      <div class="feature">
+        <div class="icon" aria-hidden="true">&#128722;</div>
+        <h3>Basket &amp; prompt generation</h3>
+        <p>Drop skills into a basket, then export a paste-ready prompt for any workflow.</p>
+      </div>
+      <div class="feature">
+        <div class="icon" aria-hidden="true">&#128274;</div>
+        <h3>Local-only, no API calls</h3>
+        <p>Runs entirely in your browser against a static index. No network, no telemetry.</p>
+      </div>
+      <div class="feature">
+        <div class="icon" aria-hidden="true">&#9889;</div>
+        <h3>Agent-friendly CLI</h3>
+        <p><code style="background:var(--surface-alt);padding:1px 5px;border-radius:4px;font-size:12.5px">intent.mjs</code> and <code style="background:var(--surface-alt);padding:1px 5px;border-radius:4px;font-size:12.5px">query.mjs</code> let agents introspect your catalog programmatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== HOW IT WORKS ====================== -->
+<section id="how" style="background: var(--surface-alt); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+  <div class="wrap">
+    <p class="kicker">How it works</p>
+    <h2 class="section-title">Three steps, under a minute.</h2>
+    <p class="section-lede">No build step, no package manager, no config. Drop in, launch, compose.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>Install</h3>
+        <p>Clone (or copy) the folder into <code style="background:#fff;padding:1px 5px;border-radius:4px;border:1px solid var(--line);font-size:12.5px">~/.claude/ecc-browser/</code>. Node 18+ is the only prerequisite.</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>Launch</h3>
+        <p>Run <code style="background:#fff;padding:1px 5px;border-radius:4px;border:1px solid var(--line);font-size:12.5px">./launch.sh</code> (or open <code style="background:#fff;padding:1px 5px;border-radius:4px;border:1px solid var(--line);font-size:12.5px">index.html</code>). The indexer builds a local catalog in seconds.</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>Compose</h3>
+        <p>Type a goal, review ranked matches, drop the best into your basket, copy the prompt.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== CLI PREVIEW ====================== -->
+<section id="cli">
+  <div class="wrap">
+    <p class="kicker">CLI preview</p>
+    <h2 class="section-title">Same catalog, scriptable from the shell.</h2>
+    <p class="section-lede">
+      <code style="background:var(--surface-alt);padding:2px 7px;border-radius:5px;border:1px solid var(--line)">intent.mjs</code>
+      takes a plain-language goal and returns ranked skills as JSON or pretty output.
+    </p>
+
+    <div class="cli" role="region" aria-label="CLI example">
+      <div class="cli-head">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="label">~/.claude/ecc-browser</span>
+      </div>
+      <pre><span class="prompt">$</span> <span class="cmd">node intent.mjs</span> <span class="str">"review my code for security"</span>
+
+<span class="dim">matched 12 skills across 8 sources (38ms)</span>
+
+  <span class="rank">1.</span> <span class="kw">security-review</span>          <span class="dim">user/skills</span>           <span class="ok">0.94</span>
+     Audit pending changes for secrets, injection, and auth gaps.
+
+  <span class="rank">2.</span> <span class="kw">code-review</span>              <span class="dim">everything-claude-code</span> <span class="ok">0.88</span>
+     Multi-agent PR review with codebase-aware convention checks.
+
+  <span class="rank">3.</span> <span class="kw">security-scan</span>            <span class="dim">everything-claude-code</span> <span class="ok">0.81</span>
+     Scan .claude/ config for permission, hook, and MCP risks.
+
+<span class="dim">... 9 more. Use --json for machine output, --top 5 to limit.</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== FOR AGENTS ====================== -->
+<section style="background: var(--surface-alt); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+  <div class="wrap">
+    <p class="kicker">For agents</p>
+    <h2 class="section-title">Your agents get the same menu you do.</h2>
+    <p class="section-lede">
+      Claude Code agents invoke Skill Browser through the
+      <code style="background:#fff;padding:2px 7px;border-radius:5px;border:1px solid var(--line)">ecc-menu</code>
+      skill &mdash; the exact same index powers both the UI and the programmatic interface.
+    </p>
+
+    <div class="agents-card">
+      <div>
+        <h3>One index, two front-ends.</h3>
+        <p>
+          Humans open <code>index.html</code>. Agents call <code>intent.mjs</code> or <code>query.mjs</code>.
+          Both read the same <code>data.json</code> catalog &mdash; so suggestions stay consistent whether you're
+          browsing manually or delegating to a sub-agent.
+        </p>
+        <p>
+          This means agents can self-discover capabilities ("what skills exist for Postgres migrations?")
+          without hard-coded lists, and users can share recipes with agents by name.
+        </p>
+      </div>
+      <div class="agents-flow" aria-hidden="true">
+        <span class="tag">[agent]</span> <span class="dim">"find me skills for load-testing"</span><br>
+        <span class="arrow">&rarr;</span> <span class="tag">ecc-menu</span> <span class="dim">skill</span><br>
+        <span class="arrow">&nbsp;&rarr;</span> <span class="tag">query.mjs</span> <span class="dim">--intent ...</span><br>
+        <span class="arrow">&nbsp;&nbsp;&rarr;</span> <span class="tag">data.json</span> <span class="dim">(local)</span><br>
+        <span class="arrow">&nbsp;&nbsp;&nbsp;&larr;</span> <span class="dim">ranked JSON results</span><br>
+        <span class="arrow">&nbsp;&nbsp;&larr;</span> <span class="dim">formatted suggestions</span><br>
+        <span class="arrow">&nbsp;&larr;</span> <span class="dim">agent invokes top match</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== OPEN SOURCE ====================== -->
+<section id="open-source" class="tight">
+  <div class="wrap">
+    <p class="kicker">Open source</p>
+    <h2 class="section-title">MIT. Zero dependencies. One file to run.</h2>
+    <p class="section-lede" style="margin-bottom: 22px;">
+      A single static <code style="background:var(--surface-alt);padding:2px 7px;border-radius:5px;border:1px solid var(--line)">index.html</code>,
+      two small Node scripts for CLI, and a generated JSON catalog. No npm install required.
+    </p>
+
+    <div class="oss">
+      <div class="meta">
+        <div class="item"><strong>MIT</strong> license</div>
+        <div class="item"><strong>0</strong> dependencies</div>
+        <div class="item"><strong>Node 18+</strong> for CLI</div>
+        <div class="item"><strong>&lt;400KB</strong> total</div>
+      </div>
+      <div class="install">./launch.sh</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== FINAL CTA ====================== -->
+<section class="final-cta">
+  <div class="wrap">
+    <h2>Ready to explore your catalog?</h2>
+    <p>Open Skill Browser and compose your next prompt in seconds.</p>
+    <div class="cta-row" style="justify-content:center">
+      <a class="btn primary" href="./index.html">Open the app <span class="arr">&rarr;</span></a>
+      <a class="btn" href="https://buildr.nu">Visit buildr.nu</a>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== FOOTER ====================== -->
+<footer class="site">
+  <div class="wrap">
+    <div>&copy; 2026 Robin Westerlund &middot; Skill Browser</div>
+    <div class="links">
+      <a href="./index.html">App</a>
+      <a href="#features">Features</a>
+      <a href="https://buildr.nu">buildr.nu</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
