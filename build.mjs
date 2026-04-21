@@ -93,6 +93,13 @@ function stripQuotes(s) {
   return s;
 }
 
+function extractBody(text) {
+  if (!text.startsWith("---")) return text.trim();
+  const end = text.indexOf("\n---", 3);
+  if (end === -1) return "";
+  return text.slice(end + 4).replace(/^\r?\n/, "").trimEnd();
+}
+
 function deriveCategory(name, source) {
   const n = name.toLowerCase();
   const src = (source && source.namespace) || "";
@@ -313,6 +320,7 @@ function collectSkills(source) {
       source: source.label,
       namespace: source.namespace,
       path: skillFile,
+      body: extractBody(text),
     });
   }
   return items;
@@ -350,6 +358,7 @@ function collectCommands(source) {
           source: subNamespace && source.scope !== "plugin" ? `${source.label}:${subNamespace}` : source.label,
           namespace: effectiveSource.namespace,
           path: full,
+          body: extractBody(text),
         });
       }
     }

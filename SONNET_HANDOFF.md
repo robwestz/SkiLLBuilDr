@@ -300,7 +300,8 @@ Don't start scanning bodies without the architecture signed off.
 | Fas 0 v1 PR 1 — Deep-link routing | ✅ DONE | 2026-04-21 Opus | 58/58 tests; bundle 371.9 KB; `hash-router.js` + 33 router tests |
 | Fas 0 v1 PR 2 — Cross-browser + Playwright | ✅ DONE | 2026-04-21 Sonnet | 150 e2e tests (5 projects × 30 specs); responsive CSS fixes; `touch-action: manipulation`; CI Playwright job |
 | Fas 0 v1 PR 3 — Observability (PostHog) | ✅ DONE | 2026-04-21 Sonnet | analytics.js opt-in; Settings panel; welcome consent; 13 tests; CSP meta; docs/privacy.md — **Robin: set POSTHOG_KEY before activating** |
-| Fas 0 v1 PR 4 — Catalog freshness | | | mtime check + footer indicator |
+| Fas 0 v1 PR 4 — Skill detail panel | ✅ DONE | 2026-04-21 Sonnet | Click any row → right slide-in panel; full SKILL.md body rendered as Markdown; Copy slug + Basket buttons; Esc / overlay closes; `body` field in data.js; bundle ~5 MB; 72/72 tests green |
+| Fas 0 v1 PR 5 — Catalog freshness | | | mtime check + footer indicator |
 | Fas 0 v1 PR 5 — Launch polish | | | OG/Twitter + brand-voice + polish |
 | Fas 0 v1 RELEASE GRIND | | | v0.5.0 tag, GH Pages live |
 | Fas 1 v1 PR 0 — Extract compose.js | | | No behavior change |

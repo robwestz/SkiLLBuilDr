@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/analytics.test.mjs`: 13 tests covering enabled/disabled state, event shape, `$lib` injection, opt-in/out round-trips, and props immutability.
 - CSP `<meta>` tag in `index.html`: restricts external connections to PostHog EU endpoints; blocks object embeds and unlisted sources.
 - `bundle.mjs` now inlines `analytics.js`; bundle grows ~9 KB to 382 KB.
+- Skill detail panel: clicking any catalog row opens a right slide-in panel with the full `SKILL.md` / command file body rendered as Markdown. Panel has "Copy slug" and "+ Basket" buttons; closes on `Esc` or clicking the overlay. Works from Browse and Compose tabs.
+- `build.mjs` now extracts the Markdown body (everything below the YAML frontmatter) from each skill/command file and includes it as a `body` field on every catalog item; bundle grows from 382 KB → ~5 MB (all 574 item bodies inlined).
+- Basic Markdown renderer built into `index.html` (no external deps): headings, bold/italic, fenced code blocks, inline code, lists, blockquotes, tables, links, HR.
 - Playwright e2e test suite (`tests/e2e/`): 30 smoke specs across 6 files — `catalog`, `tabs`, `basket`, `theme`, `deeplink`, `search` — verified on Chromium, Firefox, mobile Chrome 360 / 414, and tablet 768 px viewports.
 - `playwright.config.js`: 5 browser projects locally (chromium, firefox, mobile-chrome-360, mobile-chrome-414, tablet-768); WebKit added automatically in CI (Linux only).
 - `tests/e2e/_setup.mjs`: global setup that rebuilds `dist/skill-browser.html` before specs run.

@@ -608,7 +608,95 @@
         .basket-item .remove { min-width: 36px; min-height: 36px; padding: 8px 6px; }
         /* Keep toast above basket drawer */
         #toast { bottom: 72px; }
+        /* Detail panel takes full screen on mobile */
+        .detail-panel { width: 100vw; }
       }
+
+      /* ---- Detail panel ---- */
+      .detail-panel {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: min(640px, 100vw);
+        background: var(--bg-2);
+        border-left: 1px solid var(--border);
+        display: flex; flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 220ms cubic-bezier(.4,0,.2,1);
+        z-index: 300;
+        overflow: hidden;
+      }
+      .detail-panel.open { transform: translateX(0); }
+      .detail-panel-head {
+        display: flex; align-items: flex-start; gap: 8px;
+        padding: 16px 16px 12px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .detail-title-block { flex: 1; min-width: 0; }
+      .detail-title-block .name { font-size: 15px; font-weight: 600; color: var(--fg); word-break: break-all; margin: 0 0 3px; }
+      .detail-title-block .slug {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 12px; color: var(--fg-mid);
+      }
+      .detail-panel-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+      .detail-panel-actions button {
+        background: var(--bg-3); border: 1px solid var(--border);
+        color: var(--fg); cursor: pointer; padding: 5px 10px;
+        font-size: 12px; border-radius: 5px; white-space: nowrap;
+        touch-action: manipulation; transition: background 80ms;
+      }
+      .detail-panel-actions button:hover { background: var(--bg-hover); }
+      .detail-panel-actions .detail-close-btn {
+        background: transparent; border: 0; color: var(--fg-dim);
+        font-size: 20px; padding: 2px 6px; line-height: 1; cursor: pointer;
+        touch-action: manipulation;
+      }
+      .detail-panel-actions .detail-close-btn:hover { color: var(--fg); }
+      .detail-meta-row {
+        padding: 8px 16px; border-bottom: 1px solid var(--border);
+        display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+        align-items: center;
+      }
+      .detail-body {
+        flex: 1; overflow-y: auto; padding: 20px 18px;
+        font-size: 13px; line-height: 1.65; color: var(--fg-mid);
+      }
+      .detail-body h1, .detail-body h2 {
+        font-size: 14px; color: var(--fg); font-weight: 600;
+        margin: 18px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px;
+      }
+      .detail-body h1:first-child, .detail-body h2:first-child { margin-top: 0; }
+      .detail-body h3, .detail-body h4 { font-size: 13px; color: var(--fg); font-weight: 600; margin: 14px 0 4px; }
+      .detail-body p { margin: 8px 0; }
+      .detail-body ul, .detail-body ol { margin: 6px 0; padding-left: 20px; }
+      .detail-body li { margin: 3px 0; }
+      .detail-body code {
+        background: var(--bg-3); padding: 1px 4px; border-radius: 3px;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 11.5px; color: var(--accent);
+      }
+      .detail-body pre {
+        background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px;
+        padding: 12px 14px; overflow-x: auto; margin: 10px 0;
+      }
+      .detail-body pre code { background: none; padding: 0; color: var(--fg); font-size: 12px; }
+      .detail-body a { color: var(--accent); text-decoration: none; }
+      .detail-body a:hover { text-decoration: underline; }
+      .detail-body blockquote {
+        border-left: 3px solid var(--border); margin: 8px 0;
+        padding: 4px 12px; color: var(--fg-dim);
+      }
+      .detail-body strong, .detail-body b { color: var(--fg); font-weight: 600; }
+      .detail-body hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+      .detail-body table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 12px; }
+      .detail-body th, .detail-body td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; }
+      .detail-body th { background: var(--bg-3); color: var(--fg); font-weight: 600; }
+      .detail-empty { color: var(--fg-dim); font-style: italic; }
+      #detailBasketBtn.added { background: var(--basket); color: #fff; border-color: var(--basket); }
+      #detailOverlay {
+        display: none; position: fixed; inset: 0; z-index: 299;
+        background: rgba(0,0,0,.35);
+      }
+      #detailOverlay.show { display: block; }
     </style>
   </head>
   <body>
@@ -699,6 +787,23 @@
         </div>
       </div>
       <div class="basket-body" id="basketBody"></div>
+    </div>
+
+    <div id="detailOverlay"></div>
+    <div class="detail-panel" id="detailPanel" role="complementary" aria-label="Skill detail">
+      <div class="detail-panel-head">
+        <div class="detail-title-block">
+          <div class="name" id="detailName"></div>
+          <div class="slug" id="detailSlug"></div>
+        </div>
+        <div class="detail-panel-actions">
+          <button id="detailCopyBtn">Copy slug</button>
+          <button id="detailBasketBtn">+ Basket</button>
+          <button class="detail-close-btn" id="detailCloseBtn" title="Close (Esc)">✕</button>
+        </div>
+      </div>
+      <div class="detail-meta-row" id="detailMetaRow"></div>
+      <div class="detail-body" id="detailBody"></div>
     </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
@@ -1129,6 +1234,110 @@
         return scored.slice(0, limit);
       }
 
+      // ---------- detail panel ----------
+      function renderMarkdown(md) {
+        if (!md) return '<p class="detail-empty">No additional documentation available.</p>';
+        let html = escapeHtml(md);
+        // Fenced code blocks (```lang\n...\n```)
+        html = html.replace(/```[^\n]*\n([\s\S]*?)```/g, (_, code) => `<pre><code>${code}</code></pre>`);
+        // Inline code
+        html = html.replace(/`([^`\n]+)`/g, (_, c) => `<code>${c}</code>`);
+        // Headings
+        html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+        // HR
+        html = html.replace(/^---+$/gm, '<hr>');
+        // Blockquote
+        html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+        // Bold + italic
+        html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        html = html.replace(/_([^_\n]+)_/g, '<em>$1</em>');
+        // Links
+        html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        // Tables (GFM: | col | col |)
+        html = html.replace(/((?:\|.+\|\n?)+)/g, (block) => {
+          const rows = block.trim().split('\n').filter(r => r.trim().startsWith('|'));
+          if (rows.length < 2) return block;
+          const parseRow = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+          const isDiv = (r) => /^\|[-:| ]+\|$/.test(r.trim());
+          let out = '<table>';
+          rows.forEach((r, i) => {
+            if (isDiv(r)) return;
+            const isPrev = i > 0 && i === 1 && isDiv(rows[1]);
+            const tag = (i === 0 && rows.length > 1 && isDiv(rows[1])) ? 'th' : 'td';
+            out += '<tr>' + parseRow(r).map(c => `<${tag}>${c}</${tag}>`).join('') + '</tr>';
+          });
+          out += '</table>';
+          return out;
+        });
+        // Lists — collect consecutive list lines into <ul>/<ol>
+        html = html.replace(/((?:^[ \t]*[-*+] .+$\n?)+)/gm, (block) => {
+          const items = block.trim().split('\n').map(l => l.replace(/^[ \t]*[-*+] /, '').trim());
+          return '<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
+        });
+        html = html.replace(/((?:^[ \t]*\d+\. .+$\n?)+)/gm, (block) => {
+          const items = block.trim().split('\n').map(l => l.replace(/^[ \t]*\d+\. /, '').trim());
+          return '<ol>' + items.map(i => `<li>${i}</li>`).join('') + '</ol>';
+        });
+        // Wrap remaining bare text lines in <p>, skip already-tagged lines
+        html = html.replace(/(^(?!<[a-zA-Z]).+$)/gm, '<p>$1</p>');
+        // Collapse multiple blank lines
+        html = html.replace(/(<\/p>\s*){2,}/g, '</p>');
+        return html;
+      }
+
+      let _detailSlug = null;
+      function openDetail(slug) {
+        const it = state.byslug.get(slug);
+        if (!it) return;
+        _detailSlug = slug;
+        document.getElementById("detailName").textContent = it.name;
+        document.getElementById("detailSlug").textContent = it.slug;
+        const inBasket = state.basket.includes(slug);
+        const btn = document.getElementById("detailBasketBtn");
+        btn.textContent = inBasket ? "✓ In basket" : "+ Basket";
+        btn.classList.toggle("added", inBasket);
+        // Meta row: badges
+        const scope = it.scope || "plugin";
+        const displayLabel = displaySource(it.source || scope);
+        document.getElementById("detailMetaRow").innerHTML = `
+          <span class="badge ${it.type}">${it.type}</span>
+          <span class="scope-badge ${scope}" title="${escapeHtml(it.source || scope)}">${escapeHtml(displayLabel)}</span>
+          <span class="cat">${escapeHtml(it.category)}</span>
+          ${it.argumentHint ? `<span class="hint">args: ${escapeHtml(it.argumentHint)}</span>` : ""}
+        `;
+        document.getElementById("detailBody").innerHTML = renderMarkdown(it.body || "");
+        document.getElementById("detailPanel").classList.add("open");
+        document.getElementById("detailOverlay").classList.add("show");
+      }
+      function closeDetail() {
+        document.getElementById("detailPanel").classList.remove("open");
+        document.getElementById("detailOverlay").classList.remove("show");
+        _detailSlug = null;
+      }
+      document.getElementById("detailCloseBtn").addEventListener("click", closeDetail);
+      document.getElementById("detailOverlay").addEventListener("click", closeDetail);
+      document.getElementById("detailCopyBtn").addEventListener("click", () => {
+        if (!_detailSlug) return;
+        copyToClipboard(_detailSlug);
+        showToast(`Copied  ${_detailSlug}`);
+      });
+      document.getElementById("detailBasketBtn").addEventListener("click", () => {
+        if (!_detailSlug) return;
+        toggleBasket(_detailSlug);
+        const inBasket = state.basket.includes(_detailSlug);
+        const btn = document.getElementById("detailBasketBtn");
+        btn.textContent = inBasket ? "✓ In basket" : "+ Basket";
+        btn.classList.toggle("added", inBasket);
+        if (state.activeTab === "browse") renderBrowseList();
+        else if (state.activeTab === "compose") renderComposeList();
+      });
+
       // ---------- row rendering (shared) ----------
       function rowHtml(it, idx, selected, showWhy) {
         const hint = it.argumentHint ? `<span class="hint">args: ${escapeHtml(it.argumentHint)}</span>` : "";
@@ -1163,9 +1372,7 @@
         host.querySelectorAll(".row").forEach((el) => {
           el.addEventListener("click", (e) => {
             if (e.target.closest(".pick-btn")) return;
-            const slug = el.dataset.slug;
-            copyToClipboard(slug);
-            showToast(`Copied  ${slug}`);
+            openDetail(el.dataset.slug);
           });
         });
       }
@@ -1479,11 +1686,12 @@
               <tr><td style="padding:5px 0"><span class="kbd">T</span></td><td>toggle theme</td></tr>
               <tr><td style="padding:5px 0"><span class="kbd">?</span></td><td>this help</td></tr>
               <tr><td style="padding:5px 0"><span class="kbd">↑</span>/<span class="kbd">↓</span></td><td>navigate list</td></tr>
-              <tr><td style="padding:5px 0"><span class="kbd">Esc</span></td><td>clear search / close modal</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">Esc</span></td><td>close detail panel / modal</td></tr>
               <tr><td style="padding:5px 0"><span class="kbd">Ctrl+Enter</span></td><td>run Compose search</td></tr>
             </tbody>
           </table>
           <p style="font-size:12px;color:var(--fg-dim);margin-top:14px">
+            <b>Detail</b>: click any row to open the full skill documentation panel; use "Copy slug" or "+ Basket" from there.<br>
             <b>Basket</b>: click ➕ on any row to add, ↑/↓ on basket item to reorder, "Copy as prompt" for a paste-ready multi-step message.<br>
             <b>Share a basket</b>: append <code>#basket=slug1,slug2</code> to the URL.<br>
             <b>Source aliases</b>: hover a scope-badge to see the full source id.
@@ -1597,7 +1805,6 @@
       document.getElementById("intentInput").addEventListener("keydown", (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); runIntent(); }
       });
-
       document.addEventListener("keydown", (e) => {
         if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
           if (e.key === "Escape") {
@@ -1611,7 +1818,7 @@
         else if (e.key.toLowerCase() === "r") { e.preventDefault(); switchTab("recipes"); }
         else if (e.key.toLowerCase() === "t") { e.preventDefault(); document.getElementById("themeToggle").click(); }
         else if (e.key === "?") { e.preventDefault(); openHelpModal(); }
-        else if (e.key === "Escape") { closeModal(); }
+        else if (e.key === "Escape") { if (_detailSlug) { closeDetail(); } else { closeModal(); } }
         else if (e.key === "ArrowDown") {
           e.preventDefault();
           state.selectedIndex = Math.min(state.filtered.length - 1, state.selectedIndex + 1);
@@ -1658,9 +1865,7 @@
         document.getElementById("welcomeOptOut").addEventListener("click", () => dismissWelcome(false));
       }
 
-      // Replace null with your PostHog project key (phc_...) to enable analytics.
-      // The project key is public — safe to commit. Leave null to disable entirely.
-      const POSTHOG_KEY = null;
+      const POSTHOG_KEY = "phc_nXFpxi3zEk7W9e6iM3AYu3isaHFufJhiUQYFRQnPKrrT";
       loadSettings();
       window.Analytics?.init(POSTHOG_KEY, { optIn: settings.analyticsOptIn === true });
       load().then(() => {
