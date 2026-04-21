@@ -10,7 +10,8 @@
     "build": "node build.mjs",
     "bundle": "node bundle.mjs",
     "test": "bash test.sh",
-    "start": "bash launch.sh"
+    "start": "bash launch.sh",
+    "e2e": "playwright test"
   },
   "engines": {
     "node": ">=18"
@@ -32,8 +33,12 @@
     "intent.mjs",
     "launch.sh",
     "index.html",
+    "hash-router.js",
     "recipes.json",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
 }

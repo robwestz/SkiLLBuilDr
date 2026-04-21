@@ -46,6 +46,8 @@
       }
       * { box-sizing: border-box; }
       html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+      /* Prevent 300ms tap delay and scroll-gesture interception on all interactive elements */
+      button, a, [role="button"], input, textarea, select { touch-action: manipulation; }
       body { display: grid; grid-template-rows: auto auto 1fr auto; }
 
       header {
@@ -578,6 +580,26 @@
         cursor: pointer;
       }
       .modal button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      /* ── Responsive: narrow screens ─────────────────────────────── */
+      @media (max-width: 640px) {
+        /* Sidebar too wide at 640px — shrink it */
+        #browsePane { grid-template-columns: 180px 1fr; }
+      }
+      @media (max-width: 480px) {
+        /* Hide keyboard-shortcut hints on touch — irrelevant and crowds the header */
+        header .meta:not(#meta) { display: none; }
+        /* Collapse browse sidebar; search alone is sufficient on phone */
+        #browsePane { grid-template-columns: 1fr; }
+        #browsePane aside { display: none; }
+        /* Compact basket action row so all buttons are reachable */
+        .basket-head { padding: 8px 12px; }
+        .basket-head .actions { flex-wrap: wrap; gap: 6px; justify-content: flex-start; }
+        .basket-head button { font-size: 11px; padding: 4px 8px; }
+        /* Minimum 44px touch target for reorder/remove buttons (adjacent, small) */
+        .basket-item .remove { min-width: 36px; min-height: 36px; padding: 8px 6px; }
+        /* Keep toast above basket drawer */
+        #toast { bottom: 72px; }
+      }
     </style>
   </head>
   <body>
@@ -614,8 +636,9 @@
         <div id="categories"></div>
       </aside>
       <div class="list-col">
-        <div class="search-bar">
-          <input id="search" type="search" placeholder="Search name, description, source, or category..." autofocus />
+        <div class="search-bar" style="display:flex;gap:8px;align-items:center">
+          <input id="search" type="search" placeholder="Search name, description, source, or category..." autofocus style="flex:1" />
+          <button id="btnCopyFilterUrl" type="button" class="icon-btn" style="width:auto;padding:0 10px;font-size:11px;display:none" title="Copy a URL that reproduces the current filters (without basket)" aria-label="Copy filter URL">🔗 Copy filter URL</button>
         </div>
         <div class="list" id="browseList"></div>
       </div>
@@ -674,6 +697,7 @@
       <div class="modal" id="modal"></div>
     </div>
 
+    <script src="hash-router.js"></script>
     <script src="data.js"></script>
     <script src="recipes.js"></script>
     <script>
@@ -757,29 +781,122 @@
         loadBasket();
         loadCustomRecipes();
         renderFilters();
-        applyFilter();
+        applyHashStateFromUrl();
         renderRecipes();
         renderExampleChips();
       }
 
       function loadBasket() {
-        // URL-hash basket takes priority, e.g. #basket=<slug>,<slug>
-        const hash = location.hash.replace(/^#/, "");
-        const params = new URLSearchParams(hash);
-        if (params.has("basket")) {
-          const slugs = params.get("basket").split(",").map(decodeURIComponent).filter(Boolean);
-          if (slugs.length) {
-            state.basket = slugs;
-            updateBasketUI();
-            setTimeout(() => openBasket(), 200);
-            return;
-          }
-        }
+        // localStorage only. Hash-driven state (including shared baskets) is
+        // applied later by applyHashStateFromUrl() after filters render.
         try {
           const raw = localStorage.getItem(STORE_KEY_BASKET);
           if (raw) state.basket = JSON.parse(raw);
         } catch { state.basket = []; }
         updateBasketUI();
+      }
+
+      // ---------- deep-link routing ----------
+      // See hash-router.js for the full hash spec. pushHashState never writes
+      // basket to the URL bar — the basket stays local until the user explicitly
+      // shares via "Copy share link". URL reflects the browsing view only.
+      let _suppressHashPush = false;
+
+      function filterStateForHash() {
+        return {
+          q: state.filter.query || null,
+          type: state.filter.type && state.filter.type !== "all" ? state.filter.type : null,
+          scope: state.filter.scope || null,
+          source: state.filter.source || null,
+          category: state.filter.category || null,
+          tab: state.activeTab && state.activeTab !== "browse" ? state.activeTab : null
+        };
+      }
+
+      function pushHashState() {
+        if (_suppressHashPush) return;
+        if (!window.HashRouter) return;
+        const hashStr = window.HashRouter.buildHash(filterStateForHash());
+        const currentHash = location.hash.replace(/^#/, "");
+        if (currentHash === hashStr) return;
+        const url = hashStr
+          ? location.pathname + location.search + "#" + hashStr
+          : location.pathname + location.search;
+        history.pushState(null, "", url);
+      }
+
+      function applyHashStateFromUrl() {
+        if (!window.HashRouter) { applyFilter(); return; }
+        const parsed = window.HashRouter.parseHash(location.hash);
+
+        _suppressHashPush = true;
+        try {
+          if (Array.isArray(parsed.basket) && parsed.basket.length > 0) {
+            state.basket = parsed.basket.slice();
+            saveBasket();
+            updateBasketUI();
+            setTimeout(() => openBasket(), 200);
+          }
+
+          state.filter.type = parsed.type || "all";
+          state.filter.scope = parsed.scope || null;
+          state.filter.source = parsed.source || null;
+          state.filter.category = parsed.category || null;
+          state.filter.query = parsed.q || "";
+
+          const searchEl = document.getElementById("search");
+          if (searchEl) searchEl.value = state.filter.query;
+          document.querySelectorAll("#typeToggle button").forEach((x) => {
+            x.classList.toggle("active", x.dataset.type === state.filter.type);
+          });
+          updateChipActive();
+
+          const targetTab = parsed.tab || "browse";
+          if (targetTab !== state.activeTab) {
+            switchTab(targetTab);
+          } else {
+            applyFilter();
+          }
+
+          if (parsed.item) setTimeout(() => focusItem(parsed.item), 120);
+          updateCopyFilterUrlVisibility();
+        } finally {
+          _suppressHashPush = false;
+        }
+      }
+
+      function focusItem(slug) {
+        if (state.activeTab !== "browse") switchTab("browse");
+        let idx = state.filtered.findIndex((x) => x.slug === slug);
+        if (idx < 0) {
+          // Item is filtered out — clear filters and retry so the link resolves.
+          state.filter = { type: "all", scope: null, source: null, category: null, query: "" };
+          const searchEl = document.getElementById("search");
+          if (searchEl) searchEl.value = "";
+          document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x.dataset.type === "all"));
+          updateChipActive();
+          applyFilter();
+          idx = state.filtered.findIndex((x) => x.slug === slug);
+        }
+        if (idx >= 0) {
+          state.selectedIndex = idx;
+          renderBrowseList();
+        } else {
+          showToast(`Item not found: ${slug}`);
+        }
+      }
+
+      function updateCopyFilterUrlVisibility() {
+        const btn = document.getElementById("btnCopyFilterUrl");
+        if (!btn) return;
+        const hasFilters =
+          state.filter.type !== "all" ||
+          state.filter.scope ||
+          state.filter.source ||
+          state.filter.category ||
+          state.filter.query ||
+          (state.activeTab && state.activeTab !== "browse");
+        btn.style.display = hasFilters ? "" : "none";
       }
       function saveBasket() {
         try { localStorage.setItem(STORE_KEY_BASKET, JSON.stringify(state.basket)); } catch {}
@@ -834,6 +951,8 @@
           state.filter[facet] = value;
           updateChipActive();
           applyFilter();
+          pushHashState();
+          updateCopyFilterUrlVisibility();
         });
         return el;
       }
@@ -875,6 +994,8 @@
             document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x.dataset.type === "all"));
             updateChipActive();
             applyFilter();
+            pushHashState();
+            updateCopyFilterUrlVisibility();
           });
           return;
         }
@@ -1251,12 +1372,17 @@
 
       // ---------- tabs ----------
       function switchTab(name) {
+        const changed = state.activeTab !== name;
         state.activeTab = name;
         document.querySelectorAll("nav.tabs button[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
         document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("active", p.id === name + "Pane"));
         if (name === "browse") renderBrowseList();
         if (name === "compose") {
           setTimeout(() => document.getElementById("intentInput").focus(), 50);
+        }
+        if (changed) {
+          pushHashState();
+          updateCopyFilterUrlVisibility();
         }
       }
 
@@ -1315,9 +1441,11 @@
       });
       document.getElementById("btnCopyLink").addEventListener("click", () => {
         if (state.basket.length === 0) { showToast("Basket is empty."); return; }
-        const params = new URLSearchParams();
-        params.set("basket", state.basket.map(encodeURIComponent).join(","));
-        const url = location.origin + location.pathname + "#" + params.toString();
+        const hashState = Object.assign({ basket: state.basket.slice() }, filterStateForHash());
+        const hashStr = window.HashRouter
+          ? window.HashRouter.buildHash(hashState)
+          : "basket=" + state.basket.map(encodeURIComponent).join(",");
+        const url = location.origin + location.pathname + "#" + hashStr;
         copyToClipboard(url);
         showToast("Share link copied");
       });
@@ -1329,9 +1457,13 @@
         const collapsed = list.classList.toggle("collapsed");
         btn.textContent = collapsed ? "Show all sources ▼" : "Collapse sources ▲";
       });
+      let _searchPushTimer = null;
       document.getElementById("search").addEventListener("input", (e) => {
         state.filter.query = e.target.value;
         applyFilter();
+        updateCopyFilterUrlVisibility();
+        clearTimeout(_searchPushTimer);
+        _searchPushTimer = setTimeout(pushHashState, 300);
       });
       document.getElementById("typeToggle").addEventListener("click", (e) => {
         const b = e.target.closest("button");
@@ -1339,7 +1471,17 @@
         state.filter.type = b.dataset.type;
         document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x === b));
         applyFilter();
+        pushHashState();
+        updateCopyFilterUrlVisibility();
       });
+      document.getElementById("btnCopyFilterUrl").addEventListener("click", () => {
+        if (!window.HashRouter) return;
+        const hashStr = window.HashRouter.buildHash(filterStateForHash());
+        const url = location.origin + location.pathname + (hashStr ? "#" + hashStr : "");
+        copyToClipboard(url);
+        showToast("Filter URL copied");
+      });
+      window.addEventListener("popstate", () => { applyHashStateFromUrl(); });
       document.getElementById("btnExportRecipes").addEventListener("click", () => {
         if (state.customRecipes.length === 0) { showToast("No custom recipes to export."); return; }
         const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), recipes: state.customRecipes }, null, 2)], { type: "application/json" });

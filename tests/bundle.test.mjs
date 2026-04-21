@@ -33,6 +33,13 @@ test("bundle: inlines data and recipes", () => {
   assert.ok(content.includes("window.__ECC_RECIPES__"), "must inline __ECC_RECIPES__");
 });
 
+test("bundle: inlines hash-router", () => {
+  const content = readFileSync(DIST, "utf8");
+  assert.ok(content.includes("HashRouter"), "must inline hash-router (window.HashRouter)");
+  assert.ok(content.includes("parseHash"), "must inline parseHash function");
+  assert.ok(content.includes("buildHash"), "must inline buildHash function");
+});
+
 test("bundle: includes UI primitives", () => {
   const content = readFileSync(DIST, "utf8");
   assert.ok(content.includes("Welcome to Skill Browser"), "must include welcome overlay");

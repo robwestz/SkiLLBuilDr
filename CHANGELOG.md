@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Playwright e2e test suite (`tests/e2e/`): 30 smoke specs across 6 files — `catalog`, `tabs`, `basket`, `theme`, `deeplink`, `search` — verified on Chromium, Firefox, mobile Chrome 360 / 414, and tablet 768 px viewports.
+- `playwright.config.js`: 5 browser projects locally (chromium, firefox, mobile-chrome-360, mobile-chrome-414, tablet-768); WebKit added automatically in CI (Linux only).
+- `tests/e2e/_setup.mjs`: global setup that rebuilds `dist/skill-browser.html` before specs run.
+- `tests/e2e/_helpers.mjs`: shared `gotoApp` helper that suppresses the welcome overlay and waits for data to load regardless of which tab is active.
+- GitHub Actions `e2e` job in `.github/workflows/test.yml`: runs after unit tests on `ubuntu-latest` with all three Playwright browser engines; uploads report artifact on failure.
+- `package.json` script `"e2e": "playwright test"` and `@playwright/test` devDependency.
+- Responsive CSS hardening: `touch-action: manipulation` on all interactive elements eliminates the 300 ms double-tap-zoom delay; keyboard-shortcut hints hidden on screens ≤ 480 px; browse sidebar collapsed at ≤ 480 px; basket buttons enlarged to meet 44 px minimum touch target on mobile.
+- Deep-link hash router (`hash-router.js`): 8 combinable URL-hash keys — `basket`, `q`, `type`, `scope`, `source`, `category`, `item`, `tab` — so agents and humans can share or link to a specific view. Unknown keys are preserved on round-trip for forward compatibility.
+- `🔗 Copy filter URL` button in the search bar (appears when any filter or non-default tab is active); copies the current view without the basket.
+- `Copy share link` in the basket drawer now includes the current filter state as well as the basket, so shared links reproduce both view and selection.
+- Browser back/forward navigates between filter states via `history.pushState` + `popstate`.
+- 33 router unit tests (`tests/router.test.mjs`) covering all 8 keys, combinations, URL-encoding round-trips, unknown-key preservation, and backward-compat with the old `#basket=` format.
+- `tests/bundle.test.mjs` asserts the single-file bundle inlines the hash-router.
+
+### Changed
+- `bundle.mjs` now inlines `hash-router.js` alongside `data.js` and `recipes.js`; the bundle is still self-contained (no external `<script src=>` references) and grows from ~360 KB → ~372 KB.
+- `package.json` `files` whitelist includes `hash-router.js`.
+- `index.html` `loadBasket()` no longer parses the URL hash; all hash handling is centralized in `applyHashStateFromUrl()`.
+
 ## [0.4.0] - 2026-04-21
 
 ### Added
