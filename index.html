@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- CSP: inline scripts required for bundled app; external network restricted
+         to PostHog EU endpoints (analytics opt-in only). -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://eu-assets.i.posthog.com; connect-src 'self' blob: https://eu.i.posthog.com https://eu-assets.i.posthog.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; object-src 'none';">
     <title>Skill Browser</title>
     <style>
       :root {
@@ -580,6 +583,12 @@
         cursor: pointer;
       }
       .modal button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .settings-section { margin-bottom: 18px; }
+      .settings-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--fg-dim); font-weight: 600; margin: 0 0 8px; }
+      .settings-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+      .settings-row label { font-size: 13px; display: flex; align-items: start; gap: 8px; cursor: pointer; }
+      .settings-row label input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+      .settings-note { font-size: 11px; color: var(--fg-dim); margin: 4px 0 0 24px; line-height: 1.5; }
       /* ── Responsive: narrow screens ─────────────────────────────── */
       @media (max-width: 640px) {
         /* Sidebar too wide at 640px — shrink it */
@@ -608,6 +617,7 @@
       <span class="meta" id="meta">loading...</span>
       <span class="meta" style="margin-left:auto"><span class="kbd">/</span> search · <span class="kbd">B</span> basket · <span class="kbd">C</span> compose · <span class="kbd">?</span> help</span>
       <button id="themeToggle" class="icon-btn" title="Toggle theme (T)">◐</button>
+      <button id="settingsBtn" class="icon-btn" title="Settings">⚙</button>
       <button id="helpBtn" class="icon-btn" title="Keyboard shortcuts (?)">?</button>
     </header>
 
@@ -697,6 +707,7 @@
       <div class="modal" id="modal"></div>
     </div>
 
+    <script src="analytics.js"></script>
     <script src="hash-router.js"></script>
     <script src="data.js"></script>
     <script src="recipes.js"></script>
@@ -708,6 +719,7 @@
       const settings = {
         theme: "dark",
         welcomeSeen: false,
+        analyticsOptIn: null, // null = not asked yet, true = opted in, false = opted out
       };
       function loadSettings() {
         try {
@@ -829,6 +841,9 @@
         if (!window.HashRouter) { applyFilter(); return; }
         const parsed = window.HashRouter.parseHash(location.hash);
 
+        const deepKeys = ["basket","q","type","scope","source","category","item","tab"].filter((k) => parsed[k] != null && (Array.isArray(parsed[k]) ? parsed[k].length > 0 : true));
+        if (deepKeys.length > 0) window.Analytics?.track("deeplink.arrived", { keys: deepKeys });
+
         _suppressHashPush = true;
         try {
           if (Array.isArray(parsed.basket) && parsed.basket.length > 0) {
@@ -949,6 +964,7 @@
         el.innerHTML = `<span>${escapeHtml(label)}</span><span class="count">${count}</span>`;
         el.addEventListener("click", () => {
           state.filter[facet] = value;
+          window.Analytics?.track("filter.changed", { facet, value: value ?? "all" });
           updateChipActive();
           applyFilter();
           pushHashState();
@@ -1157,12 +1173,15 @@
       // ---------- basket ----------
       function toggleBasket(slug) {
         const idx = state.basket.indexOf(slug);
+        const op = idx >= 0 ? "remove" : "add";
         if (idx >= 0) state.basket.splice(idx, 1);
         else state.basket.push(slug);
         saveBasket();
         updateBasketUI();
+        window.Analytics?.track("basket.action", { op, count: state.basket.length });
       }
       function clearBasket() {
+        window.Analytics?.track("basket.action", { op: "clear", count: 0 });
         state.basket = []; saveBasket(); updateBasketUI();
         if (state.activeTab === "browse") renderBrowseList();
         if (state.activeTab === "compose") renderComposeList();
@@ -1372,7 +1391,8 @@
 
       // ---------- tabs ----------
       function switchTab(name) {
-        const changed = state.activeTab !== name;
+        const prevTab = state.activeTab;
+        const changed = prevTab !== name;
         state.activeTab = name;
         document.querySelectorAll("nav.tabs button[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
         document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("active", p.id === name + "Pane"));
@@ -1381,6 +1401,7 @@
           setTimeout(() => document.getElementById("intentInput").focus(), 50);
         }
         if (changed) {
+          window.Analytics?.track("tab.switched", { from: prevTab, to: name });
           pushHashState();
           updateCopyFilterUrlVisibility();
         }
@@ -1393,6 +1414,58 @@
         applyTheme();
       });
       document.getElementById("helpBtn").addEventListener("click", openHelpModal);
+      document.getElementById("settingsBtn").addEventListener("click", openSettingsModal);
+
+      function openSettingsModal() {
+        const checked = settings.analyticsOptIn === true ? "checked" : "";
+        openModal(`
+          <h3>Settings</h3>
+          <div class="settings-section">
+            <p class="settings-section-title">Appearance</p>
+            <div class="settings-row">
+              <span style="font-size:13px">Theme</span>
+              <button type="button" id="settingsThemeBtn" class="icon-btn" style="width:auto;padding:2px 10px;font-size:12px">${settings.theme === "light" ? "☀ Light" : "◐ Dark"}</button>
+            </div>
+          </div>
+          <div class="settings-section">
+            <p class="settings-section-title">Analytics</p>
+            <div class="settings-row">
+              <label>
+                <input type="checkbox" id="settingsAnalytics" ${checked} />
+                Share anonymous usage data to help improve Skill Browser
+              </label>
+            </div>
+            <p class="settings-note">Tab switches, filter changes, basket actions. No PII, no source names, no clipboard content. Change anytime.</p>
+          </div>
+          <div class="settings-section">
+            <p class="settings-section-title">Data</p>
+            <button type="button" id="settingsClearData" style="font-size:12px;padding:6px 12px;background:var(--bg-3);border:1px solid var(--border);color:var(--fg-mid);border-radius:5px;cursor:pointer">Clear all stored data (basket, settings, recipes)</button>
+          </div>
+          <div class="actions">
+            <button type="button" class="primary" id="settingsClose">Close</button>
+          </div>
+        `);
+        document.getElementById("settingsClose").addEventListener("click", closeModal);
+        document.getElementById("settingsThemeBtn").addEventListener("click", function() {
+          settings.theme = settings.theme === "light" ? "dark" : "light";
+          saveSettings(); applyTheme();
+          this.textContent = settings.theme === "light" ? "☀ Light" : "◐ Dark";
+        });
+        document.getElementById("settingsAnalytics").addEventListener("change", (e) => {
+          settings.analyticsOptIn = e.target.checked;
+          saveSettings();
+          if (e.target.checked) window.Analytics?.optIn();
+          else window.Analytics?.optOut();
+        });
+        document.getElementById("settingsClearData").addEventListener("click", () => {
+          if (!confirm("Clear all stored data? This removes your basket, settings, and custom recipes.")) return;
+          localStorage.removeItem(STORE_KEY_BASKET);
+          localStorage.removeItem(STORE_KEY_RECIPES);
+          localStorage.removeItem(STORE_KEY_SETTINGS);
+          showToast("All data cleared. Reload to reset.");
+          closeModal();
+        });
+      }
 
       function openHelpModal() {
         openModal(`
@@ -1565,19 +1638,37 @@
           <p style="font-size:12px;color:var(--fg-dim);margin-top:12px">
             Click ➕ on any row to add to basket. Press <span class="kbd">?</span> for shortcuts.
           </p>
-          <div class="actions">
-            <button type="button" class="primary" id="welcomeGotIt">Got it →</button>
+          <div style="margin-top:14px;padding:12px;background:var(--bg-3);border-radius:6px;border:1px solid var(--border)">
+            <p style="font-size:12px;font-weight:600;margin:0 0 4px">Anonymous usage analytics</p>
+            <p style="font-size:11px;color:var(--fg-dim);margin:0 0 10px;line-height:1.5">Help improve Skill Browser by sharing anonymous usage data (tab switches, filter changes, basket actions). No PII, no source names, no clipboard content. Change any time in ⚙ Settings.</p>
+            <div class="actions" style="justify-content:flex-start;margin-top:0;gap:8px">
+              <button type="button" class="primary" id="welcomeOptIn">Got it · Share data →</button>
+              <button type="button" id="welcomeOptOut">Skip analytics</button>
+            </div>
           </div>
         `);
-        document.getElementById("welcomeGotIt").addEventListener("click", () => {
+        function dismissWelcome(optIn) {
           settings.welcomeSeen = true;
+          settings.analyticsOptIn = optIn;
           saveSettings();
+          if (optIn) window.Analytics?.optIn();
           closeModal();
-        });
+        }
+        document.getElementById("welcomeOptIn").addEventListener("click", () => dismissWelcome(true));
+        document.getElementById("welcomeOptOut").addEventListener("click", () => dismissWelcome(false));
       }
 
+      // Replace null with your PostHog project key (phc_...) to enable analytics.
+      // The project key is public — safe to commit. Leave null to disable entirely.
+      const POSTHOG_KEY = null;
       loadSettings();
+      window.Analytics?.init(POSTHOG_KEY, { optIn: settings.analyticsOptIn === true });
       load().then(() => {
+        window.Analytics?.track("app.opened", {
+          viewport_w: window.innerWidth,
+          viewport_h: window.innerHeight,
+          theme: settings.theme
+        });
         if (!settings.welcomeSeen) openWelcomeModal();
       }).catch((e) => {
         document.getElementById("browseList").innerHTML =

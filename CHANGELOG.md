@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `analytics.js` IIFE module (same pattern as `hash-router.js`): GDPR-first opt-in PostHog analytics. Disabled by default — no network calls until explicit consent. Events: `app.opened`, `tab.switched`, `filter.changed`, `basket.action`, `deeplink.arrived`. Set `POSTHOG_KEY` in `index.html` to your PostHog project key to activate.
+- Settings panel (⚙ gear icon in header): Appearance (theme toggle), Analytics (opt-in toggle), Data (clear all stored data).
+- Welcome modal now includes analytics consent ("Got it · Share data" / "Skip analytics") so first-visit users can choose without hunting for settings.
+- `docs/privacy.md`: full accounting of what is and isn't collected, storage mechanism, and opt-out instructions.
+- `tests/analytics.test.mjs`: 13 tests covering enabled/disabled state, event shape, `$lib` injection, opt-in/out round-trips, and props immutability.
+- CSP `<meta>` tag in `index.html`: restricts external connections to PostHog EU endpoints; blocks object embeds and unlisted sources.
+- `bundle.mjs` now inlines `analytics.js`; bundle grows ~9 KB to 382 KB.
 - Playwright e2e test suite (`tests/e2e/`): 30 smoke specs across 6 files — `catalog`, `tabs`, `basket`, `theme`, `deeplink`, `search` — verified on Chromium, Firefox, mobile Chrome 360 / 414, and tablet 768 px viewports.
 - `playwright.config.js`: 5 browser projects locally (chromium, firefox, mobile-chrome-360, mobile-chrome-414, tablet-768); WebKit added automatically in CI (Linux only).
 - `tests/e2e/_setup.mjs`: global setup that rebuilds `dist/skill-browser.html` before specs run.

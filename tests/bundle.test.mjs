@@ -40,6 +40,12 @@ test("bundle: inlines hash-router", () => {
   assert.ok(content.includes("buildHash"), "must inline buildHash function");
 });
 
+test("bundle: inlines analytics module", () => {
+  const content = readFileSync(DIST, "utf8");
+  assert.ok(content.includes("window.Analytics"), "must inline analytics (window.Analytics)");
+  assert.ok(content.includes("skill-browser"), "must include $lib identifier");
+});
+
 test("bundle: includes UI primitives", () => {
   const content = readFileSync(DIST, "utf8");
   assert.ok(content.includes("Welcome to Skill Browser"), "must include welcome overlay");

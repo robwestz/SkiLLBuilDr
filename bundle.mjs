@@ -34,10 +34,14 @@ function run() {
 
   // ---- 2. read inputs ----
   const indexPath = join(__dirname, "index.html");
+  const analyticsPath = join(__dirname, "analytics.js");
+  const routerPath = join(__dirname, "hash-router.js");
   const dataPath = join(__dirname, "data.js");
   const recipesPath = join(__dirname, "recipes.js");
 
   const indexHtml = readFileSync(indexPath, "utf8");
+  const analyticsJs = readFileSync(analyticsPath, "utf8");
+  const routerJs = readFileSync(routerPath, "utf8");
   const dataJs = readFileSync(dataPath, "utf8");
   const recipesJs = readFileSync(recipesPath, "utf8");
 
@@ -49,13 +53,25 @@ function run() {
     return src.replace(/<\/script>/gi, "</scr" + "ipt>");
   }
 
+  const inlineAnalytics = `<script>\n${escapeScriptClose(analyticsJs)}\n</script>`;
+  const inlineRouter = `<script>\n${escapeScriptClose(routerJs)}\n</script>`;
   const inlineData = `<script>\n${escapeScriptClose(dataJs)}\n</script>`;
   const inlineRecipes = `<script>\n${escapeScriptClose(recipesJs)}\n</script>`;
 
   // Tolerate single/double quotes and extra whitespace on the src= tags.
+  const analyticsTagRe = /<script\s+src\s*=\s*["']analytics\.js["']\s*>\s*<\/script>/i;
+  const routerTagRe = /<script\s+src\s*=\s*["']hash-router\.js["']\s*>\s*<\/script>/i;
   const dataTagRe = /<script\s+src\s*=\s*["']data\.js["']\s*>\s*<\/script>/i;
   const recipesTagRe = /<script\s+src\s*=\s*["']recipes\.js["']\s*>\s*<\/script>/i;
 
+  if (!analyticsTagRe.test(indexHtml)) {
+    console.error(`[bundle] could not find <script src="analytics.js"></script> in index.html`);
+    process.exit(1);
+  }
+  if (!routerTagRe.test(indexHtml)) {
+    console.error(`[bundle] could not find <script src="hash-router.js"></script> in index.html`);
+    process.exit(1);
+  }
   if (!dataTagRe.test(indexHtml)) {
     console.error(`[bundle] could not find <script src="data.js"></script> in index.html`);
     process.exit(1);
@@ -65,7 +81,9 @@ function run() {
     process.exit(1);
   }
 
-  let merged = indexHtml.replace(dataTagRe, () => inlineData);
+  let merged = indexHtml.replace(analyticsTagRe, () => inlineAnalytics);
+  merged = merged.replace(routerTagRe, () => inlineRouter);
+  merged = merged.replace(dataTagRe, () => inlineData);
   merged = merged.replace(recipesTagRe, () => inlineRecipes);
 
   // ---- 4. write output ----
