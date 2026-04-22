@@ -6,7 +6,19 @@
     <!-- CSP: inline scripts required for bundled app; external network restricted
          to PostHog EU endpoints (analytics opt-in only). -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://eu-assets.i.posthog.com; connect-src 'self' blob: https://eu.i.posthog.com https://eu-assets.i.posthog.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; object-src 'none';">
-    <title>Skill Browser</title>
+    <title>Skill Browser — Claude Code skill catalog</title>
+    <meta name="description" content="Local, offline browser for Claude Code skills and slash-commands. Unified catalog across every installed plugin. 500+ skills, Compose mode, Recipes, paste-ready prompts." />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Skill Browser — Claude Code skill catalog" />
+    <meta property="og:description" content="Find, compose, and copy any Claude Code skill or slash-command. 500+ skills across all your installed plugins, with intent-based search and basket." />
+    <meta property="og:site_name" content="Skill Browser" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Skill Browser — Claude Code skill catalog" />
+    <meta name="twitter:description" content="Find, compose, and copy any Claude Code skill or slash-command. 500+ skills across all your installed plugins." />
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>" />
     <style>
       :root {
         --bg: #0f1115;
@@ -1978,19 +1990,21 @@
       });
 
       function openWelcomeModal() {
+        const d = window.__ECC_DATA__;
+        const total = d?.counts?.total ?? "500+";
         openModal(`
-          <h3>Welcome to Skill Browser</h3>
-          <p style="font-size:13px;color:var(--fg-mid);line-height:1.5">
-            A local tool for discovering skills and slash-commands across every plugin you've installed.
+          <h3 style="margin:0 0 6px">👋 Welcome to Skill Browser</h3>
+          <p style="font-size:13px;color:var(--fg-mid);line-height:1.6;margin:0 0 12px">
+            Your local catalog of <b style="color:var(--fg)">${total} skills &amp; commands</b> across every Claude Code plugin you have installed — searchable, composable, shareable.
           </p>
-          <ul style="font-size:13px;color:var(--fg-mid);line-height:1.7;padding-left:20px">
-            <li><b>Browse</b> — filter the full catalog by type, scope, source, or category</li>
-            <li><b>Compose</b> — describe a goal in plain language, get ranked skill suggestions</li>
-            <li><b>Recipes</b> — ready-made skill chains + save-your-own</li>
-            <li><b>Basket</b> — combine skills into a paste-ready prompt</li>
+          <ul style="font-size:13px;color:var(--fg-mid);line-height:1.8;padding-left:18px;margin:0 0 10px">
+            <li><b style="color:var(--fg)">Browse</b> — filter by type, scope, source, or category; click any row to read the full docs</li>
+            <li><b style="color:var(--fg)">Compose</b> — describe a goal in plain English, get ranked skill suggestions</li>
+            <li><b style="color:var(--fg)">Recipes</b> — curated skill chains + save your own</li>
+            <li><b style="color:var(--fg)">Basket</b> — build a multi-step prompt and copy it in one click</li>
           </ul>
-          <p style="font-size:12px;color:var(--fg-dim);margin-top:12px">
-            Click ➕ on any row to add to basket. Press <span class="kbd">?</span> for shortcuts.
+          <p style="font-size:11.5px;color:var(--fg-dim);margin:0 0 14px">
+            Press <span class="kbd">?</span> for all shortcuts · <span class="kbd">B</span> basket · <span class="kbd">/</span> search
           </p>
           <div style="margin-top:14px;padding:12px;background:var(--bg-3);border-radius:6px;border:1px solid var(--border)">
             <p style="font-size:12px;font-weight:600;margin:0 0 4px">Anonymous usage analytics</p>
