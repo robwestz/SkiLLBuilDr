@@ -63,12 +63,12 @@ test("data.counts.total matches items.length", () => {
     `counts.total=${data.counts.total} != items.length=${data.items.length}`);
 });
 
-test("data.counts.skills + counts.commands == counts.total", () => {
+test("data.counts.agents + skills + commands == counts.total", () => {
   const data = JSON.parse(readFileSync(DATA, "utf8"));
   assert.equal(
-    data.counts.skills + data.counts.commands,
+    (data.counts.agents ?? 0) + data.counts.skills + data.counts.commands,
     data.counts.total,
-    "skills+commands should equal total"
+    "agents+skills+commands should equal total"
   );
 });
 
@@ -76,7 +76,7 @@ test("each item has required fields (first 50 sampled)", () => {
   const data = JSON.parse(readFileSync(DATA, "utf8"));
   for (const it of data.items.slice(0, 50)) {
     assert.ok(typeof it.type === "string", "item.type missing");
-    assert.ok(["skill", "command"].includes(it.type), `bad type: ${it.type}`);
+    assert.ok(["skill", "command", "agent"].includes(it.type), `bad type: ${it.type}`);
     assert.ok(typeof it.name === "string" && it.name.length > 0, "item.name missing");
     assert.ok(typeof it.slug === "string" && it.slug.startsWith("/"), `bad slug: ${it.slug}`);
     assert.ok(typeof it.category === "string", "item.category missing");

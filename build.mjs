@@ -367,8 +367,34 @@ function collectCommands(source) {
   return items;
 }
 
+function collectAgents(source) {
+  const agentsDir = join(source.root, "agents");
+  if (!isDir(agentsDir)) return [];
+  const items = [];
+  for (const entry of safeReaddir(agentsDir)) {
+    const full = join(agentsDir, entry);
+    if (!isFile(full) || !entry.endsWith(".md")) continue;
+    const name = basename(entry, ".md");
+    const text = readFileSync(full, "utf8");
+    const fm = parseFrontmatter(text);
+    items.push({
+      type: "agent",
+      name: fm.name || name,
+      slug: buildSlug(source, fm.name || name),
+      description: fm.description || "",
+      category: deriveCategory(fm.name || name, source),
+      scope: source.scope,
+      source: source.label,
+      namespace: source.namespace,
+      path: full,
+      body: extractBody(text),
+    });
+  }
+  return items;
+}
+
 function collectSource(source) {
-  return [...collectSkills(source), ...collectCommands(source)];
+  return [...collectAgents(source), ...collectSkills(source), ...collectCommands(source)];
 }
 
 // ------------- Main -------------
@@ -425,6 +451,7 @@ function main() {
     })),
     counts: {
       total: items.length,
+      agents: items.filter((i) => i.type === "agent").length,
       skills: items.filter((i) => i.type === "skill").length,
       commands: items.filter((i) => i.type === "command").length,
     },
@@ -455,7 +482,7 @@ function main() {
   }
 
   console.log(
-    `Wrote ${items.length} items (${data.counts.skills} skills + ${data.counts.commands} commands) from ${sources.length} sources`
+    `Wrote ${items.length} items (${data.counts.agents} agents + ${data.counts.skills} skills + ${data.counts.commands} commands) from ${sources.length} sources`
   );
   if (opts.verbose) {
     console.error("scopes:", scopes);
