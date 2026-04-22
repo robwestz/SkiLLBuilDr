@@ -1,5 +1,33 @@
 # Handoff — skill-browser
 
+> **🔄 CLAUDE → CODEX HANDOFF (2026-04-22)**
+>
+> Robins Claude Max tokens slut mitt i en session. Codex tar över i samma workspace.
+>
+> **Robins sista request (verbatim):**
+> > "jag tänkte att det kunde ju vara snyggt att playground ligger i navigation bredvid recipies eller bredvid basket?"
+>
+> **Status just nu:**
+> - ✅ Implementerat: `Playground ⚗️` flyttad från headern till nav-raden, **bredvid Recipes**.
+> - ⚠️ **Ocommittat** i `index.html` (endast den filen ändrad).
+> - Ändringar:
+>   1. Ny CSS-klass `nav.tabs .tab-link-btn` (matchar övriga tabs visuellt).
+>   2. Tog bort `<a href="playground.html" class="icon-btn">⚗️</a>` från headern.
+>   3. La till `<a href="playground.html" class="tab-link-btn">Playground ⚗️</a>` i `<nav class="tabs">` efter Recipes-knappen.
+>
+> **Nästa steg för Codex:**
+> 1. Öppna `index.html` i webbläsare (eller kör `bash launch.sh`). Verifiera att Playground ligger i nav-raden bredvid Recipes och ser ut som de andra tabs.
+> 2. Testa klick → går till `playground.html`. Testa hover-state. Kolla mobile-viewport kort (ingen wrap/overflow).
+> 3. Om OK: `git add index.html && git commit -m "feat: move Playground link into nav row next to Recipes"` och pusha (Robin har tidigare sagt "kör push med" som stående policy).
+>
+> **Öppet/otestat:**
+> - Tidigare nämnd CSS-bugg: sidpanelens mittendel försvann vid lång oformaterad text under "mer från" / "du kanske också gillar". Oklart om fixat — värt snabb sanity-check i detail-panelen medan du ändå testar.
+> - Untracked i working tree: `.claude/`, `.codeboarding/`, `.cursor/`, `probe*.html/js`, `mobile-360-*.png`. Rör inte utan att fråga Robin.
+>
+> **Robins preferenser:** Svenska, korta svar, kör på utan onödiga mellanfrågor, testa i browser före "klart".
+>
+> ---
+
 You're picking up a working local tool that we want to turn into a sellable/OSS product. This document gets you from cold-start to productive in ~10 minutes. Read top to bottom before touching code.
 
 ## What this is

@@ -4,7 +4,7 @@
 Ge en snabb, sökbar, kategoriserad GUI-entry-point till ECC:s 183 skills + 79 commands utan att behöva scrolla `/`-listan i Claude Code. En lokal HTML-app med live-sök, kategori-filter och klick-för-att-kopiera slug till clipboard.
 
 ## Current Phase
-Phase 4: v1-production — Wave 2 complete, Wave 3 scheduled (2026-04-21 natten)
+Phase 5: Package Assembler - Wave 1 in progress (2026-04-22)
 
 ## Wave 2 result (2026-04-21 ~05:00)
 - [x] Category overhaul: Misc 69 → 0 (`build.mjs` expanded deriveCategory with prp/multi/context/loop/blueprint/AI Ops/ECC-meta rules)
@@ -165,3 +165,29 @@ Filer: se `README.md`. Öppna med `bash ~/.claude/ecc-browser/launch.sh`. Keyboa
 - Skill-slug: `/everything-claude-code:<skill-name>`
 - Command-slug: `/everything-claude-code:<command-basename>`
 - Inte förväxla med ECC:s egna: `ecc_dashboard.py` (install-GUI), `scripts/ecc.js` (install-CLI)
+
+## Current Execution Track (2026-04-22)
+- Phase 5 „r aktiv. Tidigare faser och deras checkrutor ovan g„ller fortfarande som historik.
+- P0 i roadmapen „r go-live-triggern: Package Assembler m†ste fungera innan deployment av buildr.nu.
+- Wave 1 levererad: `assembler.html` + `kickoff-template.mjs` + individuella paketfiler i Download-steget.
+
+### Phase 5: Package Assembler (2026-04-22)
+**M†l:** buildr.nu ska kunna ladda ner ett komplett arbets-paket som en kall agent kan k”ra direkt, med offline-first assemblerfl”de och ZIP-export.
+
+**Wave 1 - assembler-skelett + kickoff-template:**
+- [x] `assembler.html` - 4-stegs wizard med Describe / Select / Review / Download
+- [x] Browser-port av intent-rankning f”r auto-selektion i steg 2
+- [x] `kickoff-template.mjs` - generator f”r sj„lvbeskrivande `KICKOFF.md`
+- [x] Enhetstester f”r kickoff-template-scenarier
+
+**Wave 2 - paketbygge + ZIP:**
+- [ ] `fflate`-baserad ZIP-generering i browser
+- [ ] Paketfiler: `KICKOFF.md`, `CLAUDE.md`, `README.md`, `workflows/<name>.yaml`
+- [ ] †teranv„nd befintliga exportfunktioner d„r det „r rimligt
+- [ ] Verifiering att ZIP-inneh†llet g†r att anv„nda utan extern dependency
+
+**Wave 3 - integration + polish:**
+- [ ] Navintegration i browser/playground/landing
+- [ ] README + handoff uppdaterade f”r assemblerfl”det
+- [ ] Regressionsskydd i testsvit
+- [ ] `node --test tests/*.test.mjs` fortsatt gr”nt

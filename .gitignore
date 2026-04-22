@@ -12,3 +12,19 @@ coverage/
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Tool/editor dirs
+.codeboarding/
+.cursor/
+.claude/
+
+# Probe/debug files
+probe*.html
+probe*.js
+findings.md
+progress.md
+
+# Screenshots / images
+*.png
+*.jpg
+*.gif

@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Package Assembler - buildr.nu</title>
+  <style>
+    :root {
+      --bg: #0f1318;
+      --bg-2: #171c23;
+      --bg-3: #202731;
+      --bg-4: #2a3441;
+      --border: #2f3946;
+      --border-hi: #455264;
+      --fg: #e7ecf3;
+      --fg-dim: #96a1b0;
+      --fg-soft: #bcc7d4;
+      --accent: #d97757;
+      --accent-soft: rgba(217, 119, 87, 0.12);
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --skill: #6aa9ff;
+      --command: #b58cff;
+      --agent: #4ecdc4;
+      --rule: #f0c040;
+      --workflow: #ff8c69;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+      --radius: 14px;
+      font-family: "Segoe UI", "SF Pro Text", Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: radial-gradient(circle at top, #18202a 0%, var(--bg) 42%); color: var(--fg); }
+    body { display: flex; flex-direction: column; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 19, 24, 0.88);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { min-width: 0; }
+    .brand h1 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+    .brand h1 span { color: var(--accent); }
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--fg-dim);
+      font-size: 12px;
+    }
+    .navlinks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .navlinks a {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--fg-soft);
+      font-size: 12px;
+    }
+    .navlinks a:hover { border-color: var(--accent); color: var(--fg); }
+
+    .shell {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 26px auto 40px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.75fr) 320px;
+      gap: 18px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(32, 39, 49, 0.96), rgba(18, 22, 29, 0.98));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-height: 740px;
+      overflow: hidden;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .step-pill {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      min-width: 0;
+    }
+    .step-pill.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .step-pill.done {
+      border-color: rgba(74, 222, 128, 0.42);
+      background: rgba(74, 222, 128, 0.08);
+    }
+    .step-index {
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border-hi);
+      margin-bottom: 8px;
+      color: var(--fg-soft);
+    }
+    .step-pill.active .step-index {
+      border-color: var(--accent);
+      color: #fff;
+      background: var(--accent);
+    }
+    .step-pill.done .step-index {
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+    .step-title {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+    .step-desc {
+      display: block;
+      margin-top: 4px;
+      color: var(--fg-dim);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .stage {
+      display: none;
+      padding: 22px 22px 18px;
+      flex: 1;
+      min-height: 0;
+    }
+    .stage.active {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .stage-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .stage-head h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+    .stage-head p {
+      margin: 8px 0 0;
+      color: var(--fg-dim);
+      max-width: 720px;
+      line-height: 1.6;
+      font-size: 13px;
+    }
+    .stage-meta {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      font-size: 12px;
+      color: var(--fg-soft);
+      min-width: 170px;
+    }
+    .stage-meta b { color: var(--fg); }
+
+    .field-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr 280px;
+    }
+    .field-card {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .field-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .field-card p {
+      margin: 0 0 12px;
+      font-size: 12px;
+      color: var(--fg-dim);
+      line-height: 1.5;
+    }
+    .label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--fg-dim);
+      font-weight: 700;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border-hi);
+      background: #11161c;
+      color: var(--fg);
+      padding: 12px 14px;
+      outline: none;
+    }
+    input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+    .hint-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .hint-chip {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--fg-soft);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+    .hint-chip:hover { border-color: var(--accent); color: var(--fg); }
+
+    .results-toolbar,
+    .review-toolbar,
+    .files-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .toolbar-note {
+      color: var(--fg-dim);
+      font-size: 12px;
+    }
+
+    .btn {
+      border-radius: 12px;
+      border: 1px solid var(--border-hi);
+      background: var(--bg-4);
+      color: var(--fg);
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn.primary:hover { filter: brightness(1.06); }
+    .btn.ghost {
+      background: transparent;
+      color: var(--fg-soft);
+    }
+    .btn.ghost:hover { color: var(--fg); }
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      filter: none;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      align-content: start;
+    }
+    .result-card, .review-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .result-card.added {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .result-top {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    .badge.skill { color: var(--skill); background: rgba(106, 169, 255, 0.1); border-color: rgba(106, 169, 255, 0.2); }
+    .badge.command { color: var(--command); background: rgba(181, 140, 255, 0.1); border-color: rgba(181, 140, 255, 0.2); }
+    .badge.agent { color: var(--agent); background: rgba(78, 205, 196, 0.1); border-color: rgba(78, 205, 196, 0.2); }
+    .badge.rule { color: var(--rule); background: rgba(240, 192, 64, 0.1); border-color: rgba(240, 192, 64, 0.2); }
+    .badge.workflow { color: var(--workflow); background: rgba(255, 140, 105, 0.1); border-color: rgba(255, 140, 105, 0.2); }
+    .badge.score {
+      margin-left: auto;
+      color: var(--fg-soft);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--border);
+    }
+    .result-card h3, .review-card h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+    .result-card p, .review-card p {
+      margin: 0;
+      color: var(--fg-dim);
+      line-height: 1.55;
+      font-size: 12px;
+    }
+    .meta-line {
+      color: var(--fg-soft);
+      font-size: 11px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .meta-line code {
+      font-family: Consolas, monospace;
+      font-size: 11px;
+      color: var(--fg-soft);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+      flex-wrap: wrap;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) 320px;
+      gap: 14px;
+      align-items: start;
+    }
+    .review-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .review-controls {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .mini-btn {
+      border: 1px solid var(--border-hi);
+      background: transparent;
+      color: var(--fg-soft);
+      border-radius: 10px;
+      padding: 6px 9px;
+      font-size: 11px;
+    }
+    .mini-btn:hover { border-color: var(--accent); color: var(--fg); }
+    .summary-panel {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+      position: sticky;
+      top: 96px;
+    }
+    .summary-panel h3 {
+      margin: 0 0 12px;
+      font-size: 14px;
+    }
+    .summary-panel dl {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 8px 12px;
+      margin: 0 0 14px;
+      font-size: 12px;
+    }
+    .summary-panel dt { color: var(--fg-dim); }
+    .summary-panel dd { margin: 0; color: var(--fg); }
+    .stat-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .stat-chip {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--fg-soft);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .files-layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 14px;
+      min-height: 420px;
+    }
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 12px;
+    }
+    .file-tab {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--fg-soft);
+      text-align: left;
+    }
+    .file-tab.active {
+      border-color: var(--accent);
+      color: var(--fg);
+      background: var(--accent-soft);
+    }
+    .file-preview {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(17, 22, 28, 0.95);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .file-preview-head {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      flex-wrap: wrap;
+    }
+    .file-preview-head h3 {
+      margin: 0;
+      font-size: 14px;
+    }
+    .codebox {
+      margin: 0;
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--fg-soft);
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "SFMono-Regular", monospace;
+      min-height: 360px;
+    }
+
+    .footer-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px 22px 18px;
+      border-top: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      flex-wrap: wrap;
+    }
+    .footer-actions .group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sidebar {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-self: start;
+      position: sticky;
+      top: 94px;
+    }
+    .sidebar h3 {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--fg-dim);
+    }
+    .sidebar .panel {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .sidebar p {
+      margin: 0;
+      color: var(--fg-dim);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .status {
+      font-size: 12px;
+      color: var(--fg-soft);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .status b { color: var(--fg); }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: rgba(17, 22, 28, 0.96);
+      color: var(--fg);
+      border: 1px solid var(--border-hi);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 0.16s, transform 0.16s;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .empty {
+      padding: 18px;
+      border: 1px dashed var(--border-hi);
+      border-radius: 14px;
+      color: var(--fg-dim);
+      text-align: center;
+      line-height: 1.6;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        width: min(100vw - 20px, 1180px);
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+      }
+      .field-grid,
+      .review-grid,
+      .files-layout {
+        grid-template-columns: 1fr;
+      }
+      .summary-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .navlinks {
+        margin-left: 0;
+      }
+      .stepper {
+        grid-template-columns: 1fr 1fr;
+      }
+      .stage {
+        padding: 18px 16px 16px;
+      }
+      .footer-actions {
+        padding: 14px 16px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Package <span>Assembler</span></h1>
+      <p>Read-only against catalog files. Outputs stay local until you copy or download them.</p>
+    </div>
+    <nav class="navlinks">
+      <a href="index.html">Skill Browser</a>
+      <a href="playground.html">Playground</a>
+    </nav>
+  </header>
+
+  <div class="shell">
+    <section class="card main">
+      <div class="stepper" id="stepper"></div>
+
+      <section class="stage active" data-step="1">
+        <div class="stage-head">
+          <div>
+            <h2>Describe what you want to build</h2>
+            <p>Start with the target outcome. The assembler scores the local catalog, suggests the strongest skills, and keeps the package read-only until download.</p>
+          </div>
+          <div class="stage-meta"><b id="catalogCount">Loading...</b><br />catalog items ready</div>
+        </div>
+
+        <div class="field-grid">
+          <div class="field-card">
+            <label class="label" for="goalInput">Goal</label>
+            <textarea id="goalInput" placeholder="Example: Build a SaaS onboarding assistant with auth, billing, analytics, and a sharp handoff plan."></textarea>
+
+            <div style="height:12px"></div>
+
+            <label class="label" for="descriptionInput">Extra context</label>
+            <textarea id="descriptionInput" style="min-height:110px" placeholder="Constraints, stack hints, target users, deadline, or what must be delivered."></textarea>
+
+            <div class="hint-row" id="exampleChips"></div>
+          </div>
+
+          <aside class="field-card">
+            <h3>Package identity</h3>
+            <p>Use a stable package name when you know it. If you leave it blank, the assembler derives one from the goal.</p>
+            <label class="label" for="packageNameInput">Package name</label>
+            <input id="packageNameInput" type="text" placeholder="auto-derived from the goal" />
+
+            <div style="height:14px"></div>
+
+            <h3>What Wave 1 delivers</h3>
+            <p>Wave 1 assembles the package files and lets you download them individually. ZIP bundling lands in Wave 2.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="stage" data-step="2">
+        <div class="stage-head">
+          <div>
+            <h2>Select the package contents</h2>
+            <p>The suggestions below are scored locally from the catalog. Start from the top set, then add or remove anything that does not belong.</p>
+          </div>
+          <div class="stage-meta"><b id="selectedCount">0</b><br />selected items</div>
+        </div>
+
+        <div class="results-toolbar">
+          <div class="toolbar-note" id="suggestionSummary">No ranking yet.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnRefreshRanking" type="button">Re-rank</button>
+            <button class="btn ghost" id="btnUseTopSix" type="button">Replace with top 6</button>
+          </div>
+        </div>
+
+        <div class="results-grid" id="resultsGrid"></div>
+      </section>
+
+      <section class="stage" data-step="3">
+        <div class="stage-head">
+          <div>
+            <h2>Review the package plan</h2>
+            <p>Order matters here. The selected items become the execution order in <code>KICKOFF.md</code> and the workflow export.</p>
+          </div>
+          <div class="stage-meta"><b id="reviewCount">0</b><br />execution steps</div>
+        </div>
+
+        <div class="review-grid">
+          <div class="review-list" id="reviewList"></div>
+          <aside class="summary-panel">
+            <h3>Package summary</h3>
+            <dl>
+              <dt>Name</dt><dd id="summaryName">-</dd>
+              <dt>Goal</dt><dd id="summaryGoal">-</dd>
+              <dt>Context</dt><dd id="summaryContext">-</dd>
+            </dl>
+            <div class="status"><b>Read-only</b><span>Catalog files are never rewritten from here.</span></div>
+            <div class="stat-strip" id="typeStats"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="stage" data-step="4">
+        <div class="stage-head">
+          <div>
+            <h2>Download the package files</h2>
+            <p>This step generates the files in memory from your selected items. Download them one by one now; ZIP bundling follows in the next wave.</p>
+          </div>
+          <div class="stage-meta"><b id="fileCount">0</b><br />generated files</div>
+        </div>
+
+        <div class="files-toolbar">
+          <div class="toolbar-note" id="fileSummary">No files generated yet.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost" id="btnCopyFile" type="button">Copy current file</button>
+            <button class="btn primary" id="btnDownloadFile" type="button">Download current file</button>
+          </div>
+        </div>
+
+        <div class="files-layout">
+          <div class="file-list" id="fileList"></div>
+          <div class="file-preview">
+            <div class="file-preview-head">
+              <h3 id="fileTitle">Generated files</h3>
+              <span class="toolbar-note" id="fileMeta">Waiting for package generation.</span>
+            </div>
+            <pre class="codebox" id="filePreview">Generate a package to preview the output.</pre>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer-actions">
+        <div class="group">
+          <button class="btn ghost" type="button" id="btnBack">Back</button>
+          <button class="btn ghost" type="button" id="btnReset">Reset</button>
+        </div>
+        <div class="group">
+          <button class="btn primary" type="button" id="btnNext">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card sidebar">
+      <div class="panel">
+        <h3>Current package</h3>
+        <div class="status" id="sidebarStatus">
+          <span><b>Name:</b> <span id="sidebarName">-</span></span>
+          <span><b>Goal:</b> <span id="sidebarGoal">-</span></span>
+          <span><b>Selected:</b> <span id="sidebarSelected">0</span></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Output contract</h3>
+        <p>The assembler generates <code>KICKOFF.md</code>, <code>CLAUDE.md</code>, <code>README.md</code>, and a workflow export. It does not mutate <code>data.json</code>, <code>data.js</code>, <code>recipes.json</code>, or any repo files.</p>
+      </div>
+
+      <div class="panel">
+        <h3>Step guidance</h3>
+        <p>Describe the actual target outcome, keep the selected list tight, then review the order before downloading the package files.</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="data.js"></script>
+  <script>
+    const STEPS = [
+      { id: 1, title: "Describe", desc: "Goal, context, package name" },
+      { id: 2, title: "Select", desc: "Ranked local catalog suggestions" },
+      { id: 3, title: "Review", desc: "Order and trim execution steps" },
+      { id: 4, title: "Download", desc: "Generate files and export them" },
+    ];
+
+    const EXAMPLES = [
+      "Build a SaaS onboarding assistant with auth, billing, and analytics",
+      "Build a CLI tool for release automation with tests and packaging",
+      "Set up a data pipeline for weekly revenue reporting",
+      "Create an AI agent workspace that can plan phases and execute them",
+    ];
+
+    const STOPWORDS = new Set("a an and are as at be but by do for from has have i if in is it its me my of on or our so that the their them then there they this to up was we were what when where which while will with you your want need should would can could how make get help please just some something thing things use using".split(" "));
+
+    function uniqueNodesForPackage(nodes = []) {
+      const seen = new Set();
+      return nodes.filter((node) => {
+        const key = node?.slug || node?.name;
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function slugifyPackageLabel(text = "") {
+      return String(text)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "workspace-package";
+    }
+
+    function detectPackageProfile(goal = "", description = "", nodes = []) {
+      const hay = `${goal} ${description} ${nodes.map((node) => `${node.name} ${node.description || ""}`).join(" ")}`.toLowerCase();
+      if (/\b(cli|command|terminal|shell|release)\b/.test(hay)) return "cli";
+      if (/\b(data pipeline|pipeline|etl|warehouse|report|reporting|analytics|stripe|postgres)\b/.test(hay)) return "data";
+      if (/\b(saas|billing|auth|onboarding|dashboard|web app|hosted)\b/.test(hay)) return "saas";
+      return "general";
+    }
+
+    function inferDeliverables(profile, goal, description) {
+      const generic = [
+        "A working implementation plan that can be executed without extra clarification.",
+        "Code, docs, and tests aligned with the stated goal.",
+        "A final handoff that is ready for handoff to Robin or the next agent.",
+      ];
+      if (profile === "saas") {
+        return [
+          "A production-shaped application shell with auth, core flows, and clear module boundaries.",
+          "Data model, billing or account assumptions, and onboarding UX documented in the implementation.",
+          "Verification notes covering critical user journeys, failure states, and release readiness.",
+          ...generic,
+        ];
+      }
+      if (profile === "cli") {
+        return [
+          "A command interface with stable verbs, flags, and example usage.",
+          "Test coverage for the main command flows and failure paths.",
+          "Packaging and release notes so the tool can be installed and operated safely.",
+          ...generic,
+        ];
+      }
+      if (profile === "data") {
+        return [
+          "Documented ingestion, transformation, and output stages for the pipeline.",
+          "Validation rules for source quality, data integrity, and report correctness.",
+          "Operations notes for schedules, reruns, alerts, and troubleshooting.",
+          ...generic,
+        ];
+      }
+      return [
+        `A coherent implementation of: ${goal || description || "the requested package"}.`,
+        "Clear tests, verification notes, and documented follow-up risks.",
+        ...generic,
+      ];
+    }
+
+    function inferSuccessCriteria(profile) {
+      const shared = [
+        "The selected skills are followed in order with explicit progress updates.",
+        "The result is production-grade, offline-first where possible, and documented.",
+        "All critical checks pass and the package is ready for handoff.",
+      ];
+      if (profile === "cli") {
+        return [
+          "Primary commands run end-to-end with expected output and guardrails.",
+          "Tests or validation scripts cover core command behavior.",
+          ...shared,
+        ];
+      }
+      if (profile === "data") {
+        return [
+          "Pipeline stages, inputs, and outputs are explicit and reproducible.",
+          "Validation covers schema drift, bad input, and reporting correctness.",
+          ...shared,
+        ];
+      }
+      if (profile === "saas") {
+        return [
+          "Core product flows are implemented and verified against the user goal.",
+          "Architecture, UX, and delivery scope are aligned before heavy implementation.",
+          ...shared,
+        ];
+      }
+      return shared;
+    }
+
+    function inferFirstMoves(profile) {
+      if (profile === "cli") {
+        return [
+          "Confirm the command surface, inputs, outputs, and safety constraints.",
+          "Lock test cases before implementation and keep packaging in scope from day one.",
+        ];
+      }
+      if (profile === "data") {
+        return [
+          "Map each data source, required transformation, and final report contract before coding.",
+          "Define validation and rerun strategy early so the pipeline is operable.",
+        ];
+      }
+      if (profile === "saas") {
+        return [
+          "Clarify the product slice, users, and acceptance criteria before building.",
+          "Sequence architecture, UI, and verification so the first shipped flow is coherent.",
+        ];
+      }
+      return [
+        "Clarify the scope and acceptance criteria before implementation.",
+        "Use the selected skills to plan, execute, verify, and document in sequence.",
+      ];
+    }
+
+    function buildExecutionPlan(nodes) {
+      return nodes.map((node, index) => {
+        const summary = node.description ? node.description.replace(/\s+/g, " ").trim() : "Apply this capability to move the package forward.";
+        const skillLine = node.slug ? `Use \`${node.slug}\` and follow its contract.` : "Use this step as written.";
+        return `### Step ${index + 1}: ${node.name}
+
+${summary}
+
+${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}`;
+      }).join("\n\n");
+    }
+
+    function buildClaudeMdInline({ nodes = [] } = {}) {
+      const selected = uniqueNodesForPackage(nodes).filter((node) => node.slug);
+      const lines = ["## Skills", "", "Load these skills into the session before execution:", ""];
+      selected.forEach((node) => lines.push(`- \`${node.slug}\` - ${node.description || node.name}`));
+      return lines.join("\n").trim() + "\n";
+    }
+
+    function buildReadmeInline({ goal = "", description = "", packageName = "", nodes = [] } = {}) {
+      const selected = uniqueNodesForPackage(nodes);
+      const lines = [
+        `# ${packageName || slugifyPackageLabel(goal || description)}`,
+        "",
+        "## What this package is for",
+        "",
+        goal || description || "This package was assembled to execute a focused build plan.",
+        "",
+      ];
+      if (description && description !== goal) lines.push(description, "");
+      lines.push(
+        "## Included files",
+        "",
+        "- `KICKOFF.md` - the first file the agent should read.",
+        "- `CLAUDE.md` - the skill list to load into the session.",
+        "- `workflows/` - workflow exports for selected chains.",
+        "- `README.md` - this summary for humans.",
+        "",
+        "## Selected skills",
+        ""
+      );
+      selected.forEach((node) => lines.push(`- ${node.name}${node.slug ? ` (\`${node.slug}\`)` : ""}`));
+      return lines.join("\n").trim() + "\n";
+    }
+
+    function buildKickoffInline({ goal = "", description = "", packageName = "", nodes = [] } = {}) {
+      const selected = uniqueNodesForPackage(nodes);
+      const effectiveName = packageName || slugifyPackageLabel(goal || description);
+      const profile = detectPackageProfile(goal, description, selected);
+      const lines = [
+        `# KICKOFF: ${effectiveName}`,
+        "",
+        "Read this file fully before taking action. Treat it as the source of truth for the package.",
+        "",
+        "## Goal",
+        "",
+        goal || "Goal not provided.",
+        "",
+      ];
+      if (description) lines.push("## Product Context", "", description, "");
+      lines.push("## First Moves", "");
+      inferFirstMoves(profile).forEach((item) => lines.push(`- ${item}`));
+      lines.push("", "## Included Skills", "");
+      selected.forEach((node) => {
+        const suffix = node.description ? ` - ${node.description.replace(/\s+/g, " ").trim()}` : "";
+        lines.push(`- \`${node.slug || node.name}\`${suffix}`);
+      });
+      lines.push("", "## Execution Plan", "", buildExecutionPlan(selected), "", "## Deliverables", "");
+      inferDeliverables(profile, goal, description).forEach((item) => lines.push(`- ${item}`));
+      lines.push("", "## Success Criteria", "");
+      inferSuccessCriteria(profile).forEach((item) => lines.push(`- ${item}`));
+      lines.push(
+        "",
+        "## Working Rules",
+        "",
+        "- Stay production-grade throughout the package; do not defer obvious quality work.",
+        "- Keep execution offline-first unless an external dependency is explicitly required.",
+        "- Verify meaningful changes with tests, checks, or direct inspection before claiming completion.",
+        "- Leave the workspace in a state that is ready for handoff.",
+        ""
+      );
+      return lines.join("\n").trim() + "\n";
+    }
+
+    const KickoffTemplateApi = {
+      slugifyLabel: slugifyPackageLabel,
+      buildClaudeMd: buildClaudeMdInline,
+      buildReadme: buildReadmeInline,
+      buildKickoff: buildKickoffInline,
+    };
+
+    const state = {
+      step: 1,
+      catalog: [],
+      goal: "",
+      description: "",
+      packageName: "",
+      suggestions: [],
+      selected: [],
+      files: [],
+      activeFile: null,
+    };
+
+    function escapeHtml(text) {
+      return String(text ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function toast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(el._toastTimer);
+      el._toastTimer = setTimeout(() => el.classList.remove("show"), 1600);
+    }
+
+    function tokenize(text) {
+      return (text || "")
+        .toLowerCase()
+        .replace(/[^\w\s+/#.-]/g, " ")
+        .split(/\s+/)
+        .filter((token) => token.length > 1 && !STOPWORDS.has(token));
+    }
+
+    function scoreIntent(query, items, limit = 16) {
+      const queryTokens = tokenize(query);
+      if (!queryTokens.length) return [];
+      const df = new Map();
+      const docs = items.map((item) => {
+        const tokens = new Set(tokenize(`${item.name} ${item.description || ""} ${item.category || ""}`));
+        for (const token of tokens) df.set(token, (df.get(token) || 0) + 1);
+        return tokens;
+      });
+      const total = items.length || 1;
+      const textBlob = queryTokens.join(" ");
+      const boosts = [
+        [["test", "testing", "tdd", "coverage", "unit", "e2e"], /testing/, 6],
+        [["review", "audit"], /review|audit/, 5],
+        [["secur", "auth", "authenticat", "vulnerab", "exploit"], /security/, 7],
+        [["plan", "roadmap", "spec", "phase"], /planning|agents/, 4],
+        [["deploy", "docker", "kubernetes", "ci", "cd", "pipeline"], /devops/, 5],
+        [["frontend", "ui", "ux", "accessib", "component", "design"], /frontend|design/, 5],
+        [["database", "sql", "query", "schema", "migrat", "postgres"], /^data/, 5],
+        [["python", "django"], /python/, 6],
+        [["kotlin", "android"], /kotlin\/android/, 6],
+        [["rust"], /^rust$/, 6],
+        [["cpp", "c++"], /c\+\+/, 6],
+        [["llm", "ai", "model", "prompt", "agent"], /agents|ai ops|ecc-meta/, 5],
+        [["post", "publish", "article", "blog", "video"], /content/, 5],
+        [["onboard", "unfamiliar", "new code"], /agents|architecture|planning/, 4],
+      ];
+
+      const scored = [];
+      items.forEach((item, index) => {
+        let score = 0;
+        const name = item.name.toLowerCase();
+        const nameSet = new Set(tokenize(item.name));
+        queryTokens.forEach((token) => {
+          const weight = Math.log((total + 1) / ((df.get(token) || 0) + 1)) + 1;
+          if (nameSet.has(token)) score += 8 * weight;
+          else if (name.includes(token)) score += 4 * weight;
+          if (docs[index].has(token)) score += 2 * weight;
+        });
+
+        const category = (item.category || "").toLowerCase();
+        boosts.forEach(([terms, matcher, bonus]) => {
+          if (!terms.some((term) => textBlob.includes(term))) return;
+          if (matcher.test(category)) score += bonus;
+        });
+
+        if (textBlob.includes("review") && (name.endsWith("-review") || name.endsWith("review"))) score += 3;
+        if ((textBlob.includes("build") || textBlob.includes("fix")) && name.endsWith("-build")) score += 3;
+        if (score <= 0) return;
+
+        const why = [];
+        queryTokens.forEach((token) => {
+          if (name.includes(token)) why.push(`name:${token}`);
+          else if ((item.description || "").toLowerCase().includes(token)) why.push(`desc:${token}`);
+          else if ((item.category || "").toLowerCase().includes(token)) why.push(`cat:${token}`);
+        });
+
+        scored.push({
+          ...item,
+          _score: Math.round(score * 10) / 10,
+          _why: why.slice(0, 4).join(" | "),
+        });
+      });
+
+      scored.sort((a, b) => b._score - a._score);
+      return scored.slice(0, limit);
+    }
+
+    function normalizeSelection(item) {
+      return {
+        type: item.type,
+        name: item.name,
+        slug: item.slug,
+        description: item.description || "",
+        category: item.category || "",
+        source: item.source || "",
+        body: item.body || item.description || "",
+      };
+    }
+
+    function getPackageName() {
+      if (state.packageName) return state.packageName;
+      return KickoffTemplateApi.slugifyLabel(state.goal || state.description || "");
+    }
+
+    function countByType(nodes) {
+      return nodes.reduce((acc, node) => {
+        acc[node.type] = (acc[node.type] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function setStep(nextStep) {
+      state.step = Math.max(1, Math.min(4, nextStep));
+      renderStepper();
+      document.querySelectorAll(".stage").forEach((section) => {
+        section.classList.toggle("active", Number(section.dataset.step) === state.step);
+      });
+      document.getElementById("btnBack").disabled = state.step === 1;
+      document.getElementById("btnNext").textContent = state.step === 4 ? "Done" : "Next";
+      document.getElementById("btnNext").disabled = state.step === 4;
+      if (state.step === 4) buildFiles();
+    }
+
+    function renderStepper() {
+      const host = document.getElementById("stepper");
+      host.innerHTML = STEPS.map((step) => {
+        const done = state.step > step.id;
+        const active = state.step === step.id;
+        return `
+          <div class="step-pill ${done ? "done" : ""} ${active ? "active" : ""}">
+            <span class="step-index">${done ? "OK" : step.id}</span>
+            <span class="step-title">${escapeHtml(step.title)}</span>
+            <span class="step-desc">${escapeHtml(step.desc)}</span>
+          </div>`;
+      }).join("");
+    }
+
+    async function loadCatalog() {
+      let data = window.__ECC_DATA__;
+      if (!data) {
+        const response = await fetch("data.json");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        data = await response.json();
+      }
+      state.catalog = (data.items || []).filter((item) => item.slug || item.type === "workflow");
+      document.getElementById("catalogCount").textContent = String(state.catalog.length);
+    }
+
+    function fillExampleChips() {
+      const host = document.getElementById("exampleChips");
+      host.innerHTML = EXAMPLES.map((text) => `<button class="hint-chip" type="button">${escapeHtml(text)}</button>`).join("");
+      host.querySelectorAll(".hint-chip").forEach((button, index) => {
+        button.addEventListener("click", () => {
+          document.getElementById("goalInput").value = EXAMPLES[index];
+          updateDraft();
+        });
+      });
+    }
+
+    function updateDraft() {
+      state.goal = document.getElementById("goalInput").value.trim();
+      state.description = document.getElementById("descriptionInput").value.trim();
+      state.packageName = document.getElementById("packageNameInput").value.trim();
+      if (!state.packageName) {
+        document.getElementById("packageNameInput").value = KickoffTemplateApi.slugifyLabel(state.goal || state.description || "");
+        state.packageName = document.getElementById("packageNameInput").value.trim();
+      }
+      renderSidebar();
+      renderSummary();
+    }
+
+    function rerankSelections(replaceCurrent) {
+      updateDraft();
+      if (!state.goal && !state.description) {
+        toast("Add a goal before ranking the catalog.");
+        return;
+      }
+      const query = [state.goal, state.description].filter(Boolean).join(" ");
+      state.suggestions = scoreIntent(query, state.catalog, 16);
+      if (replaceCurrent) {
+        state.selected = state.suggestions.slice(0, 6).map(normalizeSelection);
+      }
+      renderSuggestions();
+      renderReview();
+      renderSidebar();
+      renderSummary();
+      document.getElementById("suggestionSummary").textContent = state.suggestions.length
+        ? `Showing ${state.suggestions.length} strongest local matches for the current goal.`
+        : "No local matches yet. Try shorter or more concrete wording.";
+      if (state.suggestions.length) setStep(2);
+    }
+
+    function toggleSelection(item) {
+      const exists = state.selected.find((node) => node.slug === item.slug && node.name === item.name);
+      if (exists) {
+        state.selected = state.selected.filter((node) => !(node.slug === item.slug && node.name === item.name));
+      } else {
+        state.selected = [...state.selected, normalizeSelection(item)];
+      }
+      renderSuggestions();
+      renderReview();
+      renderSidebar();
+      renderSummary();
+    }
+
+    function moveSelection(index, direction) {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= state.selected.length) return;
+      const copy = [...state.selected];
+      [copy[index], copy[nextIndex]] = [copy[nextIndex], copy[index]];
+      state.selected = copy;
+      renderReview();
+      renderSidebar();
+      renderSummary();
+    }
+
+    function renderSuggestions() {
+      const host = document.getElementById("resultsGrid");
+      document.getElementById("selectedCount").textContent = String(state.selected.length);
+      if (!state.suggestions.length) {
+        host.innerHTML = `<div class="empty">No ranking yet. Start from Step 1 and run the local selector.</div>`;
+        return;
+      }
+      host.innerHTML = state.suggestions.map((item) => {
+        const added = state.selected.some((node) => node.slug === item.slug && node.name === item.name);
+        const body = escapeHtml((item.description || "").replace(/\s+/g, " ").slice(0, 180));
+        return `
+          <article class="result-card ${added ? "added" : ""}" data-slug="${escapeHtml(item.slug || item.name)}">
+            <div class="result-top">
+              <span class="badge ${escapeHtml(item.type)}">${escapeHtml(item.type)}</span>
+              <span class="badge score">score ${item._score}</span>
+            </div>
+            <h3>${escapeHtml(item.name)}</h3>
+            <p>${body || "No description available."}</p>
+            <div class="meta-line">
+              <span>${escapeHtml(item.category || "uncategorized")}</span>
+              ${item._why ? `<span>${escapeHtml(item._why)}</span>` : ""}
+            </div>
+            <div class="meta-line"><code>${escapeHtml(item.slug || item.name)}</code></div>
+            <div class="card-actions">
+              <button class="btn ${added ? "ghost" : "primary"}" type="button" data-action="toggle">
+                ${added ? "Remove" : "Add to package"}
+              </button>
+            </div>
+          </article>`;
+      }).join("");
+
+      host.querySelectorAll("[data-action='toggle']").forEach((button, index) => {
+        button.addEventListener("click", () => toggleSelection(state.suggestions[index]));
+      });
+    }
+
+    function renderReview() {
+      const host = document.getElementById("reviewList");
+      document.getElementById("reviewCount").textContent = String(state.selected.length);
+      if (!state.selected.length) {
+        host.innerHTML = `<div class="empty">No selected items yet. Pick a few strong matches in Step 2.</div>`;
+        return;
+      }
+
+      host.innerHTML = state.selected.map((node, index) => `
+        <article class="review-card">
+          <div class="result-top">
+            <span class="badge ${escapeHtml(node.type)}">${escapeHtml(node.type)}</span>
+            <span class="badge score">step ${index + 1}</span>
+          </div>
+          <h3>${escapeHtml(node.name)}</h3>
+          <p>${escapeHtml(node.description || "No description available.")}</p>
+          <div class="meta-line">
+            <span>${escapeHtml(node.category || "uncategorized")}</span>
+            ${node.slug ? `<code>${escapeHtml(node.slug)}</code>` : ""}
+          </div>
+          <div class="review-controls">
+            <button class="mini-btn" type="button" data-move="-1">Move up</button>
+            <button class="mini-btn" type="button" data-move="1">Move down</button>
+            <button class="mini-btn" type="button" data-remove="1">Remove</button>
+          </div>
+        </article>
+      `).join("");
+
+      host.querySelectorAll("[data-move]").forEach((button, index) => {
+        button.addEventListener("click", () => moveSelection(index, Number(button.dataset.move)));
+      });
+      host.querySelectorAll("[data-remove]").forEach((button, index) => {
+        button.addEventListener("click", () => {
+          state.selected.splice(index, 1);
+          state.selected = [...state.selected];
+          renderSuggestions();
+          renderReview();
+          renderSidebar();
+          renderSummary();
+        });
+      });
+    }
+
+    function renderSummary() {
+      document.getElementById("summaryName").textContent = getPackageName();
+      document.getElementById("summaryGoal").textContent = state.goal || "-";
+      document.getElementById("summaryContext").textContent = state.description || "-";
+      const stats = countByType(state.selected);
+      const host = document.getElementById("typeStats");
+      host.innerHTML = Object.keys(stats).length
+        ? Object.entries(stats).map(([type, count]) => `<span class="stat-chip">${escapeHtml(type)}: ${count}</span>`).join("")
+        : `<span class="stat-chip">No items selected</span>`;
+    }
+
+    function renderSidebar() {
+      document.getElementById("sidebarName").textContent = getPackageName();
+      document.getElementById("sidebarGoal").textContent = state.goal || "-";
+      document.getElementById("sidebarSelected").textContent = String(state.selected.length);
+    }
+
+    function buildWorkflowYaml() {
+      const name = getPackageName();
+      const description = state.description || state.goal || "Package assembled in buildr.nu";
+      const lines = [
+        `name: ${name}`,
+        "description: |",
+        `  ${description.replace(/\n/g, "\n  ")}`,
+        "provider: claude",
+        "model: sonnet",
+        "",
+        "nodes:",
+      ];
+      const ids = state.selected.map((node, index) => {
+        const base = (node.name || `step-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        return base || `step-${index + 1}`;
+      });
+      state.selected.forEach((node, index) => {
+        lines.push(`  - id: ${ids[index]}`);
+        if (index > 0) lines.push(`    depends_on: [${ids[index - 1]}]`);
+        if (node.slug) lines.push(`    skill: ${node.slug}`);
+        if (node.body) {
+          lines.push("    prompt: |");
+          node.body.trim().split("\n").forEach((line) => lines.push(`      ${line}`));
+        }
+        lines.push("");
+      });
+      return lines.join("\n");
+    }
+
+    function buildFiles() {
+      if (!state.selected.length) return;
+      const packageName = getPackageName();
+      state.files = [
+        {
+          name: "KICKOFF.md",
+          content: KickoffTemplateApi.buildKickoff({
+            goal: state.goal,
+            description: state.description,
+            packageName,
+            nodes: state.selected,
+          }),
+        },
+        {
+          name: "CLAUDE.md",
+          content: KickoffTemplateApi.buildClaudeMd({ nodes: state.selected }),
+        },
+        {
+          name: "README.md",
+          content: KickoffTemplateApi.buildReadme({
+            goal: state.goal,
+            description: state.description,
+            packageName,
+            nodes: state.selected,
+          }),
+        },
+        {
+          name: `workflows/${packageName}.yaml`,
+          content: buildWorkflowYaml(),
+        },
+      ];
+      if (!state.activeFile || !state.files.find((file) => file.name === state.activeFile)) {
+        state.activeFile = state.files[0]?.name || null;
+      }
+      renderFiles();
+    }
+
+    function renderFiles() {
+      const fileCount = state.files.length;
+      document.getElementById("fileCount").textContent = String(fileCount);
+      document.getElementById("fileSummary").textContent = fileCount
+        ? `${fileCount} generated files ready for copy or download.`
+        : "No files generated yet.";
+
+      const list = document.getElementById("fileList");
+      if (!fileCount) {
+        list.innerHTML = `<div class="empty">Move through Steps 1-3 first.</div>`;
+        document.getElementById("fileTitle").textContent = "Generated files";
+        document.getElementById("fileMeta").textContent = "Waiting for package generation.";
+        document.getElementById("filePreview").textContent = "Generate a package to preview the output.";
+        return;
+      }
+
+      list.innerHTML = state.files.map((file) => `
+        <button class="file-tab ${file.name === state.activeFile ? "active" : ""}" type="button" data-file="${escapeHtml(file.name)}">
+          ${escapeHtml(file.name)}
+        </button>
+      `).join("");
+      list.querySelectorAll(".file-tab").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.activeFile = button.dataset.file;
+          renderFiles();
+        });
+      });
+
+      const current = state.files.find((file) => file.name === state.activeFile) || state.files[0];
+      state.activeFile = current.name;
+      document.getElementById("fileTitle").textContent = current.name;
+      document.getElementById("fileMeta").textContent = `${current.content.length.toLocaleString()} chars`;
+      document.getElementById("filePreview").textContent = current.content;
+    }
+
+    function copyCurrentFile() {
+      const current = state.files.find((file) => file.name === state.activeFile);
+      if (!current) return;
+      navigator.clipboard.writeText(current.content)
+        .then(() => toast(`Copied ${current.name}`))
+        .catch(() => toast("Clipboard copy failed."));
+    }
+
+    function downloadCurrentFile() {
+      const current = state.files.find((file) => file.name === state.activeFile);
+      if (!current) return;
+      const blob = new Blob([current.content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = current.name.split("/").pop();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast(`Downloaded ${current.name}`);
+    }
+
+    function handleNext() {
+      updateDraft();
+      if (state.step === 1) {
+        rerankSelections(true);
+        return;
+      }
+      if (state.step === 2) {
+        if (!state.selected.length) {
+          toast("Select at least one item before review.");
+          return;
+        }
+        setStep(3);
+        return;
+      }
+      if (state.step === 3) {
+        if (!state.selected.length) {
+          toast("Nothing selected to package.");
+          return;
+        }
+        buildFiles();
+        setStep(4);
+      }
+    }
+
+    function resetAll() {
+      state.step = 1;
+      state.goal = "";
+      state.description = "";
+      state.packageName = "";
+      state.suggestions = [];
+      state.selected = [];
+      state.files = [];
+      state.activeFile = null;
+      document.getElementById("goalInput").value = "";
+      document.getElementById("descriptionInput").value = "";
+      document.getElementById("packageNameInput").value = "";
+      document.getElementById("suggestionSummary").textContent = "No ranking yet.";
+      renderSuggestions();
+      renderReview();
+      renderSummary();
+      renderSidebar();
+      renderFiles();
+      setStep(1);
+    }
+
+    function wireUi() {
+      fillExampleChips();
+      document.getElementById("goalInput").addEventListener("input", updateDraft);
+      document.getElementById("descriptionInput").addEventListener("input", updateDraft);
+      document.getElementById("packageNameInput").addEventListener("input", updateDraft);
+      document.getElementById("btnBack").addEventListener("click", () => setStep(state.step - 1));
+      document.getElementById("btnNext").addEventListener("click", handleNext);
+      document.getElementById("btnReset").addEventListener("click", resetAll);
+      document.getElementById("btnRefreshRanking").addEventListener("click", () => rerankSelections(false));
+      document.getElementById("btnUseTopSix").addEventListener("click", () => rerankSelections(true));
+      document.getElementById("btnCopyFile").addEventListener("click", copyCurrentFile);
+      document.getElementById("btnDownloadFile").addEventListener("click", downloadCurrentFile);
+    }
+
+    async function init() {
+      renderStepper();
+      renderSuggestions();
+      renderReview();
+      renderSummary();
+      renderSidebar();
+      renderFiles();
+      wireUi();
+      try {
+        await loadCatalog();
+      } catch (error) {
+        document.getElementById("catalogCount").textContent = "Error";
+        document.getElementById("resultsGrid").innerHTML = `<div class="empty">Could not load the local catalog. Run <code>node build.mjs</code> first.</div>`;
+        console.error(error);
+      }
+    }
+
+    window.addEventListener("load", init);
+  </script>
+</body>
+</html>

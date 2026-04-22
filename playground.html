@@ -385,7 +385,7 @@
 <div class="topbar">
   <div>
     <div class="topbar-title">Skill <span>Playground</span></div>
-    <div class="topbar-sub">Assemble, edit, and export custom skill workflows</div>
+    <div class="topbar-sub">Assemble, edit, and export custom skill workflows. Local-only; does not rewrite catalog files.</div>
   </div>
   <div class="topbar-actions">
     <button class="btn ghost" onclick="window.location='index.html'">← Browser</button>
@@ -497,6 +497,7 @@
 
 <div id="toast"></div>
 
+<script src="data.js"></script>
 <script>
 "use strict";
 
@@ -509,6 +510,8 @@ const state = {
   catalogFilter: { type: "all", q: "" },
   dragSrcIdx: null,
 };
+// Playground is intentionally read-only against the scanned catalog files.
+// User edits live in-memory and saved workflows persist only in localStorage.
 const SAVE_KEY = "skill-playground-saves-v1";
 let saves = [];
 
@@ -545,9 +548,12 @@ function fallbackCopy(text) {
 // ── LOAD CATALOG ──
 async function loadCatalog() {
   try {
-    const r = await fetch("data.json");
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const data = await r.json();
+    let data = window.__ECC_DATA__;
+    if (!data) {
+      const r = await fetch("data.json");
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      data = await r.json();
+    }
     state.catalog = data.items || [];
     document.getElementById("catalogStatus").textContent = `${state.catalog.length} items`;
     applyFilter();

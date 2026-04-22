@@ -1,0 +1,5 @@
+# Default owner for all files — required reviewer on every PR.
+# Add path-specific owners as the team grows, e.g.:
+#   .github/workflows/  @robwestz
+#   src/payments/       @payments-team
+* @robwestz

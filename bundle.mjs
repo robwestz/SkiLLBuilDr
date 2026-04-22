@@ -34,12 +34,14 @@ function run() {
 
   // ---- 2. read inputs ----
   const indexPath = join(__dirname, "index.html");
+  const playgroundPath = join(__dirname, "playground.html");
   const analyticsPath = join(__dirname, "analytics.js");
   const routerPath = join(__dirname, "hash-router.js");
   const dataPath = join(__dirname, "data.js");
   const recipesPath = join(__dirname, "recipes.js");
 
   const indexHtml = readFileSync(indexPath, "utf8");
+  const playgroundHtml = readFileSync(playgroundPath, "utf8");
   const analyticsJs = readFileSync(analyticsPath, "utf8");
   const routerJs = readFileSync(routerPath, "utf8");
   const dataJs = readFileSync(dataPath, "utf8");
@@ -63,6 +65,7 @@ function run() {
   const routerTagRe = /<script\s+src\s*=\s*["']hash-router\.js["']\s*>\s*<\/script>/i;
   const dataTagRe = /<script\s+src\s*=\s*["']data\.js["']\s*>\s*<\/script>/i;
   const recipesTagRe = /<script\s+src\s*=\s*["']recipes\.js["']\s*>\s*<\/script>/i;
+  const playgroundDataTagRe = /<script\s+src\s*=\s*["']data\.js["']\s*>\s*<\/script>/i;
 
   if (!analyticsTagRe.test(indexHtml)) {
     console.error(`[bundle] could not find <script src="analytics.js"></script> in index.html`);
@@ -86,16 +89,19 @@ function run() {
   merged = merged.replace(dataTagRe, () => inlineData);
   merged = merged.replace(recipesTagRe, () => inlineRecipes);
 
+  let bundledPlayground = playgroundHtml;
+  if (playgroundDataTagRe.test(playgroundHtml)) {
+    bundledPlayground = playgroundHtml.replace(playgroundDataTagRe, () => inlineData);
+  }
+
   // ---- 4. write output ----
   const distDir = join(__dirname, "dist");
   mkdirSync(distDir, { recursive: true });
   const outPath = join(distDir, "skill-browser.html");
   writeFileSync(outPath, merged, "utf8");
 
-  // Copy playground.html to dist — standalone, no inlining needed
-  const playgroundSrc = join(__dirname, "playground.html");
   const playgroundDst = join(distDir, "playground.html");
-  writeFileSync(playgroundDst, readFileSync(playgroundSrc, "utf8"), "utf8");
+  writeFileSync(playgroundDst, bundledPlayground, "utf8");
 
   // ---- 5. log size + item count ----
   const { size } = statSync(outPath);

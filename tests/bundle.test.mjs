@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const DIST = join(ROOT, "dist", "skill-browser.html");
+const DIST_PLAYGROUND = join(ROOT, "dist", "playground.html");
 
 before(() => {
   const r = spawnSync(process.execPath, [join(ROOT, "bundle.mjs")], { cwd: ROOT, stdio: "pipe" });
@@ -20,6 +21,13 @@ test("bundle: file exists and is non-trivial", () => {
   assert.ok(existsSync(DIST), "dist/skill-browser.html must exist");
   const content = readFileSync(DIST, "utf8");
   assert.ok(content.length > 100_000, `bundle too small (${content.length} bytes)`);
+});
+
+test("bundle: playground bundle exists and includes inlined data", () => {
+  assert.ok(existsSync(DIST_PLAYGROUND), "dist/playground.html must exist");
+  const content = readFileSync(DIST_PLAYGROUND, "utf8");
+  assert.ok(content.includes("window.__ECC_DATA__"), "playground bundle must inline __ECC_DATA__");
+  assert.ok(!/<script[^>]+src=["']data\.js["']/i.test(content), "playground bundle must not depend on external data.js");
 });
 
 test("bundle: is self-contained (no external script src refs)", () => {
