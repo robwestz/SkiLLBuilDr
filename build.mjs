@@ -100,6 +100,17 @@ function extractBody(text) {
   return text.slice(end + 4).replace(/^\r?\n/, "").trimEnd();
 }
 
+// Returns first meaningful non-heading line from body text (for rules without descriptions).
+function firstLine(body) {
+  for (const raw of body.split("\n")) {
+    const t = raw.replace(/^#+\s*/, "").trim();
+    if (t && !t.startsWith("|") && !t.startsWith("---") && !t.startsWith("```")) {
+      return t.slice(0, 120);
+    }
+  }
+  return "";
+}
+
 function deriveCategory(name, source) {
   const n = name.toLowerCase();
   const src = (source && source.namespace) || "";
@@ -393,8 +404,63 @@ function collectAgents(source) {
   return items;
 }
 
+const RULE_LANG_CATEGORY = {
+  common: "ECC-meta",
+  typescript: "Node/TS",
+  python: "Python",
+  golang: "Go",
+  rust: "Rust",
+  swift: "Swift/iOS",
+  kotlin: "Kotlin/Android",
+  cpp: "C++",
+  csharp: ".NET",
+  dart: "Flutter/Dart",
+  java: "Java/Spring",
+  perl: "Perl",
+  php: "PHP",
+  web: "Frontend/UI",
+  zh: "ECC-meta",
+};
+
+function collectRules(source) {
+  const rulesDir = join(source.root, "rules");
+  if (!isDir(rulesDir)) return [];
+  const items = [];
+
+  const walk = (dir, langDir) => {
+    for (const entry of safeReaddir(dir)) {
+      const full = join(dir, entry);
+      if (isDir(full)) {
+        walk(full, entry);
+      } else if (isFile(full) && entry.endsWith(".md") && entry !== "README.md") {
+        const name = basename(entry, ".md");
+        const text = readFileSync(full, "utf8");
+        const fm = parseFrontmatter(text);
+        const body = extractBody(text);
+        const displayName = langDir ? `${langDir}/${name}` : name;
+        const category = RULE_LANG_CATEGORY[langDir] || deriveCategory(name, source);
+        items.push({
+          type: "rule",
+          name: fm.name || displayName,
+          slug: `rule:${source.namespace ? source.namespace + "/" : ""}${displayName}`,
+          description: fm.description || firstLine(body),
+          category,
+          scope: source.scope,
+          source: source.label,
+          namespace: source.namespace,
+          path: full,
+          body,
+          rulePaths: fm.paths || null,
+        });
+      }
+    }
+  };
+  walk(rulesDir, null);
+  return items;
+}
+
 function collectSource(source) {
-  return [...collectAgents(source), ...collectSkills(source), ...collectCommands(source)];
+  return [...collectAgents(source), ...collectSkills(source), ...collectCommands(source), ...collectRules(source)];
 }
 
 // ------------- Main -------------
@@ -454,6 +520,7 @@ function main() {
       agents: items.filter((i) => i.type === "agent").length,
       skills: items.filter((i) => i.type === "skill").length,
       commands: items.filter((i) => i.type === "command").length,
+      rules: items.filter((i) => i.type === "rule").length,
     },
     categories,
     scopes,
@@ -482,7 +549,7 @@ function main() {
   }
 
   console.log(
-    `Wrote ${items.length} items (${data.counts.agents} agents + ${data.counts.skills} skills + ${data.counts.commands} commands) from ${sources.length} sources`
+    `Wrote ${items.length} items (${data.counts.agents} agents + ${data.counts.skills} skills + ${data.counts.commands} commands + ${data.counts.rules} rules) from ${sources.length} sources`
   );
   if (opts.verbose) {
     console.error("scopes:", scopes);

@@ -33,6 +33,7 @@
         --skill: #6aa9ff;
         --command: #b58cff;
         --agent: #4ecdc4;
+        --rule: #f0c040;
         --scope-plugin: #7ec07a;
         --scope-user: #e0b341;
         --scope-project: #ff9874;
@@ -54,6 +55,7 @@
         --skill: #2a5ea8;
         --command: #6d3ec2;
         --agent: #1a8c86;
+        --rule: #a08010;
         --scope-plugin: #3e7a3a;
         --scope-user: #a07a12;
         --scope-project: #c8654a;
@@ -243,6 +245,7 @@
       .badge.skill { background: rgba(106,169,255,0.12); color: var(--skill); border: 1px solid rgba(106,169,255,0.25); }
       .badge.command { background: rgba(181,140,255,0.12); color: var(--command); border: 1px solid rgba(181,140,255,0.25); }
       .badge.agent { background: rgba(78,205,196,0.12); color: var(--agent); border: 1px solid rgba(78,205,196,0.25); }
+      .badge.rule  { background: rgba(240,192,64,0.12); color: var(--rule);  border: 1px solid rgba(240,192,64,0.25); }
       .name-wrap { display: flex; flex-direction: column; gap: 3px; }
       .name {
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
@@ -787,6 +790,7 @@
           <button data-type="agent">Agents</button>
           <button data-type="skill">Skills</button>
           <button data-type="command">Commands</button>
+          <button data-type="rule">Rules</button>
         </div>
         <h2>Scope</h2>
         <div id="scopes"></div>
@@ -968,7 +972,7 @@
         const ageDays = builtAt ? (Date.now() - builtAt) / 86_400_000 : 0;
         const ageStr = builtAt ? ` · built ${timeAgo(builtAt)}` : "";
         document.getElementById("meta").textContent =
-          `${data.counts.total} items · ${data.counts.agents ?? 0} agents · ${data.counts.skills} skills · ${data.counts.commands} commands · ${data.sources ? data.sources.length : 0} sources${ageStr}`;
+          `${data.counts.total} items · ${data.counts.agents ?? 0} agents · ${data.counts.skills} skills · ${data.counts.commands} commands · ${data.counts.rules ?? 0} rules · ${data.sources ? data.sources.length : 0} sources${ageStr}`;
         if (ageDays > 3) {
           const banner = document.createElement("div");
           banner.id = "staleBanner";
@@ -1395,6 +1399,7 @@
           <span class="scope-badge ${scope}" title="${escapeHtml(it.source || scope)}">${escapeHtml(displayLabel)}</span>
           <span class="cat">${escapeHtml(it.category)}</span>
           ${it.argumentHint ? `<span class="hint">args: ${escapeHtml(it.argumentHint)}</span>` : ""}
+          ${it.rulePaths ? `<span class="hint" title="Active for these file globs">paths: ${escapeHtml(Array.isArray(it.rulePaths) ? it.rulePaths.join(", ") : it.rulePaths)}</span>` : ""}
         `;
         // Render body and wire copy-code buttons
         const bodyEl = document.getElementById("detailBody");

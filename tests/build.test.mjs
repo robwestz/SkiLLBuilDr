@@ -63,12 +63,12 @@ test("data.counts.total matches items.length", () => {
     `counts.total=${data.counts.total} != items.length=${data.items.length}`);
 });
 
-test("data.counts.agents + skills + commands == counts.total", () => {
+test("data.counts agents + skills + commands + rules == counts.total", () => {
   const data = JSON.parse(readFileSync(DATA, "utf8"));
   assert.equal(
-    (data.counts.agents ?? 0) + data.counts.skills + data.counts.commands,
+    (data.counts.agents ?? 0) + data.counts.skills + data.counts.commands + (data.counts.rules ?? 0),
     data.counts.total,
-    "agents+skills+commands should equal total"
+    "agents+skills+commands+rules should equal total"
   );
 });
 
@@ -76,9 +76,10 @@ test("each item has required fields (first 50 sampled)", () => {
   const data = JSON.parse(readFileSync(DATA, "utf8"));
   for (const it of data.items.slice(0, 50)) {
     assert.ok(typeof it.type === "string", "item.type missing");
-    assert.ok(["skill", "command", "agent"].includes(it.type), `bad type: ${it.type}`);
+    assert.ok(["skill", "command", "agent", "rule"].includes(it.type), `bad type: ${it.type}`);
     assert.ok(typeof it.name === "string" && it.name.length > 0, "item.name missing");
-    assert.ok(typeof it.slug === "string" && it.slug.startsWith("/"), `bad slug: ${it.slug}`);
+    const validSlug = it.type === "rule" ? it.slug.startsWith("rule:") : it.slug.startsWith("/");
+    assert.ok(typeof it.slug === "string" && validSlug, `bad slug: ${it.slug}`);
     assert.ok(typeof it.category === "string", "item.category missing");
     assert.ok(typeof it.scope === "string", "item.scope missing");
   }

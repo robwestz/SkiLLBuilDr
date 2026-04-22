@@ -74,7 +74,8 @@ test("--format json produces a valid JSON array", () => {
   assert.ok(parsed.length > 0, "empty array");
   for (const it of parsed.slice(0, 5)) {
     assert.ok(typeof it.type === "string");
-    assert.ok(typeof it.slug === "string" && it.slug.startsWith("/"));
+    const validSlug = it.type === "rule" ? it.slug.startsWith("rule:") : it.slug.startsWith("/");
+    assert.ok(typeof it.slug === "string" && validSlug);
   }
 });
 
