@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skill Playground — Build & Compose Workflows</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #13161c;
+      --bg-2: #1a1e26;
+      --bg-3: #222630;
+      --bg-4: #2a2f3a;
+      --border: #2e3340;
+      --border-hi: #3e4455;
+      --fg: #e8eaf0;
+      --fg-dim: #7a8196;
+      --fg-mid: #b0b8cc;
+      --accent: #d97757;
+      --skill: #6aa9ff;
+      --command: #b58cff;
+      --agent: #4ecdc4;
+      --rule: #f0c040;
+      --workflow: #ff8c69;
+      --ok: #4ade80;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      height: 46px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .topbar-title { font-weight: 700; font-size: 15px; color: var(--fg); letter-spacing: -0.3px; }
+    .topbar-title span { color: var(--accent); }
+    .topbar-sub { font-size: 11px; color: var(--fg-dim); }
+    .topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-hi);
+      background: var(--bg-3);
+      color: var(--fg-mid);
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s, background .15s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--fg); background: var(--bg-4); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .btn.primary:hover { background: #e88a6a; border-color: #e88a6a; }
+    .btn.ghost { border-color: transparent; background: transparent; }
+    .btn.ghost:hover { background: var(--bg-3); border-color: var(--border); }
+
+    /* ── THREE COLUMNS ── */
+    .workspace {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── PANEL SHARED ── */
+    .panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .panel:last-child { border-right: none; }
+    .panel-head {
+      padding: 10px 14px 9px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-head h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--fg-dim); }
+    .panel-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+    /* ── LEFT: CATALOG ── */
+    .catalog-search-wrap {
+      padding: 10px 10px 0;
+      background: var(--bg-2);
+      flex-shrink: 0;
+    }
+    .catalog-search {
+      width: 100%;
+      background: var(--bg-3);
+      border: 1px solid var(--border-hi);
+      border-radius: 6px;
+      color: var(--fg);
+      padding: 6px 10px;
+      font-size: 12px;
+      outline: none;
+    }
+    .catalog-search:focus { border-color: var(--accent); }
+    .catalog-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 7px 10px 8px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-chip {
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg-dim);
+      font-size: 10px;
+      cursor: pointer;
+      transition: all .12s;
+    }
+    .filter-chip:hover, .filter-chip.active {
+      border-color: var(--accent);
+      color: var(--fg);
+      background: rgba(217,119,87,0.1);
+    }
+    .filter-chip[data-type="skill"].active { border-color: var(--skill); color: var(--skill); background: rgba(106,169,255,0.08); }
+    .filter-chip[data-type="command"].active { border-color: var(--command); color: var(--command); background: rgba(181,140,255,0.08); }
+    .filter-chip[data-type="agent"].active { border-color: var(--agent); color: var(--agent); background: rgba(78,205,196,0.08); }
+    .filter-chip[data-type="rule"].active { border-color: var(--rule); color: var(--rule); background: rgba(240,192,64,0.08); }
+    .filter-chip[data-type="workflow"].active { border-color: var(--workflow); color: var(--workflow); background: rgba(255,140,105,0.08); }
+
+    .catalog-count { padding: 5px 12px 3px; font-size: 10px; color: var(--fg-dim); flex-shrink: 0; }
+    .catalog-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(46,51,64,0.5);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      transition: background .1s;
+    }
+    .catalog-item:hover { background: var(--bg-3); }
+    .catalog-item-name { font-size: 12px; font-weight: 500; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .catalog-item-desc { font-size: 10.5px; color: var(--fg-dim); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .catalog-item-add {
+      width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-hi);
+      background: var(--bg-4); color: var(--fg-dim); font-size: 15px; line-height: 1;
+      text-align: center; cursor: pointer; flex-shrink: 0; transition: all .12s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .catalog-item-add:hover { border-color: var(--accent); color: var(--accent); background: rgba(217,119,87,0.1); }
+
+    /* ── BADGES ── */
+    .badge {
+      font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; flex-shrink: 0;
+    }
+    .badge.skill { background: rgba(106,169,255,0.12); color: var(--skill); border: 1px solid rgba(106,169,255,0.2); }
+    .badge.command { background: rgba(181,140,255,0.12); color: var(--command); border: 1px solid rgba(181,140,255,0.2); }
+    .badge.agent { background: rgba(78,205,196,0.12); color: var(--agent); border: 1px solid rgba(78,205,196,0.2); }
+    .badge.rule { background: rgba(240,192,64,0.12); color: var(--rule); border: 1px solid rgba(240,192,64,0.2); }
+    .badge.workflow { background: rgba(255,140,105,0.12); color: var(--workflow); border: 1px solid rgba(255,140,105,0.2); }
+    .badge.custom { background: rgba(217,119,87,0.12); color: var(--accent); border: 1px solid rgba(217,119,87,0.2); }
+
+    /* ── CENTER: CANVAS ── */
+    .canvas-panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    .canvas-empty {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; color: var(--fg-dim); text-align: center; padding: 40px;
+    }
+    .canvas-empty .icon { font-size: 40px; opacity: .4; }
+    .canvas-empty p { font-size: 13px; line-height: 1.6; max-width: 260px; }
+    .canvas-empty .hint { font-size: 11px; color: var(--fg-dim); opacity: .7; }
+
+    #nodeList {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .node-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color .15s;
+    }
+    .node-card:hover { border-color: var(--border-hi); }
+    .node-card.dragging { opacity: .4; }
+    .node-card.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(217,119,87,0.25); }
+
+    .node-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .node-number {
+      width: 20px; height: 20px; border-radius: 50%; background: var(--bg-4);
+      border: 1px solid var(--border-hi); display: flex; align-items: center;
+      justify-content: center; font-size: 10px; font-weight: 700; color: var(--fg-dim);
+      flex-shrink: 0;
+    }
+    .node-name { font-size: 12px; font-weight: 600; color: var(--fg); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .node-actions { display: flex; gap: 3px; flex-shrink: 0; }
+    .node-btn {
+      width: 22px; height: 22px; border-radius: 4px; border: none;
+      background: transparent; color: var(--fg-dim); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+      transition: background .1s, color .1s;
+    }
+    .node-btn:hover { background: var(--bg-4); color: var(--fg); }
+    .node-btn.del:hover { color: #f87171; }
+
+    .node-body {
+      padding: 0 10px 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .2s ease, padding .2s ease;
+    }
+    .node-card.expanded .node-body { max-height: 400px; padding: 0 10px 10px; overflow-y: auto; }
+
+    .node-desc-preview {
+      font-size: 11px; color: var(--fg-dim); padding: 0 10px 8px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .node-card.expanded .node-desc-preview { display: none; }
+
+    .node-edit-label { font-size: 10px; color: var(--fg-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+    .node-edit-area {
+      width: 100%; min-height: 80px; background: var(--bg-3);
+      border: 1px solid var(--border-hi); border-radius: 5px;
+      color: var(--fg); font-size: 11.5px; line-height: 1.6;
+      padding: 7px 9px; font-family: inherit; resize: vertical; outline: none;
+      margin-bottom: 8px;
+    }
+    .node-edit-area:focus { border-color: var(--accent); }
+    .node-slug { font-size: 10px; color: var(--fg-dim); font-family: monospace; margin-bottom: 6px; }
+
+    .node-connector {
+      display: flex; align-items: center; justify-content: center;
+      height: 18px; color: var(--border-hi); font-size: 16px; line-height: 1;
+      pointer-events: none;
+    }
+
+    .canvas-add-row {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .canvas-add-input {
+      flex: 1; background: var(--bg-3); border: 1px solid var(--border-hi);
+      border-radius: 6px; color: var(--fg); padding: 7px 10px; font-size: 12px; outline: none;
+    }
+    .canvas-add-input:focus { border-color: var(--accent); }
+    .canvas-add-input::placeholder { color: var(--fg-dim); }
+
+    /* drag handle */
+    .drag-handle { cursor: grab; color: var(--border-hi); font-size: 13px; padding: 0 2px; }
+    .drag-handle:active { cursor: grabbing; }
+
+    /* ── RIGHT: PREVIEW ── */
+    .preview-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .preview-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 12px;
+      background: var(--bg-2);
+      flex-shrink: 0;
+    }
+    .preview-tab {
+      padding: 9px 10px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--fg-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      transition: color .12s, border-color .12s;
+    }
+    .preview-tab:hover { color: var(--fg); }
+    .preview-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .preview-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+    .preview-toolbar { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .preview-meta { font-size: 11px; color: var(--fg-dim); flex: 1; }
+    .preview-code {
+      background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px;
+      padding: 14px; font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 11.5px; line-height: 1.65; color: var(--fg-mid);
+      white-space: pre-wrap; word-break: break-word; flex: 1;
+    }
+
+    /* ── SAVES ── */
+    .saves-section {
+      border-top: 1px solid var(--border);
+      padding: 10px 14px 12px;
+      flex-shrink: 0;
+    }
+    .saves-header { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--fg-dim); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .saves-list { display: flex; flex-direction: column; gap: 4px; max-height: 130px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .save-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 8px; border-radius: 5px; background: var(--bg-3);
+      border: 1px solid var(--border); cursor: pointer; transition: border-color .1s;
+    }
+    .save-item:hover { border-color: var(--border-hi); }
+    .save-item-title { flex: 1; font-size: 11px; color: var(--fg-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .save-item-count { font-size: 10px; color: var(--fg-dim); flex-shrink: 0; }
+    .save-item-del { background: none; border: none; color: var(--fg-dim); cursor: pointer; font-size: 13px; padding: 1px 4px; border-radius: 3px; }
+    .save-item-del:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--bg-4); border: 1px solid var(--border-hi); color: var(--fg);
+      padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      box-shadow: var(--shadow); transition: transform .2s ease, opacity .2s ease;
+      opacity: 0; pointer-events: none; z-index: 1000;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── MODAL ── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    .modal-backdrop.hidden { display: none; }
+    .modal {
+      background: var(--bg-2); border: 1px solid var(--border-hi);
+      border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      padding: 22px 24px; max-width: 520px; width: 90%;
+    }
+    .modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--fg); }
+    .modal label { font-size: 11px; color: var(--fg-dim); display: block; margin-bottom: 4px; }
+    .modal input {
+      width: 100%; background: var(--bg-3); border: 1px solid var(--border-hi);
+      border-radius: 6px; color: var(--fg); padding: 8px 10px; font-size: 12.5px;
+      outline: none; font-family: inherit; margin-bottom: 12px;
+    }
+    .modal input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── MISC ── */
+    .empty { text-align: center; padding: 20px; color: var(--fg-dim); font-size: 12px; }
+    .loading { text-align: center; padding: 30px; color: var(--fg-dim); font-size: 12px; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Skill <span>Playground</span></div>
+    <div class="topbar-sub">Assemble, edit, and export custom skill workflows</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn ghost" onclick="window.location='index.html'">← Browser</button>
+    <button class="btn" id="btnSave">Save workflow</button>
+    <button class="btn primary" id="btnExport">Export ▾</button>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- LEFT: CATALOG -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Skill Catalog</h2>
+      <span id="catalogStatus" style="font-size:10px;color:var(--fg-dim);margin-left:auto"></span>
+    </div>
+    <div class="catalog-search-wrap">
+      <input class="catalog-search" id="catalogSearch" placeholder="Search skills, commands, agents…" autocomplete="off" />
+    </div>
+    <div class="catalog-filters" id="catalogFilters">
+      <button class="filter-chip active" data-type="all">All</button>
+      <button class="filter-chip" data-type="skill">Skills</button>
+      <button class="filter-chip" data-type="command">Commands</button>
+      <button class="filter-chip" data-type="agent">Agents</button>
+      <button class="filter-chip" data-type="rule">Rules</button>
+      <button class="filter-chip" data-type="workflow">Workflows</button>
+    </div>
+    <div class="catalog-count" id="catalogCount"></div>
+    <div class="panel-body" id="catalogList">
+      <div class="loading">Loading catalog…</div>
+    </div>
+  </div>
+
+  <!-- CENTER: CANVAS -->
+  <div class="canvas-panel">
+    <div class="panel-head">
+      <h2>Canvas</h2>
+      <span id="nodeCountBadge" style="font-size:10px;color:var(--fg-dim);padding:1px 7px;background:var(--bg-3);border:1px solid var(--border);border-radius:10px;display:none">0 steps</span>
+      <div style="margin-left:auto">
+        <button class="btn ghost" id="btnClearCanvas" style="font-size:11px;padding:3px 8px">Clear</button>
+      </div>
+    </div>
+    <div id="nodeList"></div>
+    <div class="canvas-add-row">
+      <input class="canvas-add-input" id="customStepInput" placeholder="+ Add a custom step or instruction…" />
+      <button class="btn" id="btnAddCustom">Add</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: PREVIEW + SAVES -->
+  <div class="preview-panel">
+    <div class="preview-tabs" id="previewTabs">
+      <div class="preview-tab active" data-tab="prompt">Prompt</div>
+      <div class="preview-tab" data-tab="yaml">YAML</div>
+      <div class="preview-tab" data-tab="recipe">Recipe</div>
+      <div class="preview-tab" data-tab="claudemd">CLAUDE.md</div>
+    </div>
+    <div class="preview-body">
+      <div class="preview-toolbar">
+        <span class="preview-meta" id="previewMeta">0 steps</span>
+        <button class="btn" id="btnCopyPreview">Copy</button>
+      </div>
+      <pre class="preview-code" id="previewCode">(empty — add steps to the canvas)</pre>
+    </div>
+    <div class="saves-section">
+      <div class="saves-header">
+        Saved workflows
+        <span id="saveCount" style="color:var(--fg-dim);font-size:10px"></span>
+      </div>
+      <div class="saves-list" id="savesList">
+        <div class="empty" style="padding:6px 0;font-size:11px">No saved workflows yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVE MODAL -->
+<div class="modal-backdrop hidden" id="saveModal">
+  <div class="modal">
+    <h3>Save workflow</h3>
+    <label>Title</label>
+    <input id="saveTitle" placeholder="My workflow…" />
+    <label>Description (optional)</label>
+    <input id="saveDesc" placeholder="What this workflow is for…" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="btnSaveCancel">Cancel</button>
+      <button class="btn primary" id="btnSaveConfirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-backdrop hidden" id="exportModal">
+  <div class="modal">
+    <h3>Export workflow</h3>
+    <label>Workflow name (for YAML filename)</label>
+    <input id="exportName" placeholder="my-workflow" />
+    <label>Description</label>
+    <input id="exportDesc" placeholder="What this workflow does…" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="btnExportCancel">Cancel</button>
+      <button class="btn" id="btnExportPrompt">Copy prompt</button>
+      <button class="btn" id="btnExportYaml">Copy YAML</button>
+      <button class="btn primary" id="btnExportDownload">Download YAML</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+// ── STATE ──
+const state = {
+  catalog: [],
+  filtered: [],
+  nodes: [],
+  activePreviewTab: "prompt",
+  catalogFilter: { type: "all", q: "" },
+  dragSrcIdx: null,
+};
+const SAVE_KEY = "skill-playground-saves-v1";
+let saves = [];
+
+// ── UTILS ──
+function escapeHtml(s) {
+  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+function toast(msg, ms = 2200) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), ms);
+}
+
+function copyText(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => toast("Copied!")).catch(() => fallbackCopy(text));
+  } else fallbackCopy(text);
+}
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.cssText = "position:fixed;opacity:0";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+  toast("Copied!");
+}
+
+// ── LOAD CATALOG ──
+async function loadCatalog() {
+  try {
+    const r = await fetch("data.json");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    state.catalog = data.items || [];
+    document.getElementById("catalogStatus").textContent = `${state.catalog.length} items`;
+    applyFilter();
+  } catch {
+    document.getElementById("catalogList").innerHTML =
+      `<div class="empty">Could not load data.json.<br>Run <code style="font-family:monospace">node build.mjs</code> first.</div>`;
+  }
+}
+
+// ── CATALOG FILTER ──
+function applyFilter() {
+  const { type, q } = state.catalogFilter;
+  const tokens = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  state.filtered = state.catalog.filter(it => {
+    if (type !== "all" && it.type !== type) return false;
+    if (!tokens.length) return true;
+    const hay = `${it.name} ${it.description || ""} ${it.category || ""}`.toLowerCase();
+    return tokens.every(t => hay.includes(t));
+  });
+  renderCatalog();
+}
+
+function renderCatalog() {
+  const host = document.getElementById("catalogList");
+  const count = state.filtered.length;
+  document.getElementById("catalogCount").textContent = `${count} item${count !== 1 ? "s" : ""}`;
+
+  if (!count) {
+    host.innerHTML = `<div class="empty">No matches.</div>`;
+    return;
+  }
+
+  const BATCH = 80;
+  const items = state.filtered.slice(0, BATCH);
+  host.innerHTML = items.map((it, i) => {
+    const desc = (it.description || "").replace(/\s+/g, " ").slice(0, 90);
+    return `<div class="catalog-item" data-i="${i}">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span class="badge ${it.type}">${it.type[0].toUpperCase()}</span>
+          <span class="catalog-item-name">${escapeHtml(it.name)}</span>
+        </div>
+        ${desc ? `<div class="catalog-item-desc">${escapeHtml(desc)}</div>` : ""}
+      </div>
+      <div class="catalog-item-add" title="Add to canvas">+</div>
+    </div>`;
+  }).join("");
+
+  if (count > BATCH) {
+    host.innerHTML += `<div class="catalog-count" style="padding:8px 12px 10px">${count - BATCH} more — refine your search</div>`;
+  }
+
+  host.querySelectorAll(".catalog-item").forEach((row, i) => {
+    row.querySelector(".catalog-item-add").addEventListener("click", (e) => {
+      e.stopPropagation();
+      addNodeFromCatalog(items[i]);
+    });
+    row.addEventListener("click", () => addNodeFromCatalog(items[i]));
+  });
+}
+
+// ── CANVAS NODES ──
+function addNodeFromCatalog(it) {
+  state.nodes.push({
+    id: uid(),
+    type: it.type,
+    name: it.name,
+    slug: it.slug,
+    description: it.description || "",
+    content: it.body || it.description || "",
+    isCustom: false,
+  });
+  renderCanvas();
+  updatePreview();
+  const nl = document.getElementById("nodeList");
+  nl.scrollTop = nl.scrollHeight;
+  toast(`Added: ${it.name}`);
+}
+
+function addCustomNode(text) {
+  if (!text.trim()) return;
+  state.nodes.push({
+    id: uid(),
+    type: "custom",
+    name: text.trim().slice(0, 60),
+    slug: null,
+    description: "",
+    content: text.trim(),
+    isCustom: true,
+  });
+  renderCanvas();
+  updatePreview();
+}
+
+function removeNode(id) {
+  state.nodes = state.nodes.filter(n => n.id !== id);
+  renderCanvas();
+  updatePreview();
+}
+
+function moveNode(id, dir) {
+  const i = state.nodes.findIndex(n => n.id === id);
+  if (dir === -1 && i === 0) return;
+  if (dir === 1 && i === state.nodes.length - 1) return;
+  const arr = [...state.nodes];
+  [arr[i], arr[i + dir]] = [arr[i + dir], arr[i]];
+  state.nodes = arr;
+  renderCanvas();
+  updatePreview();
+}
+
+function renderCanvas() {
+  const host = document.getElementById("nodeList");
+  const badge = document.getElementById("nodeCountBadge");
+
+  if (!state.nodes.length) {
+    badge.style.display = "none";
+    host.innerHTML = `<div class="canvas-empty">
+      <div class="icon">⚗️</div>
+      <p>Click <b>+</b> on any skill in the catalog to add it here, or type a custom step below.</p>
+      <div class="hint">Drag to reorder · Click to expand · Edit content inline</div>
+    </div>`;
+    return;
+  }
+
+  badge.style.display = "";
+  badge.textContent = `${state.nodes.length} step${state.nodes.length !== 1 ? "s" : ""}`;
+
+  const html = state.nodes.map((node, i) => {
+    const preview = (node.content || node.description || "").replace(/\s+/g, " ").slice(0, 100);
+    const connector = i < state.nodes.length - 1
+      ? `<div class="node-connector">↓</div>` : "";
+    return `
+      <div class="node-card" data-id="${node.id}" draggable="true">
+        <div class="node-head">
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+          <div class="node-number">${i + 1}</div>
+          <span class="badge ${node.isCustom ? "custom" : node.type}">${node.isCustom ? "✎" : node.type[0].toUpperCase()}</span>
+          <span class="node-name">${escapeHtml(node.name)}</span>
+          <div class="node-actions">
+            <button class="node-btn" data-move="-1" title="Move up">↑</button>
+            <button class="node-btn" data-move="1" title="Move down">↓</button>
+            <button class="node-btn del" data-del="1" title="Remove">×</button>
+          </div>
+        </div>
+        ${preview ? `<div class="node-desc-preview">${escapeHtml(preview)}${(node.content || "").length > 100 ? "…" : ""}</div>` : ""}
+        <div class="node-body">
+          <div class="node-edit-label">Content / Instructions</div>
+          <textarea class="node-edit-area" data-nid="${node.id}" rows="4">${escapeHtml(node.content)}</textarea>
+          ${node.slug ? `<div class="node-slug">Slug: <b>${escapeHtml(node.slug)}</b></div>` : ""}
+        </div>
+      </div>${connector}`;
+  }).join("");
+
+  host.innerHTML = html;
+
+  host.querySelectorAll(".node-card").forEach((card) => {
+    const id = card.dataset.id;
+
+    card.querySelector(".node-head").addEventListener("click", (e) => {
+      if (e.target.closest(".node-actions") || e.target.closest(".drag-handle")) return;
+      card.classList.toggle("expanded");
+    });
+
+    card.querySelector("[data-move='-1']").addEventListener("click", () => moveNode(id, -1));
+    card.querySelector("[data-move='1']").addEventListener("click", () => moveNode(id, 1));
+    card.querySelector("[data-del]").addEventListener("click", () => removeNode(id));
+
+    const ta = card.querySelector("textarea");
+    if (ta) {
+      ta.addEventListener("input", () => {
+        const node = state.nodes.find(n => n.id === id);
+        if (node) { node.content = ta.value; updatePreview(); }
+      });
+      ta.addEventListener("click", e => e.stopPropagation());
+    }
+
+    // Drag-and-drop reorder
+    card.addEventListener("dragstart", (e) => {
+      state.dragSrcIdx = state.nodes.findIndex(n => n.id === id);
+      card.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+    card.addEventListener("dragover", (e) => { e.preventDefault(); card.classList.add("drag-over"); });
+    card.addEventListener("dragleave", () => card.classList.remove("drag-over"));
+    card.addEventListener("drop", (e) => {
+      e.preventDefault();
+      card.classList.remove("drag-over");
+      const destIdx = state.nodes.findIndex(n => n.id === id);
+      if (state.dragSrcIdx !== null && state.dragSrcIdx !== destIdx) {
+        const arr = [...state.nodes];
+        const [removed] = arr.splice(state.dragSrcIdx, 1);
+        arr.splice(destIdx, 0, removed);
+        state.nodes = arr;
+        renderCanvas();
+        updatePreview();
+      }
+      state.dragSrcIdx = null;
+    });
+  });
+}
+
+// ── PREVIEW BUILDERS ──
+function buildPrompt() {
+  if (!state.nodes.length) return "(empty — add steps to the canvas)";
+  const lines = ["Please work through the following steps in order. After each step, briefly confirm what you did before moving on.\n"];
+  state.nodes.forEach((n, i) => {
+    lines.push(`## Step ${i + 1}: ${n.name}`);
+    if (n.slug) lines.push(`> Skill: \`${n.slug}\``);
+    const body = n.content?.trim();
+    if (body) lines.push(`\n${body}`);
+    lines.push("");
+  });
+  return lines.join("\n");
+}
+
+function buildYaml(name, desc) {
+  const slug = (name || "my-workflow").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const description = desc || "Custom workflow assembled in Skill Playground";
+  const lines = [
+    `name: ${slug}`,
+    `description: |`,
+    `  ${description.replace(/\n/g, "\n  ")}`,
+    `provider: claude`,
+    `model: sonnet`,
+    ``,
+    `nodes:`,
+  ];
+
+  const nodeIds = state.nodes.map(n =>
+    n.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 32) || `step-${state.nodes.indexOf(n)+1}`
+  );
+
+  state.nodes.forEach((n, i) => {
+    lines.push(`  - id: ${nodeIds[i]}`);
+    if (i > 0) lines.push(`    depends_on: [${nodeIds[i - 1]}]`);
+    if (n.slug) lines.push(`    skill: ${n.slug}`);
+    const prompt = n.content?.trim();
+    if (prompt) {
+      lines.push(`    prompt: |`);
+      prompt.split("\n").forEach(l => lines.push(`      ${l}`));
+    }
+    lines.push("");
+  });
+  return lines.join("\n");
+}
+
+function buildRecipeJson() {
+  return JSON.stringify({
+    title: "Untitled workflow",
+    slugs: state.nodes.filter(n => n.slug).map(n => n.slug),
+    steps: state.nodes.map(n => ({ name: n.name, slug: n.slug, content: n.content, isCustom: n.isCustom })),
+    createdAt: new Date().toISOString(),
+  }, null, 2);
+}
+
+function buildClaudeMd() {
+  const lines = ["## Skills\n", "Include these skills in your Claude Code session:\n"];
+  state.nodes.filter(n => n.slug).forEach(n => {
+    lines.push(`- \`${n.slug}\` — ${n.description || n.name}`);
+  });
+  if (state.nodes.some(n => n.isCustom)) {
+    lines.push("\n## Custom Instructions\n");
+    state.nodes.filter(n => n.isCustom).forEach(n => {
+      lines.push(`### ${n.name}\n\n${n.content}\n`);
+    });
+  }
+  return lines.join("\n");
+}
+
+function updatePreview() {
+  const tab = state.activePreviewTab;
+  const skillCount = state.nodes.filter(n => !n.isCustom).length;
+  document.getElementById("previewMeta").textContent =
+    `${state.nodes.length} step${state.nodes.length !== 1 ? "s" : ""} · ${skillCount} from catalog`;
+
+  let text = "";
+  if (tab === "prompt") text = buildPrompt();
+  else if (tab === "yaml") text = buildYaml();
+  else if (tab === "recipe") text = buildRecipeJson();
+  else if (tab === "claudemd") text = buildClaudeMd();
+  document.getElementById("previewCode").textContent = text;
+}
+
+// ── SAVES ──
+function loadSaves() {
+  try { saves = JSON.parse(localStorage.getItem(SAVE_KEY) || "[]"); }
+  catch { saves = []; }
+  renderSaves();
+}
+
+function persistSaves() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
+  renderSaves();
+}
+
+function renderSaves() {
+  const host = document.getElementById("savesList");
+  document.getElementById("saveCount").textContent = saves.length ? `(${saves.length})` : "";
+  if (!saves.length) {
+    host.innerHTML = `<div class="empty" style="padding:6px 0;font-size:11px">No saved workflows yet.</div>`;
+    return;
+  }
+  host.innerHTML = saves.map((s, i) => `
+    <div class="save-item" data-i="${i}">
+      <span class="save-item-title">${escapeHtml(s.title)}</span>
+      <span class="save-item-count">${s.steps?.length ?? 0}s</span>
+      <button class="save-item-del" data-del="${i}" title="Delete">×</button>
+    </div>
+  `).join("");
+  host.querySelectorAll(".save-item").forEach((el) => {
+    const i = Number(el.dataset.i);
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("[data-del]")) return;
+      loadWorkflow(saves[i]);
+    });
+    el.querySelector("[data-del]").addEventListener("click", (e) => {
+      e.stopPropagation();
+      saves.splice(i, 1);
+      persistSaves();
+    });
+  });
+}
+
+function saveCurrentWorkflow(title, desc) {
+  saves.unshift({
+    id: uid(), title: title || "Untitled", description: desc || "",
+    steps: state.nodes.map(n => ({ ...n })),
+    savedAt: new Date().toISOString(),
+  });
+  if (saves.length > 30) saves.pop();
+  persistSaves();
+  toast(`Saved "${title || "Untitled"}"`);
+}
+
+function loadWorkflow(wf) {
+  state.nodes = (wf.steps || []).map(s => ({ ...s, id: uid() }));
+  renderCanvas();
+  updatePreview();
+  toast(`Loaded: ${wf.title}`);
+}
+
+// ── WIRE UI ──
+
+// Catalog filter chips
+document.getElementById("catalogFilters").addEventListener("click", (e) => {
+  const chip = e.target.closest(".filter-chip");
+  if (!chip) return;
+  document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  state.catalogFilter.type = chip.dataset.type;
+  applyFilter();
+});
+
+document.getElementById("catalogSearch").addEventListener("input", (e) => {
+  state.catalogFilter.q = e.target.value;
+  applyFilter();
+});
+
+// Custom step
+document.getElementById("btnAddCustom").addEventListener("click", () => {
+  const inp = document.getElementById("customStepInput");
+  addCustomNode(inp.value);
+  inp.value = "";
+});
+document.getElementById("customStepInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("btnAddCustom").click(); }
+});
+
+// Clear canvas
+document.getElementById("btnClearCanvas").addEventListener("click", () => {
+  if (!state.nodes.length) return;
+  if (!confirm("Clear all steps from canvas?")) return;
+  state.nodes = [];
+  renderCanvas();
+  updatePreview();
+});
+
+// Preview tabs
+document.getElementById("previewTabs").addEventListener("click", (e) => {
+  const tab = e.target.closest(".preview-tab");
+  if (!tab) return;
+  document.querySelectorAll(".preview-tab").forEach(t => t.classList.remove("active"));
+  tab.classList.add("active");
+  state.activePreviewTab = tab.dataset.tab;
+  updatePreview();
+});
+
+document.getElementById("btnCopyPreview").addEventListener("click", () => {
+  copyText(document.getElementById("previewCode").textContent);
+});
+
+// Save modal
+document.getElementById("btnSave").addEventListener("click", () => {
+  if (!state.nodes.length) { toast("Canvas is empty — add some steps first"); return; }
+  document.getElementById("saveModal").classList.remove("hidden");
+  setTimeout(() => document.getElementById("saveTitle").focus(), 50);
+});
+document.getElementById("btnSaveCancel").addEventListener("click", () => document.getElementById("saveModal").classList.add("hidden"));
+document.getElementById("btnSaveConfirm").addEventListener("click", () => {
+  const title = document.getElementById("saveTitle").value.trim();
+  const desc = document.getElementById("saveDesc").value.trim();
+  saveCurrentWorkflow(title, desc);
+  document.getElementById("saveModal").classList.add("hidden");
+  document.getElementById("saveTitle").value = "";
+  document.getElementById("saveDesc").value = "";
+});
+document.getElementById("saveModal").addEventListener("click", (e) => {
+  if (e.target.id === "saveModal") document.getElementById("saveModal").classList.add("hidden");
+});
+
+// Export modal
+document.getElementById("btnExport").addEventListener("click", () => {
+  if (!state.nodes.length) { toast("Canvas is empty — add some steps first"); return; }
+  document.getElementById("exportModal").classList.remove("hidden");
+  setTimeout(() => document.getElementById("exportName").focus(), 50);
+});
+document.getElementById("btnExportCancel").addEventListener("click", () => document.getElementById("exportModal").classList.add("hidden"));
+document.getElementById("exportModal").addEventListener("click", (e) => {
+  if (e.target.id === "exportModal") document.getElementById("exportModal").classList.add("hidden");
+});
+document.getElementById("btnExportPrompt").addEventListener("click", () => {
+  copyText(buildPrompt());
+  document.getElementById("exportModal").classList.add("hidden");
+});
+document.getElementById("btnExportYaml").addEventListener("click", () => {
+  const name = document.getElementById("exportName").value;
+  const desc = document.getElementById("exportDesc").value;
+  copyText(buildYaml(name, desc));
+  document.getElementById("exportModal").classList.add("hidden");
+});
+document.getElementById("btnExportDownload").addEventListener("click", () => {
+  const name = document.getElementById("exportName").value || "my-workflow";
+  const desc = document.getElementById("exportDesc").value;
+  const yaml = buildYaml(name, desc);
+  const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "workflow";
+  const blob = new Blob([yaml], { type: "text/yaml" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${slug}.yaml`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById("exportModal").classList.add("hidden");
+  toast("Downloaded!");
+});
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    document.getElementById("saveModal").classList.add("hidden");
+    document.getElementById("exportModal").classList.add("hidden");
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "s" && !e.target.matches("input,textarea")) {
+    e.preventDefault();
+    document.getElementById("btnSave").click();
+  }
+});
+
+// ── INIT ──
+loadSaves();
+renderCanvas();
+updatePreview();
+loadCatalog();
+</script>
+</body>
+</html>

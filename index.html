@@ -34,6 +34,7 @@
         --command: #b58cff;
         --agent: #4ecdc4;
         --rule: #f0c040;
+        --workflow: #ff8c69;
         --scope-plugin: #7ec07a;
         --scope-user: #e0b341;
         --scope-project: #ff9874;
@@ -56,6 +57,7 @@
         --command: #6d3ec2;
         --agent: #1a8c86;
         --rule: #a08010;
+        --workflow: #c4530a;
         --scope-plugin: #3e7a3a;
         --scope-user: #a07a12;
         --scope-project: #c8654a;
@@ -183,6 +185,7 @@
       .bundle-card-types .t-skill  { color: var(--skill); }
       .bundle-card-types .t-command{ color: var(--command); }
       .bundle-card-types .t-rule   { color: var(--rule); }
+      .bundle-card-types .t-workflow { color: var(--workflow); }
       #bundleList { max-height: 320px; overflow-y: auto; }
       #bundleList.collapsed { max-height: 180px; }
       .toggle-more-bundles {
@@ -311,6 +314,7 @@
       .badge.command { background: rgba(181,140,255,0.12); color: var(--command); border: 1px solid rgba(181,140,255,0.25); }
       .badge.agent { background: rgba(78,205,196,0.12); color: var(--agent); border: 1px solid rgba(78,205,196,0.25); }
       .badge.rule  { background: rgba(240,192,64,0.12); color: var(--rule);  border: 1px solid rgba(240,192,64,0.25); }
+      .badge.workflow { background: rgba(255,140,105,0.12); color: var(--workflow); border: 1px solid rgba(255,140,105,0.25); }
       .name-wrap { display: flex; flex-direction: column; gap: 3px; }
       .name {
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
@@ -735,6 +739,14 @@
       }
       .detail-close-btn:hover { color: var(--fg); background: var(--bg-hover); }
 
+      /* Single scroll container — everything below topbar scrolls together */
+      .detail-scroll-area {
+        flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+        /* scrollbar styling */
+        scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+      }
+      .detail-scroll-area::-webkit-scrollbar { width: 5px; }
+      .detail-scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
       /* Header: name + slug + actions */
       .detail-panel-head {
         padding: 14px 18px 12px;
@@ -774,7 +786,7 @@
 
       /* Scrollable body */
       .detail-body {
-        flex: 1; overflow-y: auto; padding: 20px 20px 28px;
+        padding: 20px 20px 28px; flex-shrink: 0;
         font-size: 13px; line-height: 1.7; color: var(--fg-mid);
       }
       .detail-body h1, .detail-body h2 {
@@ -834,6 +846,7 @@
       <h1>Skill Browser</h1>
       <span class="meta" id="meta">loading...</span>
       <span class="meta" style="margin-left:auto"><span class="kbd">/</span> search · <span class="kbd">B</span> basket · <span class="kbd">C</span> compose · <span class="kbd">?</span> help</span>
+      <a href="playground.html" class="icon-btn" title="Open Skill Playground — assemble & export workflows" style="text-decoration:none;font-size:13px">⚗️</a>
       <button id="themeToggle" class="icon-btn" title="Toggle theme (T)">◐</button>
       <button id="settingsBtn" class="icon-btn" title="Settings">⚙</button>
       <button id="helpBtn" class="icon-btn" title="Keyboard shortcuts (?)">?</button>
@@ -856,6 +869,7 @@
           <button data-type="skill">Skills</button>
           <button data-type="command">Commands</button>
           <button data-type="rule">Rules</button>
+          <button data-type="workflow">Workflows</button>
         </div>
         <h2>Scope</h2>
         <div id="scopes"></div>
@@ -937,22 +951,24 @@
         </div>
         <button class="detail-close-btn" id="detailCloseBtn" title="Close (Esc)">✕</button>
       </div>
-      <div class="detail-panel-head">
-        <div class="detail-title-row">
-          <div class="detail-title-block">
-            <div class="name" id="detailName"></div>
-            <div class="slug" id="detailSlug"></div>
+      <div class="detail-scroll-area" id="detailScrollArea">
+        <div class="detail-panel-head">
+          <div class="detail-title-row">
+            <div class="detail-title-block">
+              <div class="name" id="detailName"></div>
+              <div class="slug" id="detailSlug"></div>
+            </div>
           </div>
+          <div class="detail-panel-actions">
+            <button id="detailCopyBtn">Copy slug</button>
+            <button id="detailCopyBodyBtn" title="Copy full skill as Markdown">Copy MD</button>
+            <button id="detailBasketBtn">+ Basket</button>
+          </div>
+          <div class="detail-desc-row" id="detailDesc"></div>
         </div>
-        <div class="detail-panel-actions">
-          <button id="detailCopyBtn">Copy slug</button>
-          <button id="detailCopyBodyBtn">Copy body</button>
-          <button id="detailBasketBtn">+ Basket</button>
-        </div>
-        <div class="detail-desc-row" id="detailDesc"></div>
+        <div class="detail-meta-row" id="detailMetaRow"></div>
+        <div class="detail-body" id="detailBody"></div>
       </div>
-      <div class="detail-meta-row" id="detailMetaRow"></div>
-      <div class="detail-body" id="detailBody"></div>
     </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
@@ -1048,7 +1064,7 @@
         const ageDays = builtAt ? (Date.now() - builtAt) / 86_400_000 : 0;
         const ageStr = builtAt ? ` · built ${timeAgo(builtAt)}` : "";
         document.getElementById("meta").textContent =
-          `${data.counts.total} items · ${data.counts.agents ?? 0} agents · ${data.counts.skills} skills · ${data.counts.commands} commands · ${data.counts.rules ?? 0} rules · ${data.sources ? data.sources.length : 0} sources${ageStr}`;
+          `${data.counts.total} items · ${data.counts.agents ?? 0} agents · ${data.counts.skills} skills · ${data.counts.commands} commands · ${data.counts.rules ?? 0} rules${data.counts.workflows ? ` · ${data.counts.workflows} workflows` : ""} · ${data.sources ? data.sources.length : 0} sources${ageStr}`;
         if (ageDays > 3) {
           const banner = document.createElement("div");
           banner.id = "staleBanner";
@@ -1325,7 +1341,8 @@
         if (b.skill) parts.push(`<span class="t-skill">${b.skill}s</span>`);
         if (b.command) parts.push(`<span class="t-command">${b.command}c</span>`);
         if (b.rule) parts.push(`<span class="t-rule">${b.rule}r</span>`);
-        const total = b.agent + b.skill + b.command + b.rule;
+        if (b.workflow) parts.push(`<span class="t-workflow">${b.workflow}w</span>`);
+        const total = b.agent + b.skill + b.command + b.rule + (b.workflow || 0);
         el.innerHTML = `
           <div class="bundle-card-top">
             <span class="bundle-card-source">${escapeHtml(srcLabel)}</span>
@@ -1690,8 +1707,8 @@
         }
         // Scroll body to top on each open
         bodyEl.scrollTop = 0;
-        // "More from this bundle" strip
-        const panel = document.getElementById("detailPanel");
+        // "More from this bundle" strip — append inside scroll area so it scrolls
+        const panel = document.getElementById("detailScrollArea");
         let relEl = panel.querySelector(".detail-related");
         const related = state.items.filter((x) =>
           x.slug !== it.slug && x.source === it.source && x.category === it.category
@@ -1786,8 +1803,16 @@
         if (!_detailSlug) return;
         const it = state.byslug.get(_detailSlug);
         if (!it) return;
-        copyToClipboard(it.body || it.description || "");
-        showToast("Body copied");
+        const header = [
+          `# ${it.name}`,
+          ``,
+          `**Type:** ${it.type}  |  **Source:** ${it.source || ""}  |  **Category:** ${it.category}`,
+          `**Slug:** \`${it.slug}\``,
+          it.description ? `\n> ${it.description}` : "",
+          `\n---\n`,
+        ].filter(Boolean).join("\n");
+        copyToClipboard(header + (it.body || it.description || ""));
+        showToast("Markdown copied");
       });
       document.getElementById("detailBasketBtn").addEventListener("click", () => {
         if (!_detailSlug) return;

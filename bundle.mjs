@@ -92,6 +92,11 @@ function run() {
   const outPath = join(distDir, "skill-browser.html");
   writeFileSync(outPath, merged, "utf8");
 
+  // Copy playground.html to dist — standalone, no inlining needed
+  const playgroundSrc = join(__dirname, "playground.html");
+  const playgroundDst = join(distDir, "playground.html");
+  writeFileSync(playgroundDst, readFileSync(playgroundSrc, "utf8"), "utf8");
+
   // ---- 5. log size + item count ----
   const { size } = statSync(outPath);
   const itemCount = extractItemCount(dataJs);

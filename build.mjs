@@ -487,8 +487,60 @@ function collectRules(source) {
   return items;
 }
 
+// ------------- Workflows (.archon/workflows/*.yaml) -------------
+
+function parseWorkflowYaml(text) {
+  const nameMatch = text.match(/^name:\s*(.+)$/m);
+  const name = nameMatch ? nameMatch[1].trim() : "";
+
+  // Description: block scalar (|) or inline string
+  let description = "";
+  const blockDesc = text.match(/^description:\s*\|\s*\n((?:[ \t]+[^\n]*\n?)+)/m);
+  if (blockDesc) {
+    description = blockDesc[1].replace(/^[ \t]+/gm, "").trim().split(/\n/)[0];
+  } else {
+    const inlineDesc = text.match(/^description:\s*"?(.+?)"?\s*$/m);
+    if (inlineDesc) description = inlineDesc[1].trim();
+  }
+
+  // Node ids — lines matching "  - id: <value>"
+  const nodeIds = [...text.matchAll(/^\s+-\s+id:\s*(.+)$/gm)].map((m) => m[1].trim());
+
+  return { name, description, nodeIds };
+}
+
+function collectWorkflows(source) {
+  const archonDir = join(source.root, ".archon", "workflows");
+  if (!isDir(archonDir)) return [];
+  const items = [];
+  for (const entry of safeReaddir(archonDir)) {
+    if (!entry.endsWith(".yaml") && !entry.endsWith(".yml")) continue;
+    const full = join(archonDir, entry);
+    if (!isFile(full)) continue;
+    const text = readFileSync(full, "utf8");
+    const { name, description, nodeIds } = parseWorkflowYaml(text);
+    if (!name) continue;
+    const { category, categoryReason } = deriveCategory(name, source);
+    items.push({
+      type: "workflow",
+      name,
+      slug: `workflow:${source.namespace ? source.namespace + "/" : ""}${name}`,
+      description: description || (nodeIds.length ? `${nodeIds.length}-step: ${nodeIds.join(" → ")}` : "Archon workflow"),
+      category,
+      categoryReason,
+      scope: source.scope,
+      source: source.label,
+      namespace: source.namespace,
+      path: full,
+      body: text,
+      workflowNodes: nodeIds,
+    });
+  }
+  return items;
+}
+
 function collectSource(source) {
-  return [...collectAgents(source), ...collectSkills(source), ...collectCommands(source), ...collectRules(source)];
+  return [...collectAgents(source), ...collectSkills(source), ...collectCommands(source), ...collectRules(source), ...collectWorkflows(source)];
 }
 
 // ------------- Main -------------
@@ -534,11 +586,11 @@ function main() {
     scopes[it.scope] = (scopes[it.scope] ?? 0) + 1;
     sourcesCount[it.source] = (sourcesCount[it.source] ?? 0) + 1;
     const bkey = `${it.source}||${it.category}`;
-    if (!bundleMap.has(bkey)) bundleMap.set(bkey, { source: it.source, category: it.category, agent: 0, skill: 0, command: 0, rule: 0 });
+    if (!bundleMap.has(bkey)) bundleMap.set(bkey, { source: it.source, category: it.category, agent: 0, skill: 0, command: 0, rule: 0, workflow: 0 });
     bundleMap.get(bkey)[it.type] = (bundleMap.get(bkey)[it.type] ?? 0) + 1;
   }
   const bundles = [...bundleMap.values()]
-    .map((b) => ({ ...b, total: b.agent + b.skill + b.command + b.rule }))
+    .map((b) => ({ ...b, total: b.agent + b.skill + b.command + b.rule + b.workflow }))
     .filter((b) => b.total >= 3)
     .sort((a, b) => b.total - a.total);
 
@@ -557,6 +609,7 @@ function main() {
       skills: items.filter((i) => i.type === "skill").length,
       commands: items.filter((i) => i.type === "command").length,
       rules: items.filter((i) => i.type === "rule").length,
+      workflows: items.filter((i) => i.type === "workflow").length,
     },
     categories,
     scopes,
@@ -586,7 +639,7 @@ function main() {
   }
 
   console.log(
-    `Wrote ${items.length} items (${data.counts.agents} agents + ${data.counts.skills} skills + ${data.counts.commands} commands + ${data.counts.rules} rules) from ${sources.length} sources`
+    `Wrote ${items.length} items (${data.counts.agents} agents + ${data.counts.skills} skills + ${data.counts.commands} commands + ${data.counts.rules} rules + ${data.counts.workflows} workflows) from ${sources.length} sources`
   );
   if (opts.verbose) {
     console.error("scopes:", scopes);
