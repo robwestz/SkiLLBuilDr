@@ -948,8 +948,18 @@
         state.categories = data.categories || {};
         state.scopes = data.scopes || {};
         state.sourcesCount = data.sourcesCount || {};
+        const builtAt = data.generatedAt ? new Date(data.generatedAt) : null;
+        const ageDays = builtAt ? (Date.now() - builtAt) / 86_400_000 : 0;
+        const ageStr = builtAt ? ` · built ${timeAgo(builtAt)}` : "";
         document.getElementById("meta").textContent =
-          `${data.counts.total} items · ${data.counts.skills} skills · ${data.counts.commands} commands · ${data.sources ? data.sources.length : 0} sources`;
+          `${data.counts.total} items · ${data.counts.skills} skills · ${data.counts.commands} commands · ${data.sources ? data.sources.length : 0} sources${ageStr}`;
+        if (ageDays > 3) {
+          const banner = document.createElement("div");
+          banner.id = "staleBanner";
+          banner.style.cssText = "background:var(--bg-3);border-bottom:1px solid var(--border);padding:7px 18px;font-size:12px;color:var(--fg-dim);display:flex;align-items:center;gap:10px";
+          banner.innerHTML = `<span>⚠ Catalog last rebuilt ${timeAgo(builtAt)} — new plugins may be missing.</span><button onclick="this.parentElement.remove()" style="margin-left:auto;background:transparent;border:0;color:var(--fg-dim);cursor:pointer;font-size:14px;padding:0 4px">✕</button><code style="background:var(--bg);border:1px solid var(--border);padding:2px 6px;border-radius:3px;font-size:11px">node build.mjs</code>`;
+          document.querySelector("nav.tabs").after(banner);
+        }
 
         const recipes = window.__ECC_RECIPES__ || { recipes: [] };
         state.seedRecipes = recipes.recipes || [];
@@ -1708,6 +1718,16 @@
       function escapeHtml(s) {
         return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
       }
+      function timeAgo(date) {
+        const secs = Math.round((Date.now() - date) / 1000);
+        if (secs < 60) return "just now";
+        const mins = Math.round(secs / 60);
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.round(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        const days = Math.round(hrs / 24);
+        return `${days}d ago`;
+      }
 
       // ---------- tabs ----------
       function switchTab(name) {
@@ -1759,6 +1779,18 @@
           </div>
           <div class="settings-section">
             <p class="settings-section-title">Data</p>
+            ${(() => {
+              const d = window.__ECC_DATA__;
+              const builtAt = d?.generatedAt ? new Date(d.generatedAt) : null;
+              const age = builtAt ? timeAgo(builtAt) : "unknown";
+              const stale = builtAt && (Date.now() - builtAt) > 3 * 86_400_000;
+              return `<p class="settings-note" style="margin-bottom:10px">
+                Catalog: <b>${d?.counts?.total ?? "?"} items</b> from <b>${d?.sources?.length ?? "?"} sources</b>
+                — last rebuilt <b style="${stale ? "color:var(--warn,#e8a94a)" : ""}">${age}</b>
+                ${stale ? '<span style="color:var(--warn,#e8a94a)">⚠</span>' : ''}
+                <br>To refresh: <code style="background:var(--bg-3);padding:1px 5px;border-radius:3px;font-size:11px">node build.mjs</code>
+              </p>`;
+            })()}
             <button type="button" id="settingsClearData" style="font-size:12px;padding:6px 12px;background:var(--bg-3);border:1px solid var(--border);color:var(--fg-mid);border-radius:5px;cursor:pointer">Clear all stored data (basket, settings, recipes)</button>
           </div>
           <div class="actions">
