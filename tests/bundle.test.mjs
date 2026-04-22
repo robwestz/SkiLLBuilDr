@@ -33,6 +33,16 @@ test("bundle: inlines data and recipes", () => {
   assert.ok(content.includes("window.__ECC_RECIPES__"), "must inline __ECC_RECIPES__");
 });
 
+test("bundle: escapes literal closing script tags inside inlined payloads", () => {
+  const content = readFileSync(DIST, "utf8");
+  const match = content.match(
+    /<script>\s*(window\.__ECC_DATA__\s*=\s*[\s\S]*?)\s*<\/script>\s*<script>\s*window\.__ECC_RECIPES__/i
+  );
+  assert.ok(match, "must inline data script immediately before recipes script");
+  assert.ok(match[1].includes("<\\/script>"), "inlined payloads must escape literal </script> sequences");
+  assert.ok(!/<\/script>/i.test(match[1]), "raw </script> must not appear inside the inlined data payload");
+});
+
 test("bundle: inlines hash-router", () => {
   const content = readFileSync(DIST, "utf8");
   assert.ok(content.includes("HashRouter"), "must inline hash-router (window.HashRouter)");

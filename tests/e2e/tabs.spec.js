@@ -39,4 +39,46 @@ test.describe('Tab navigation', () => {
     await expect(page.locator('#intentInput')).toBeVisible();
     await expect(page.locator('#runIntent')).toBeVisible();
   });
+
+  test('Playground link lives after Recipes, has hover state, and opens the playground page', async ({ page }) => {
+    await gotoApp(page);
+
+    const playground = page.locator('nav.tabs a.tab-link-btn[href="playground.html"]');
+    await expect(playground).toBeVisible();
+    await expect(playground).toContainText('Playground');
+
+    const followsRecipes = await playground.evaluate(
+      (el) => el.previousElementSibling?.matches('button[data-tab="recipes"]') ?? false
+    );
+    expect(followsRecipes).toBe(true);
+
+    const colorBeforeHover = await playground.evaluate((el) => getComputedStyle(el).color);
+    await playground.hover();
+    const colorAfterHover = await playground.evaluate((el) => getComputedStyle(el).color);
+    expect(colorAfterHover).not.toBe(colorBeforeHover);
+
+    await Promise.all([
+      page.waitForURL(/playground\.html$/),
+      playground.click(),
+    ]);
+    await expect(page).toHaveTitle(/Skill Playground/i);
+    await expect(page.locator('.topbar-title')).toContainText('Playground');
+  });
+
+  test('top navigation does not overflow the viewport on narrow screens', async ({ page }) => {
+    await gotoApp(page);
+
+    const layout = await page.evaluate(() => {
+      const nav = document.querySelector('nav.tabs');
+      return {
+        pageScrollWidth: document.documentElement.scrollWidth,
+        pageClientWidth: document.documentElement.clientWidth,
+        navScrollWidth: nav?.scrollWidth ?? 0,
+        navClientWidth: nav?.clientWidth ?? 0,
+      };
+    });
+
+    expect(layout.pageScrollWidth).toBeLessThanOrEqual(layout.pageClientWidth + 1);
+    expect(layout.navScrollWidth).toBeLessThanOrEqual(layout.navClientWidth + 1);
+  });
 });

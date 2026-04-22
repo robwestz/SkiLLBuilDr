@@ -50,7 +50,7 @@ function run() {
   // Done via replace, case-insensitive, only if the substring actually appears.
   function escapeScriptClose(src) {
     if (!/<\/script>/i.test(src)) return src;
-    return src.replace(/<\/script>/gi, "</scr" + "ipt>");
+    return src.replace(/<\/script>/gi, "<\\/script>");
   }
 
   const inlineAnalytics = `<script>\n${escapeScriptClose(analyticsJs)}\n</script>`;

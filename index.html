@@ -126,12 +126,28 @@
         color: var(--fg);
         border-bottom-color: var(--accent);
       }
+      nav.tabs .tab-link-btn {
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        color: var(--fg-dim);
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      nav.tabs .tab-link-btn:hover { color: var(--fg); }
       nav.tabs .spacer { flex: 1; }
       nav.tabs .basket-btn {
         color: var(--fg-mid);
         padding: 10px 14px;
         position: relative;
       }
+      nav.tabs .basket-btn .basket-label { margin-left: 4px; }
       nav.tabs .basket-btn.has-items { color: var(--accent); font-weight: 600; }
       nav.tabs .basket-btn .count {
         display: inline-block;
@@ -682,8 +698,21 @@
         #browsePane { grid-template-columns: 180px 1fr; }
       }
       @media (max-width: 480px) {
-        /* Hide keyboard-shortcut hints on touch — irrelevant and crowds the header */
+        /* Hide keyboard-shortcut hints on touch - irrelevant and crowds the header */
         header .meta:not(#meta) { display: none; }
+        /* Keep nav actions on one row without horizontal overflow */
+        nav.tabs { padding: 0 8px; gap: 0; }
+        nav.tabs button,
+        nav.tabs .tab-link-btn,
+        nav.tabs .basket-btn {
+          font-size: 12px;
+          padding: 10px 8px;
+        }
+        nav.tabs .spacer { display: none; }
+        nav.tabs .tab-link-btn { justify-content: center; min-width: 38px; }
+        nav.tabs .tab-link-btn .tab-link-label,
+        nav.tabs .basket-btn .basket-label { display: none; }
+        nav.tabs .basket-btn .basket-emoji { margin-right: 4px; }
         /* Collapse browse sidebar; search alone is sufficient on phone */
         #browsePane { grid-template-columns: 1fr; }
         #browsePane aside { display: none; }
@@ -846,7 +875,6 @@
       <h1>Skill Browser</h1>
       <span class="meta" id="meta">loading...</span>
       <span class="meta" style="margin-left:auto"><span class="kbd">/</span> search · <span class="kbd">B</span> basket · <span class="kbd">C</span> compose · <span class="kbd">?</span> help</span>
-      <a href="playground.html" class="icon-btn" title="Open Skill Playground — assemble & export workflows" style="text-decoration:none;font-size:13px">⚗️</a>
       <button id="themeToggle" class="icon-btn" title="Toggle theme (T)">◐</button>
       <button id="settingsBtn" class="icon-btn" title="Settings">⚙</button>
       <button id="helpBtn" class="icon-btn" title="Keyboard shortcuts (?)">?</button>
@@ -856,8 +884,16 @@
       <button data-tab="browse" class="active">Browse</button>
       <button data-tab="compose">Compose</button>
       <button data-tab="recipes">Recipes</button>
+      <a href="playground.html" class="tab-link-btn" title="Skill Playground — assemble &amp; export workflows" aria-label="Open Skill Playground">
+        <span class="tab-link-label">Playground</span>
+        <span class="tab-link-icon" aria-hidden="true">⚗️</span>
+      </a>
       <div class="spacer"></div>
-      <button class="basket-btn" id="basketBtn">🧺 Basket <span class="count" id="basketCount">0</span></button>
+      <button class="basket-btn" id="basketBtn">
+        <span class="basket-emoji" aria-hidden="true">🧺</span>
+        <span class="basket-label">Basket</span>
+        <span class="count" id="basketCount">0</span>
+      </button>
     </nav>
 
     <div class="pane active" id="browsePane">
