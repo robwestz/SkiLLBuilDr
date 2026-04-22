@@ -136,6 +136,10 @@ Inspiration: Robin's prior tool-hub builds at `~/Downloads/dr3mr/tool3r/` and `~
 - Mines inspiration from prior builds in `~/Downloads/`.
 - Uses a **fact-forcing gate** (ECC `gateguard` skill). Every Edit/Write/Bash requires 4 facts up front: callers, duplicate check, data shape, verbatim instruction. Factor the latency in.
 
+## Active autonomous plan
+
+If you are **Sonnet** picking up during Robin's token-reset window, read `SONNET_HANDOFF.md` first — it contains the phase-by-phase production-grade plan (Fas 0 v1 PR 2 → Fas 1 v1 PR 2), rules of engagement, skill cheat-sheet, and the progress tracker you update at the end of each session. Fas 0 v1 PR 1 (deep-link hash routing) is already done.
+
 ## How to start a new session
 
 Open Claude Code with `~/.claude/ecc-browser/` as the working directory. First-turn prompts that work well:

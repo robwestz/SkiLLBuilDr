@@ -34,6 +34,7 @@ function parseArgs(argv) {
     format: "tsv",
     listCategories: false,
     listSources: false,
+    debugMisc: false,
     help: false,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -46,6 +47,7 @@ function parseArgs(argv) {
     else if (a === "--format") opts.format = argv[++i];
     else if (a === "--list-categories") opts.listCategories = true;
     else if (a === "--list-sources") opts.listSources = true;
+    else if (a === "--debug-misc") opts.debugMisc = true;
     else if (a === "--help" || a === "-h") opts.help = true;
     else opts.terms.push(a);
   }
@@ -64,6 +66,7 @@ Options:
   --format tsv|json             Output format (default: tsv)
   --list-categories             Show categories with counts
   --list-sources                Show sources with counts
+  --debug-misc                  Show all Misc items with their categoryReason
   -h, --help                    Show this help
 
 Examples:
@@ -71,7 +74,8 @@ Examples:
   node query.mjs --type command review
   node query.mjs --source plugin:posthog
   node query.mjs --scope user --format json
-  node query.mjs --category Security --limit 20`);
+  node query.mjs --category Security --limit 20
+  node query.mjs --debug-misc`);
 }
 
 function score(it, tokens) {
@@ -106,6 +110,25 @@ function main() {
     const entries = Object.entries(data.sourcesCount || {}).sort((a, b) => b[1] - a[1]);
     for (const [src, count] of entries) {
       console.log(`${String(count).padStart(4)}  ${src}`);
+    }
+    return;
+  }
+
+  if (opts.debugMisc) {
+    const misc = data.items.filter((it) => it.category === "Misc");
+    // Group by categoryReason to see patterns
+    const byReason = new Map();
+    for (const it of misc) {
+      const r = it.categoryReason || "unknown";
+      if (!byReason.has(r)) byReason.set(r, []);
+      byReason.get(r).push(it);
+    }
+    console.error(`${misc.length} items in Misc across ${byReason.size} reason(s):\n`);
+    for (const [reason, items] of [...byReason.entries()].sort((a, b) => b[1].length - a[1].length)) {
+      console.log(`── ${reason}  (${items.length})`);
+      for (const it of items) {
+        console.log(`   ${it.type.padEnd(8)} ${it.name.padEnd(40)} ${it.source || ""}`);
+      }
     }
     return;
   }

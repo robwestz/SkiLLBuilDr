@@ -114,7 +114,6 @@ function firstLine(body) {
 function deriveCategory(name, source) {
   const n = name.toLowerCase();
   const src = (source && source.namespace) || "";
-  // Source-based defaults first (applies only if the name doesn't hit a stronger rule below)
   const sourceDefaults = {
     "posthog": "PostHog",
     "data": "Data",
@@ -202,14 +201,30 @@ function deriveCategory(name, source) {
     [/^blueprint|product-capability|product-lens|^project-|^workspace-planner/, "Planning"],
     [/documentation-lookup|exa-search|search-first|iterative-retrieval|model-route|dashboard-builder|fal-ai-media|nutrient-document-processing|jira|jira-integration|regex-vs-llm|browser-use|cli-anything-obsidian|cli-hub-meta-skill|deep-research|last30days/, "AI Ops"],
     [/social-graph|connections-optimizer|opensource-pipeline|visa-doc-translate|code-tour|click-path-audit|coding-standards|openclaw|secure-linux|performance-report-generator|portable-kit-prompt-compiler|rules-distill|api-connector-builder|dmux-workflows|enterprise-agent-ops|build-fix|gan-build|gan-design|^plan$/, "ECC-meta"],
+    // Agent role names (no prefix, generic role nouns)
+    [/^architect$|^code-architect$|^a11y-architect$|^analyst$|^executor$|^scientist$|^gan-/, "Agents"],
+    [/^planner$/, "Planning"],
+    [/^critic$|^comment-analyzer$|^typescript-reviewer$/, "Review"],
+    [/^designer$|^type-design-analyzer$|^a11y-/, "Frontend/UI"],
+    [/^build-error-resolver$|^silent-failure-hunter$|^performance-optimizer$|^tracer$|^trace$/, "Debug"],
+    [/^chief-of-staff$|^conversation-analyzer$/, "Ops"],
+    [/^database-reviewer$/, "Data"],
+    [/^typescript-reviewer$/, "Node/TS"],
+    [/^doc-updater$|^code-explorer$|^code-simplifier$|^explore$|^verifier$/, "ECC-meta"],
+    [/^docs-lookup$|^autoresearch$|^wiki$|^external-context$|^deep-dive$|^deep-interview$/, "AI Ops"],
+    [/^opensource-forker$|^opensource-packager$|^opensource-sanitizer$/, "DevOps"],
+    [/^pr-test-analyzer$|^qa-tester$|^ultraqa$|^visual-verdict$/, "Testing"],
+    [/^writer$|^writer-memory$/, "Content"],
+    [/^autopilot$|^ultrawork$|^ralph$|^ralplan$/, "Agents"],
+    [/^omc-|^ccg$|^sciomc$|^deepinit$|^hud$|^configure-notifications$|^remember$|^self-improve$|^skillify$|^skill$|^ask$|^cancel$|^setup$|^release$/, "ECC-meta"],
+    [/^document-specialist$/, "Content"],
   ];
   for (const [re, cat] of rules) {
-    if (re.test(n)) return cat;
+    if (re.test(n)) return { category: cat, categoryReason: `name-rule:${re.source.slice(0, 40)}` };
   }
-  if (n.endsWith("-patterns") || n.endsWith("-testing")) return "Patterns";
-  // Fall back to source-based default
-  if (src && sourceDefaults[src]) return sourceDefaults[src];
-  return "Misc";
+  if (n.endsWith("-patterns") || n.endsWith("-testing")) return { category: "Patterns", categoryReason: "name-suffix:-patterns/-testing" };
+  if (src && sourceDefaults[src]) return { category: sourceDefaults[src], categoryReason: `source-default:${src}` };
+  return { category: "Misc", categoryReason: "fallback:no-rule-matched" };
 }
 
 // ------------- Source discovery -------------
@@ -320,13 +335,15 @@ function collectSkills(source) {
     const text = readFileSync(skillFile, "utf8");
     const fm = parseFrontmatter(text);
     const name = fm.name || entry;
+    const { category: skillCat, categoryReason: skillReason } = deriveCategory(name, source);
     items.push({
       type: "skill",
       name,
       slug: buildSlug(source, name),
       description: fm.description || "",
       origin: fm.origin || "",
-      category: deriveCategory(name, source),
+      category: skillCat,
+      categoryReason: skillReason,
       scope: source.scope,
       source: source.label,
       namespace: source.namespace,
@@ -358,13 +375,15 @@ function collectCommands(source) {
         if (subNamespace && source.scope !== "plugin") {
           effectiveSource = { ...source, namespace: subNamespace };
         }
+        const { category: cmdCat, categoryReason: cmdReason } = deriveCategory(effectiveName, effectiveSource);
         items.push({
           type: "command",
           name: effectiveName,
           slug: buildSlug(effectiveSource, effectiveName),
           description: fm.description || "",
           argumentHint: fm["argument-hint"] || "",
-          category: deriveCategory(effectiveName, effectiveSource),
+          category: cmdCat,
+          categoryReason: cmdReason,
           scope: source.scope,
           source: subNamespace && source.scope !== "plugin" ? `${source.label}:${subNamespace}` : source.label,
           namespace: effectiveSource.namespace,
@@ -388,12 +407,14 @@ function collectAgents(source) {
     const name = basename(entry, ".md");
     const text = readFileSync(full, "utf8");
     const fm = parseFrontmatter(text);
+    const { category: agentCat, categoryReason: agentReason } = deriveCategory(fm.name || name, source);
     items.push({
       type: "agent",
       name: fm.name || name,
       slug: buildSlug(source, fm.name || name),
       description: fm.description || "",
-      category: deriveCategory(fm.name || name, source),
+      category: agentCat,
+      categoryReason: agentReason,
       scope: source.scope,
       source: source.label,
       namespace: source.namespace,
@@ -438,13 +459,20 @@ function collectRules(source) {
         const fm = parseFrontmatter(text);
         const body = extractBody(text);
         const displayName = langDir ? `${langDir}/${name}` : name;
-        const category = RULE_LANG_CATEGORY[langDir] || deriveCategory(name, source);
+        let ruleCat, ruleReason;
+        if (RULE_LANG_CATEGORY[langDir]) {
+          ruleCat = RULE_LANG_CATEGORY[langDir];
+          ruleReason = `rule-lang-dir:${langDir}`;
+        } else {
+          ({ category: ruleCat, categoryReason: ruleReason } = deriveCategory(name, source));
+        }
         items.push({
           type: "rule",
           name: fm.name || displayName,
           slug: `rule:${source.namespace ? source.namespace + "/" : ""}${displayName}`,
           description: fm.description || firstLine(body),
-          category,
+          category: ruleCat,
+          categoryReason: ruleReason,
           scope: source.scope,
           source: source.label,
           namespace: source.namespace,
@@ -500,11 +528,19 @@ function main() {
   const categories = {};
   const scopes = {};
   const sourcesCount = {};
+  const bundleMap = new Map();
   for (const it of items) {
     categories[it.category] = (categories[it.category] ?? 0) + 1;
     scopes[it.scope] = (scopes[it.scope] ?? 0) + 1;
     sourcesCount[it.source] = (sourcesCount[it.source] ?? 0) + 1;
+    const bkey = `${it.source}||${it.category}`;
+    if (!bundleMap.has(bkey)) bundleMap.set(bkey, { source: it.source, category: it.category, agent: 0, skill: 0, command: 0, rule: 0 });
+    bundleMap.get(bkey)[it.type] = (bundleMap.get(bkey)[it.type] ?? 0) + 1;
   }
+  const bundles = [...bundleMap.values()]
+    .map((b) => ({ ...b, total: b.agent + b.skill + b.command + b.rule }))
+    .filter((b) => b.total >= 3)
+    .sort((a, b) => b.total - a.total);
 
   const data = {
     generatedAt: new Date().toISOString(),
@@ -525,6 +561,7 @@ function main() {
     categories,
     scopes,
     sourcesCount,
+    bundles,
     items,
   };
 

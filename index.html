@@ -162,6 +162,49 @@
       }
       .source-list { max-height: 260px; overflow-y: auto; }
       .source-list.collapsed { max-height: 130px; }
+
+      /* Bundle cards */
+      .bundle-card {
+        display: flex; flex-direction: column; gap: 3px;
+        padding: 7px 10px; margin: 3px 0;
+        background: var(--bg-3); border: 1px solid var(--border);
+        border-radius: 6px; cursor: pointer;
+        transition: background 80ms, border-color 80ms;
+        touch-action: manipulation;
+      }
+      .bundle-card:hover { background: var(--bg-hover); border-color: var(--accent-dim); }
+      .bundle-card.active { border-color: var(--accent); background: rgba(217,119,87,.08); }
+      .bundle-card-top { display: flex; align-items: baseline; gap: 6px; }
+      .bundle-card-source { font-size: 12px; font-weight: 600; color: var(--fg); }
+      .bundle-card-cat { font-size: 11px; color: var(--fg-dim); flex: 1; }
+      .bundle-card-total { font-size: 11px; color: var(--fg-mid); font-weight: 600; }
+      .bundle-card-types { font-size: 10.5px; color: var(--fg-dim); letter-spacing: .2px; }
+      .bundle-card-types .t-agent  { color: var(--agent); }
+      .bundle-card-types .t-skill  { color: var(--skill); }
+      .bundle-card-types .t-command{ color: var(--command); }
+      .bundle-card-types .t-rule   { color: var(--rule); }
+      #bundleList { max-height: 320px; overflow-y: auto; }
+      #bundleList.collapsed { max-height: 180px; }
+      .toggle-more-bundles {
+        display: block; width: calc(100% - 12px); margin: 4px 6px 0;
+        background: transparent; border: 0; color: var(--fg-dim);
+        padding: 4px; font-size: 11px; cursor: pointer;
+        border-top: 1px dashed var(--border);
+      }
+      /* Related items strip in detail panel */
+      .detail-related { padding: 14px 18px 12px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--bg-3); }
+      .detail-related-title { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--fg-dim); font-weight: 600; margin: 0 0 8px; }
+      .detail-related-items { display: flex; flex-direction: column; gap: 4px; }
+      .detail-related-item {
+        display: flex; align-items: center; gap: 7px;
+        padding: 5px 8px; border-radius: 5px; cursor: pointer;
+        background: var(--bg-2); border: 1px solid transparent;
+        font-size: 12px; transition: background 80ms;
+        touch-action: manipulation;
+      }
+      .detail-related-item:hover { background: var(--bg-hover); border-color: var(--border); }
+      .detail-related-item .rel-name { flex: 1; color: var(--fg); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace,SFMono-Regular,"SF Mono",Consolas,monospace; }
+      .detail-related-item .rel-desc { font-size: 11px; color: var(--fg-dim); flex: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .toggle-more {
         display: block; width: calc(100% - 12px); margin: 4px 6px 0;
         background: transparent; border: 0; color: var(--fg-dim);
@@ -169,6 +212,28 @@
         border-top: 1px dashed var(--border);
       }
       .toggle-more:hover { color: var(--fg); }
+      /* Recently viewed strip */
+      .recent-strip { display: flex; align-items: center; gap: 6px; padding: 6px 0 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+      .recent-strip::-webkit-scrollbar { display: none; }
+      .recent-strip-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--fg-dim); font-weight: 600; flex-shrink: 0; }
+      .recent-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 6px; border-radius: 12px; background: var(--bg-3); border: 1px solid var(--border); font-size: 11.5px; color: var(--fg-mid); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 80ms; }
+      .recent-chip .badge { padding: 0 4px; font-size: 9px; line-height: 16px; }
+      .recent-chip:hover { background: var(--bg-hover); color: var(--fg); border-color: var(--accent-dim); }
+      /* Surprise me */
+      .surprise-btn { background: transparent; border: 1px solid var(--border); color: var(--fg-dim); border-radius: 6px; padding: 0 10px; height: 36px; cursor: pointer; font-size: 16px; flex-shrink: 0; transition: background 80ms, transform 120ms; }
+      .surprise-btn:hover { background: var(--bg-hover); color: var(--fg); transform: rotate(20deg); }
+      /* Bundle card save-as-recipe button */
+      .bundle-save-btn { background: transparent; border: 0; color: var(--fg-dim); cursor: pointer; font-size: 11px; padding: 1px 5px; border-radius: 3px; opacity: 0; transition: opacity 80ms; margin-left: auto; flex-shrink: 0; }
+      .bundle-card:hover .bundle-save-btn { opacity: 1; }
+      .bundle-save-btn:hover { color: var(--accent); background: rgba(217,119,87,.1); }
+      /* Cross-source "you may also like" */
+      .detail-also { padding: 12px 18px; border-top: 1px solid var(--border); flex-shrink: 0; }
+      .detail-also-title { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--fg-dim); font-weight: 600; margin: 0 0 7px; }
+      .detail-also-items { display: flex; flex-direction: column; gap: 3px; }
+      .detail-also-item { display: flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: background 80ms; }
+      .detail-also-item:hover { background: var(--bg-hover); }
+      .detail-also-item .rel-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace,SFMono-Regular,"SF Mono",Consolas,monospace; color: var(--fg-mid); }
+      .detail-also-item .rel-src { font-size: 10.5px; color: var(--fg-dim); flex-shrink: 0; }
 
       .chip {
         display: flex; align-items: center; justify-content: space-between;
@@ -799,12 +864,17 @@
         <button id="toggleMore" class="toggle-more" type="button">Show all sources ▼</button>
         <h2>Category</h2>
         <div id="categories"></div>
+        <h2>Bundles <span id="bundleActiveIndicator" style="display:none;font-size:10px;font-weight:400;color:var(--accent);margin-left:4px">● active</span></h2>
+        <div id="bundleList" class="collapsed"></div>
+        <button id="toggleMoreBundles" class="toggle-more-bundles" type="button">Show all ▼</button>
       </aside>
       <div class="list-col">
         <div class="search-bar" style="display:flex;gap:8px;align-items:center">
           <input id="search" type="search" placeholder="Search name, description, source, or category..." autofocus style="flex:1" />
+          <button id="surpriseBtn" class="surprise-btn" title="Surprise me — random item  [X]" aria-label="Surprise me">🎲</button>
           <button id="btnCopyFilterUrl" type="button" class="icon-btn" style="width:auto;padding:0 10px;font-size:11px;display:none" title="Copy a URL that reproduces the current filters (without basket)" aria-label="Copy filter URL">🔗 Copy filter URL</button>
         </div>
+        <div id="recentStrip"></div>
         <div class="list" id="browseList"></div>
       </div>
     </div>
@@ -847,6 +917,7 @@
         <div class="actions">
           <button id="btnCopyPrompt" class="primary">Copy as prompt</button>
           <button id="btnCopySlugs">Copy slugs</button>
+          <button id="btnCopyClaudemd" title="Copy basket as a CLAUDE.md skills section">CLAUDE.md ⇣</button>
           <button id="btnCopyLink">Copy share link</button>
           <button id="btnSaveRecipe">Save as recipe</button>
           <button id="btnClearBasket" class="danger">Clear</button>
@@ -897,6 +968,7 @@
     <script>
       const STORE_KEY_BASKET = "skillbrowser.basket.v1";
       const STORE_KEY_RECIPES = "skillbrowser.customRecipes.v1";
+      const STORE_KEY_RECENT = "skillbrowser.recentlyViewed.v1";
       const STORE_KEY_SETTINGS = "skillbrowser.settings.v1";
 
       const settings = {
@@ -941,6 +1013,8 @@
         categories: {},
         scopes: {},
         sourcesCount: {},
+        bundles: [],
+        activeBundle: null, // { source, category } or null
         seedRecipes: [],
         customRecipes: [],
         filter: { type: "all", scope: null, source: null, category: null, query: "" },
@@ -949,6 +1023,7 @@
         composed: [],
         basket: [], // ordered slugs
         activeTab: "browse",
+        recentlyViewed: [], // slugs, max 8, most-recent first
       };
 
       // ---------- load ----------
@@ -968,6 +1043,7 @@
         state.categories = data.categories || {};
         state.scopes = data.scopes || {};
         state.sourcesCount = data.sourcesCount || {};
+        state.bundles = data.bundles || [];
         const builtAt = data.generatedAt ? new Date(data.generatedAt) : null;
         const ageDays = builtAt ? (Date.now() - builtAt) / 86_400_000 : 0;
         const ageStr = builtAt ? ` · built ${timeAgo(builtAt)}` : "";
@@ -985,6 +1061,7 @@
         state.seedRecipes = recipes.recipes || [];
         loadBasket();
         loadCustomRecipes();
+        loadRecentlyViewed();
         renderFilters();
         applyHashStateFromUrl();
         renderRecipes();
@@ -1119,9 +1196,185 @@
         try { localStorage.setItem(STORE_KEY_RECIPES, JSON.stringify(state.customRecipes)); } catch {}
       }
 
+      // ---------- recently viewed ----------
+      function loadRecentlyViewed() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY_RECENT);
+          state.recentlyViewed = raw ? JSON.parse(raw) : [];
+        } catch { state.recentlyViewed = []; }
+      }
+      function trackRecentlyViewed(slug) {
+        state.recentlyViewed = [slug, ...state.recentlyViewed.filter((s) => s !== slug)].slice(0, 8);
+        try { localStorage.setItem(STORE_KEY_RECENT, JSON.stringify(state.recentlyViewed)); } catch {}
+      }
+      function renderRecentlyViewed() {
+        const host = document.getElementById("recentStrip");
+        if (!host) return;
+        const items = state.recentlyViewed.map((s) => state.byslug.get(s)).filter(Boolean);
+        if (items.length === 0) { host.innerHTML = ""; return; }
+        host.innerHTML = "";
+        const strip = document.createElement("div");
+        strip.className = "recent-strip";
+        const lbl = document.createElement("span");
+        lbl.className = "recent-strip-label";
+        lbl.textContent = "Recent";
+        strip.appendChild(lbl);
+        for (const it of items) {
+          const chip = document.createElement("span");
+          chip.className = "recent-chip";
+          chip.innerHTML = `<span class="badge ${it.type}">${it.type[0].toUpperCase()}</span>${escapeHtml(it.name)}`;
+          chip.addEventListener("click", () => openDetail(it.slug));
+          strip.appendChild(chip);
+        }
+        host.appendChild(strip);
+      }
+
+      // ---------- CLAUDE.md export ----------
+      function buildClamdSnippet() {
+        if (state.basket.length === 0) return "";
+        const lines = ["## Skills", ""];
+        for (const slug of state.basket) {
+          const it = state.byslug.get(slug);
+          if (!it) continue;
+          const desc = it.description ? ` — ${it.description.replace(/\s+/g, " ").slice(0, 80)}` : "";
+          lines.push(`- \`${slug}\`${desc}`);
+        }
+        return lines.join("\n");
+      }
+
+      // ---------- bundle → recipe ----------
+      function saveBundleAsRecipe(source, category) {
+        const slugs = state.items
+          .filter((it) => it.source === source && it.category === category)
+          .map((it) => it.slug);
+        if (slugs.length === 0) return;
+        const srcLabel = displaySource(source);
+        openModal(`
+          <h3>Save bundle as recipe</h3>
+          <label>Title</label>
+          <input id="recipeTitle" value="${escapeHtml(srcLabel + " / " + category)}" />
+          <label>Description</label>
+          <input id="recipeDesc" placeholder="optional" value="${escapeHtml(category + " skills from " + srcLabel)}" />
+          <p style="font-size:11px;color:var(--fg-dim);margin:4px 0 0">${slugs.length} items will be saved.</p>
+          <div class="actions">
+            <button type="button" id="cancelRecipe">Cancel</button>
+            <button type="button" class="primary" id="saveRecipe">Save</button>
+          </div>
+        `);
+        setTimeout(() => document.getElementById("recipeTitle")?.focus(), 50);
+        document.getElementById("cancelRecipe").addEventListener("click", closeModal);
+        document.getElementById("saveRecipe").addEventListener("click", () => {
+          const title = document.getElementById("recipeTitle").value.trim();
+          if (!title) return;
+          const desc = document.getElementById("recipeDesc").value.trim();
+          const id = "custom-" + Date.now();
+          state.customRecipes.push({ id, title, description: desc, slugs });
+          saveCustomRecipes();
+          renderRecipes();
+          closeModal();
+          showToast(`Saved "${title}" with ${slugs.length} items`);
+        });
+      }
+
+      // ---------- semantic related (cross-source) ----------
+      function buildSemanticRelated(it) {
+        const tokens = it.name.toLowerCase().split(/[-_\s]+/).filter((t) => t.length > 3);
+        if (tokens.length === 0) return [];
+        const scored = state.items
+          .filter((x) => x.slug !== it.slug && x.source !== it.source)
+          .map((x) => {
+            const xTokens = (x.name + " " + (x.description || "")).toLowerCase();
+            const hits = tokens.filter((t) => xTokens.includes(t)).length;
+            return { item: x, hits };
+          })
+          .filter((s) => s.hits >= Math.max(1, Math.floor(tokens.length * 0.4)))
+          .sort((a, b) => b.hits - a.hits)
+          .slice(0, 4)
+          .map((s) => s.item);
+        return scored;
+      }
+
       // ---------- filters (browse) ----------
       function renderFilters() {
-        renderScopes(); renderSources(); renderCategories();
+        renderScopes(); renderSources(); renderCategories(); renderBundles();
+      }
+
+      function renderBundles() {
+        const host = document.getElementById("bundleList");
+        host.innerHTML = "";
+        const INITIAL = 6;
+        const bundles = state.bundles;
+        const btn = document.getElementById("toggleMoreBundles");
+        btn.style.display = bundles.length > INITIAL ? "block" : "none";
+        const collapsed = host.classList.contains("collapsed");
+        const visible = collapsed ? bundles.slice(0, INITIAL) : bundles;
+        for (const b of visible) {
+          host.appendChild(bundleCard(b));
+        }
+        updateBundleActive();
+      }
+
+      function bundleCard(b) {
+        const el = document.createElement("div");
+        el.className = "bundle-card";
+        el.dataset.bsource = b.source;
+        el.dataset.bcategory = b.category;
+        const srcLabel = displaySource(b.source);
+        const parts = [];
+        if (b.agent) parts.push(`<span class="t-agent">${b.agent}a</span>`);
+        if (b.skill) parts.push(`<span class="t-skill">${b.skill}s</span>`);
+        if (b.command) parts.push(`<span class="t-command">${b.command}c</span>`);
+        if (b.rule) parts.push(`<span class="t-rule">${b.rule}r</span>`);
+        const total = b.agent + b.skill + b.command + b.rule;
+        el.innerHTML = `
+          <div class="bundle-card-top">
+            <span class="bundle-card-source">${escapeHtml(srcLabel)}</span>
+            <span class="bundle-card-cat">${escapeHtml(b.category)}</span>
+            <span class="bundle-card-total">${total}</span>
+            <button class="bundle-save-btn" title="Save bundle as recipe" data-bsave="1">💾</button>
+          </div>
+          <div class="bundle-card-types">${parts.join(" · ")}</div>`;
+        el.querySelector(".bundle-save-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          saveBundleAsRecipe(b.source, b.category);
+        });
+        el.addEventListener("click", () => activateBundle(b.source, b.category));
+        return el;
+      }
+
+      function activateBundle(source, category) {
+        const same = state.activeBundle && state.activeBundle.source === source && state.activeBundle.category === category;
+        state.activeBundle = same ? null : { source, category };
+        if (!same) {
+          // Set source + category filters to match bundle; clear type/scope/query
+          state.filter.source = source;
+          state.filter.category = category;
+          state.filter.type = "all";
+          state.filter.scope = null;
+          state.filter.query = "";
+          document.getElementById("search").value = "";
+          document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x.dataset.type === "all"));
+        } else {
+          state.filter.source = null;
+          state.filter.category = null;
+        }
+        updateBundleActive();
+        updateChipActive();
+        applyFilter();
+        pushHashState();
+        updateCopyFilterUrlVisibility();
+        window.Analytics?.track("bundle.activated", { source, category, cleared: same });
+      }
+
+      function updateBundleActive() {
+        document.querySelectorAll(".bundle-card").forEach((c) => {
+          const active = state.activeBundle &&
+            c.dataset.bsource === state.activeBundle.source &&
+            c.dataset.bcategory === state.activeBundle.category;
+          c.classList.toggle("active", !!active);
+        });
+        const ind = document.getElementById("bundleActiveIndicator");
+        if (ind) ind.style.display = state.activeBundle ? "inline" : "none";
       }
       function renderScopes() {
         const host = document.getElementById("scopes");
@@ -1157,6 +1410,8 @@
         el.innerHTML = `<span>${escapeHtml(label)}</span><span class="count">${count}</span>`;
         el.addEventListener("click", () => {
           state.filter[facet] = value;
+          state.activeBundle = null; // chip click overrides bundle
+          updateBundleActive();
           window.Analytics?.track("filter.changed", { facet, value: value ?? "all" });
           updateChipActive();
           applyFilter();
@@ -1199,8 +1454,10 @@
           const btn = document.getElementById("clearAllFilters");
           if (btn) btn.addEventListener("click", () => {
             state.filter = { type: "all", scope: null, source: null, category: null, query: "" };
+            state.activeBundle = null;
             document.getElementById("search").value = "";
             document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x.dataset.type === "all"));
+            updateBundleActive();
             updateChipActive();
             applyFilter();
             pushHashState();
@@ -1212,6 +1469,9 @@
         wireRow(host, (i) => state.filtered[i]);
         const selEl = host.querySelector(".row.selected");
         if (selEl) selEl.scrollIntoView({ block: "nearest" });
+        // Show recently viewed strip when no search query is active
+        if (!state.filter.query) renderRecentlyViewed();
+        else document.getElementById("recentStrip").innerHTML = "";
       }
 
       // ---------- compose ----------
@@ -1430,11 +1690,69 @@
         }
         // Scroll body to top on each open
         bodyEl.scrollTop = 0;
+        // "More from this bundle" strip
+        const panel = document.getElementById("detailPanel");
+        let relEl = panel.querySelector(".detail-related");
+        const related = state.items.filter((x) =>
+          x.slug !== it.slug && x.source === it.source && x.category === it.category
+        ).slice(0, 5);
+        if (related.length > 0) {
+          if (!relEl) {
+            relEl = document.createElement("div");
+            relEl.className = "detail-related";
+            panel.appendChild(relEl);
+          }
+          const srcLabel = displaySource(it.source || it.scope || "");
+          relEl.innerHTML = `<div class="detail-related-title">More from ${escapeHtml(srcLabel)} / ${escapeHtml(it.category)}</div><div class="detail-related-items"></div>`;
+          const listEl = relEl.querySelector(".detail-related-items");
+          for (const rel of related) {
+            const row = document.createElement("div");
+            row.className = "detail-related-item";
+            row.innerHTML = `<span class="badge ${rel.type}">${rel.type}</span><span class="rel-name">${escapeHtml(rel.name)}</span><span class="rel-desc">${escapeHtml(rel.description || "")}</span>`;
+            row.addEventListener("click", () => openDetail(rel.slug));
+            listEl.appendChild(row);
+          }
+          // "Browse all" link activates bundle
+          const allBtn = document.createElement("button");
+          allBtn.className = "linklike";
+          allBtn.style.cssText = "margin-top:8px;font-size:11px;display:block";
+          allBtn.textContent = `Browse all in this bundle →`;
+          allBtn.addEventListener("click", () => {
+            closeDetail();
+            switchTab("browse");
+            activateBundle(it.source, it.category);
+          });
+          relEl.appendChild(allBtn);
+        } else {
+          if (relEl) relEl.remove();
+        }
+        // Cross-source semantic related ("You may also like")
+        let alsoEl = panel.querySelector(".detail-also");
+        const semantic = buildSemanticRelated(it);
+        if (semantic.length > 0) {
+          if (!alsoEl) {
+            alsoEl = document.createElement("div");
+            alsoEl.className = "detail-also";
+            panel.appendChild(alsoEl);
+          }
+          alsoEl.innerHTML = `<div class="detail-also-title">You may also like</div><div class="detail-also-items"></div>`;
+          const alsoList = alsoEl.querySelector(".detail-also-items");
+          for (const rel of semantic) {
+            const row = document.createElement("div");
+            row.className = "detail-also-item";
+            row.innerHTML = `<span class="badge ${rel.type}">${rel.type[0].toUpperCase()}</span><span class="rel-name">${escapeHtml(rel.name)}</span><span class="rel-src">${escapeHtml(displaySource(rel.source || ""))}</span>`;
+            row.addEventListener("click", () => openDetail(rel.slug));
+            alsoList.appendChild(row);
+          }
+        } else {
+          if (alsoEl) alsoEl.remove();
+        }
       }
 
       function openDetail(slug) {
         const it = state.byslug.get(slug);
         if (!it) return;
+        trackRecentlyViewed(slug);
         // Pick the right list for navigation
         if (state.activeTab === "compose") {
           _detailList = state.composed;
@@ -1851,7 +2169,9 @@
               <tr><td style="padding:5px 0"><span class="kbd">R</span></td><td>switch to Recipes tab</td></tr>
               <tr><td style="padding:5px 0"><span class="kbd">T</span></td><td>toggle theme</td></tr>
               <tr><td style="padding:5px 0"><span class="kbd">?</span></td><td>this help</td></tr>
-              <tr><td style="padding:5px 0"><span class="kbd">↑</span>/<span class="kbd">↓</span></td><td>navigate list</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">↑</span>/<span class="kbd">↓</span> or <span class="kbd">j</span>/<span class="kbd">k</span></td><td>navigate list (vim-style)</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">Enter</span></td><td>open selected item</td></tr>
+              <tr><td style="padding:5px 0"><span class="kbd">X</span></td><td>surprise me — random item</td></tr>
               <tr><td style="padding:5px 0"><span class="kbd">Esc</span></td><td>close detail panel / modal</td></tr>
               <tr><td style="padding:5px 0"><span class="kbd">Ctrl+Enter</span></td><td>run Compose search</td></tr>
             </tbody>
@@ -1897,12 +2217,33 @@
         showToast("Share link copied");
       });
       document.getElementById("btnSaveRecipe").addEventListener("click", saveAsRecipeDialog);
+      document.getElementById("btnCopyClaudemd").addEventListener("click", () => {
+        const snippet = buildClamdSnippet();
+        if (!snippet) { showToast("Basket is empty."); return; }
+        copyToClipboard(snippet);
+        showToast(`CLAUDE.md snippet copied (${state.basket.length} skills)`);
+      });
+      document.getElementById("surpriseBtn").addEventListener("click", () => {
+        const pool = state.filter.query || state.filter.source || state.filter.category || state.filter.type !== "all"
+          ? state.filtered : state.items;
+        if (pool.length === 0) return;
+        const it = pool[Math.floor(Math.random() * pool.length)];
+        openDetail(it.slug);
+        window.Analytics?.track("surprise.used", { category: it.category });
+      });
 
       document.getElementById("toggleMore").addEventListener("click", () => {
         const list = document.getElementById("sources");
         const btn = document.getElementById("toggleMore");
         const collapsed = list.classList.toggle("collapsed");
         btn.textContent = collapsed ? "Show all sources ▼" : "Collapse sources ▲";
+      });
+      document.getElementById("toggleMoreBundles").addEventListener("click", () => {
+        const list = document.getElementById("bundleList");
+        const btn = document.getElementById("toggleMoreBundles");
+        const collapsed = list.classList.toggle("collapsed");
+        btn.textContent = collapsed ? "Show all ▼" : "Collapse ▲";
+        renderBundles(); // re-render with correct slice
       });
       let _searchPushTimer = null;
       document.getElementById("search").addEventListener("input", (e) => {
@@ -1987,14 +2328,20 @@
         else if (e.key === "Escape") { if (_detailSlug) { closeDetail(); } else { closeModal(); } }
         else if (e.key === "ArrowLeft" && _detailSlug) { e.preventDefault(); document.getElementById("detailPrevBtn").click(); }
         else if (e.key === "ArrowRight" && _detailSlug) { e.preventDefault(); document.getElementById("detailNextBtn").click(); }
-        else if (e.key === "ArrowDown") {
+        else if (e.key === "ArrowDown" || (e.key === "j" && state.activeTab === "browse")) {
           e.preventDefault();
           state.selectedIndex = Math.min(state.filtered.length - 1, state.selectedIndex + 1);
           renderBrowseList();
-        } else if (e.key === "ArrowUp") {
+        } else if (e.key === "ArrowUp" || (e.key === "k" && state.activeTab === "browse")) {
           e.preventDefault();
           state.selectedIndex = Math.max(0, state.selectedIndex - 1);
           renderBrowseList();
+        } else if (e.key === "Enter" && state.activeTab === "browse" && state.filtered.length > 0) {
+          e.preventDefault();
+          openDetail(state.filtered[state.selectedIndex].slug);
+        } else if (e.key.toLowerCase() === "x") {
+          e.preventDefault();
+          document.getElementById("surpriseBtn").click();
         }
       });
 
