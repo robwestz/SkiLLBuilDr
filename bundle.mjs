@@ -35,6 +35,7 @@ function run() {
   // ---- 2. read inputs ----
   const indexPath = join(__dirname, "index.html");
   const playgroundPath = join(__dirname, "playground.html");
+  const assemblerPath = join(__dirname, "assembler.html");
   const analyticsPath = join(__dirname, "analytics.js");
   const routerPath = join(__dirname, "hash-router.js");
   const dataPath = join(__dirname, "data.js");
@@ -42,6 +43,7 @@ function run() {
 
   const indexHtml = readFileSync(indexPath, "utf8");
   const playgroundHtml = readFileSync(playgroundPath, "utf8");
+  const assemblerHtml = readFileSync(assemblerPath, "utf8");
   const analyticsJs = readFileSync(analyticsPath, "utf8");
   const routerJs = readFileSync(routerPath, "utf8");
   const dataJs = readFileSync(dataPath, "utf8");
@@ -94,6 +96,12 @@ function run() {
     bundledPlayground = playgroundHtml.replace(playgroundDataTagRe, () => inlineData);
   }
 
+  const assemblerDataTagRe = /<script\s+src\s*=\s*["']data\.js["']\s*>\s*<\/script>/i;
+  let bundledAssembler = assemblerHtml;
+  if (assemblerDataTagRe.test(assemblerHtml)) {
+    bundledAssembler = assemblerHtml.replace(assemblerDataTagRe, () => inlineData);
+  }
+
   // ---- 4. write output ----
   const distDir = join(__dirname, "dist");
   mkdirSync(distDir, { recursive: true });
@@ -102,6 +110,9 @@ function run() {
 
   const playgroundDst = join(distDir, "playground.html");
   writeFileSync(playgroundDst, bundledPlayground, "utf8");
+
+  const assemblerDst = join(distDir, "assembler.html");
+  writeFileSync(assemblerDst, bundledAssembler, "utf8");
 
   // ---- 5. log size + item count ----
   const { size } = statSync(outPath);
