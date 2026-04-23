@@ -65,6 +65,7 @@ node ~/.claude/ecc-browser/query.mjs --list-sources
 
 # Natural-language intent matcher
 node ~/.claude/ecc-browser/intent.mjs "review my Python code for security"
+node ~/.claude/ecc-browser/intent.mjs "review Python code" --ai        # GROQ_API_KEY required
 node ~/.claude/ecc-browser/intent.mjs "onboard an unfamiliar repo" --limit 5
 node ~/.claude/ecc-browser/intent.mjs "set up analytics" --format json
 

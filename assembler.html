@@ -817,6 +817,9 @@
               <div id="aiInsightsHours" style="font-size:11px;color:var(--fg-dim)"></div>
             </div>
             <div id="aiInsightsLoading" style="display:none;font-size:12px;color:var(--fg-dim);margin-top:10px">✨ AI generating package insights…</div>
+            <div id="aiInsightsRefreshRow" style="display:none;margin-top:8px">
+              <button type="button" id="btnRefreshInsights" style="font-size:11px;padding:3px 10px;background:var(--bg-3);border:1px solid var(--border);color:var(--fg-mid);border-radius:5px;cursor:pointer">↻ Re-analyze</button>
+            </div>
           </aside>
         </div>
       </section>
@@ -1819,6 +1822,12 @@ Return ONLY valid JSON:
           ? `Estimated: ~${ctx.estimatedHours}h`
           : "";
         panel.style.display = "block";
+        const refreshRow = document.getElementById("aiInsightsRefreshRow");
+        if (refreshRow) {
+          refreshRow.style.display = "block";
+          const refreshBtn = document.getElementById("btnRefreshInsights");
+          if (refreshBtn) refreshBtn.onclick = () => triggerAIInsights();
+        }
       } catch (err) {
         loading.style.display = "none";
         panel.style.display = "none";
