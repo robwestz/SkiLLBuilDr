@@ -849,7 +849,7 @@
               <h3 id="fileTitle">Generated files</h3>
               <span class="toolbar-note" id="fileMeta">Waiting for package generation.</span>
             </div>
-            <pre class="codebox" id="filePreview">Generate a package to preview the output.</pre>
+            <div class="codebox" id="filePreview" style="min-height:360px;padding:16px;overflow:auto">Generate a package to preview the output.</div>
           </div>
         </div>
       </section>
@@ -1575,7 +1575,6 @@ Return ONLY valid JSON:
       statusEl.textContent = "Connecting…";
 
       try {
-        // Stub: actual call will use llm-client.mjs when available
         const url = provider === "groq"
           ? "https://api.groq.com/openai/v1/models"
           : "https://openrouter.ai/api/v1/models";
@@ -2195,6 +2194,53 @@ Return ONLY valid JSON:
       return lines.join("\n");
     }
 
+    function renderMarkdownPreview(md) {
+      const lines = md.split("\n");
+      const html = [];
+      let inUl = false, inOl = false, inCode = false;
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        if (line.startsWith("```")) {
+          if (inCode) { html.push("</code></pre>"); inCode = false; }
+          else { html.push('<pre style="background:var(--bg-3);padding:8px 12px;border-radius:4px;overflow:auto"><code style="font-size:11px">'); inCode = true; }
+          continue;
+        }
+        if (inCode) { html.push(escapeHtml(line)); continue; }
+        if (inUl && !line.match(/^[-*] /)) { html.push("</ul>"); inUl = false; }
+        if (inOl && !line.match(/^\d+\. /)) { html.push("</ol>"); inOl = false; }
+        if (line.startsWith("### ")) { html.push(`<h3 style="font-size:14px;margin:14px 0 4px;color:var(--fg)">${escapeHtml(line.slice(4))}</h3>`); }
+        else if (line.startsWith("## ")) { html.push(`<h2 style="font-size:16px;margin:18px 0 6px;color:var(--fg)">${escapeHtml(line.slice(3))}</h2>`); }
+        else if (line.startsWith("# ")) { html.push(`<h1 style="font-size:18px;margin:10px 0 8px;color:var(--fg);border-bottom:1px solid var(--border);padding-bottom:6px">${escapeHtml(line.slice(2))}</h1>`); }
+        else if (line.match(/^[-*] /)) {
+          if (!inUl) { html.push('<ul style="margin:4px 0;padding-left:18px">'); inUl = true; }
+          const text = inlineMarkdown(line.slice(2));
+          html.push(`<li style="margin:2px 0;font-size:12px;color:var(--fg-mid)">${text}</li>`);
+        }
+        else if (line.match(/^\d+\. /)) {
+          if (!inOl) { html.push('<ol style="margin:4px 0;padding-left:18px">'); inOl = true; }
+          const text = inlineMarkdown(line.replace(/^\d+\. /, ""));
+          html.push(`<li style="margin:2px 0;font-size:12px;color:var(--fg-mid)">${text}</li>`);
+        }
+        else if (line.trim() === "") {
+          html.push('<div style="height:8px"></div>');
+        }
+        else {
+          html.push(`<p style="margin:3px 0;font-size:12px;color:var(--fg-mid);line-height:1.6">${inlineMarkdown(line)}</p>`);
+        }
+      }
+      if (inUl) html.push("</ul>");
+      if (inOl) html.push("</ol>");
+      if (inCode) html.push("</code></pre>");
+      return html.join("\n");
+    }
+
+    function inlineMarkdown(text) {
+      return escapeHtml(text)
+        .replace(/`([^`]+)`/g, '<code style="background:var(--bg-3);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:var(--fg)">$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    }
+
     function buildFiles() {
       if (!state.selected.length) return;
       const packageName = getPackageName();
@@ -2244,7 +2290,7 @@ Return ONLY valid JSON:
         list.innerHTML = `<div class="empty">Move through Steps 1-3 first.</div>`;
         document.getElementById("fileTitle").textContent = "Generated files";
         document.getElementById("fileMeta").textContent = "Waiting for package generation.";
-        document.getElementById("filePreview").textContent = "Generate a package to preview the output.";
+        document.getElementById("filePreview").innerHTML = "Generate a package to preview the output.";
         return;
       }
 
@@ -2264,7 +2310,16 @@ Return ONLY valid JSON:
       state.activeFile = current.name;
       document.getElementById("fileTitle").textContent = current.name;
       document.getElementById("fileMeta").textContent = `${current.content.length.toLocaleString()} chars`;
-      document.getElementById("filePreview").textContent = current.content;
+      const previewEl = document.getElementById("filePreview");
+      if (current.name.endsWith(".md")) {
+        previewEl.style.fontFamily = "inherit";
+        previewEl.style.whiteSpace = "normal";
+        previewEl.innerHTML = renderMarkdownPreview(current.content);
+      } else {
+        previewEl.style.fontFamily = "Consolas, 'SFMono-Regular', monospace";
+        previewEl.style.whiteSpace = "pre-wrap";
+        previewEl.textContent = current.content;
+      }
     }
 
     function copyCurrentFile() {
