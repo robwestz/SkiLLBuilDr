@@ -4,7 +4,7 @@
   "description": "Local browser for Claude Code skills and slash-commands across all installed plugins",
   "type": "module",
   "bin": {
-    "skill-browser": "./launch.sh",
+    "skill-browser": "./launch.mjs",
     "skill-browser-mcp": "./mcp-server.mjs",
     "skill-browser-cli": "./cli.mjs"
   },
@@ -36,6 +36,7 @@
     "kickoff-template.mjs",
     "zip-builder.mjs",
     "launch.sh",
+    "launch.mjs",
     "index.html",
     "playground.html",
     "assembler.html",
