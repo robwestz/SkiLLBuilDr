@@ -1554,11 +1554,86 @@
           host.appendChild(b);
         }
       }
-      function runIntent() {
+      // Shared LLM config — reads the same key used by assembler.html
+      const STORE_KEY_LLM = "assembler-llm-config-v1";
+      function loadLLMConfig() {
+        try { return JSON.parse(localStorage.getItem(STORE_KEY_LLM) || "{}"); } catch { return {}; }
+      }
+      function hasLLMKey() {
+        const cfg = loadLLMConfig();
+        return !!(cfg.apiKey && cfg.apiKey.trim().length > 0);
+      }
+
+      const _GROQ_RANK_PROMPT_COMPOSE = `You are a causal skill ranker. Given a goal and a catalog of skills, return valid JSON:
+{"ranked":[{"slug":"<slug>","score":<0-100>,"reason":"<one sentence>"}]}
+Max 12 items. Reject skills with no direct causal path to the goal. No prose outside JSON.`;
+
+      async function rankWithGroqCompose(goal, catalogItems) {
+        const cfg = loadLLMConfig();
+        const baseUrl = cfg.provider === "openrouter"
+          ? "https://openrouter.ai/api/v1"
+          : "https://api.groq.com/openai/v1";
+        const model = cfg.provider === "openrouter"
+          ? "meta-llama/llama-3.1-8b-instruct:free"
+          : "llama3-8b-8192";
+        const catalogSummary = catalogItems.slice(0, 80).map(s => ({ slug: s.slug, name: s.name, description: (s.description || "").slice(0, 120), category: s.category }));
+        let response;
+        try {
+          response = await fetch(`${baseUrl}/chat/completions`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ model, messages: [{ role: "system", content: _GROQ_RANK_PROMPT_COMPOSE }, { role: "user", content: JSON.stringify({ goal, catalog: catalogSummary }) }], temperature: 0.1, max_tokens: 2048, response_format: { type: "json_object" } }),
+          });
+        } catch { throw new Error("LLM unreachable"); }
+        if (response.status === 401) throw new Error("Invalid API key");
+        if (response.status === 429) throw new Error("Rate limit");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        let data; try { data = await response.json(); } catch { throw new Error("Invalid JSON"); }
+        const raw = data?.choices?.[0]?.message?.content ?? "";
+        let parsed; try { parsed = JSON.parse(raw); } catch { throw new Error("Invalid JSON"); }
+        if (!Array.isArray(parsed.ranked)) return [];
+        const slugToItem = Object.fromEntries(catalogItems.map(it => [it.slug, it]));
+        return parsed.ranked
+          .filter(r => r && typeof r.slug === "string" && slugToItem[r.slug])
+          .map(r => ({ ...slugToItem[r.slug], _score: typeof r.score === "number" ? r.score : 50, _why: r.reason || "" }));
+      }
+
+      async function runIntent() {
         const input = document.getElementById("intentInput").value.trim();
         if (!input) return;
+        // Show local results immediately
         state.composed = scoreIntent(input, state.items, 15);
         renderComposeList();
+        // Upgrade to LLM ranking if key is available
+        if (hasLLMKey()) {
+          const composeList = document.getElementById("composeList");
+          const aiNote = document.createElement("div");
+          aiNote.id = "composeAiNote";
+          aiNote.style.cssText = "font-size:11px;color:var(--fg-dim);padding:6px 0;";
+          aiNote.textContent = "✨ AI ranking…";
+          composeList.prepend(aiNote);
+          try {
+            const llmResults = await rankWithGroqCompose(input, state.items);
+            if (llmResults.length > 0) {
+              state.composed = llmResults;
+              renderComposeList();
+              const note2 = document.getElementById("composeAiNote");
+              if (note2) { note2.textContent = `✨ AI ranked ${llmResults.length} skills — add Groq key in ⚙ Settings to change`; }
+              else {
+                const note3 = document.createElement("div");
+                note3.style.cssText = "font-size:11px;color:var(--fg-dim);padding:6px 0;";
+                note3.textContent = `✨ AI ranked ${llmResults.length} skills`;
+                document.getElementById("composeList").prepend(note3);
+              }
+            } else {
+              const n = document.getElementById("composeAiNote");
+              if (n) n.remove();
+            }
+          } catch {
+            const n = document.getElementById("composeAiNote");
+            if (n) n.remove();
+          }
+        }
       }
       function renderComposeList() {
         const host = document.getElementById("composeList");
@@ -2182,6 +2257,28 @@
             <p class="settings-note">Tab switches, filter changes, basket actions. No PII, no source names, no clipboard content. Change anytime.</p>
           </div>
           <div class="settings-section">
+            <p class="settings-section-title">AI Ranking (Compose mode)</p>
+            ${(() => {
+              const cfg = loadLLMConfig();
+              const hasKey = !!(cfg.apiKey && cfg.apiKey.trim().length > 0);
+              return `<p class="settings-note" style="margin-bottom:8px">
+                When set, Compose mode upgrades local IDF results with Groq AI causal ranking.
+                Key is stored only in <code>localStorage</code>; never sent anywhere except the provider.
+              </p>
+              <div class="settings-row" style="gap:6px;flex-wrap:wrap">
+                <select id="settingsLlmProvider" style="font-size:12px;padding:4px 8px;background:var(--bg-3);border:1px solid var(--border);color:var(--fg-mid);border-radius:5px">
+                  <option value="groq" ${cfg.provider !== "openrouter" ? "selected" : ""}>Groq (free — 14,400 req/day)</option>
+                  <option value="openrouter" ${cfg.provider === "openrouter" ? "selected" : ""}>OpenRouter (pay-as-you-go)</option>
+                </select>
+                <input type="password" id="settingsLlmKey" placeholder="API key" value="${hasKey ? cfg.apiKey : ""}"
+                  style="font-size:12px;padding:4px 8px;background:var(--bg-3);border:1px solid var(--border);color:var(--fg-mid);border-radius:5px;flex:1;min-width:140px" />
+                <button type="button" id="settingsLlmSave" style="font-size:12px;padding:5px 10px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer">Save</button>
+                ${hasKey ? `<button type="button" id="settingsLlmClear" style="font-size:12px;padding:5px 10px;background:var(--bg-3);border:1px solid var(--border);color:var(--fg-mid);border-radius:5px;cursor:pointer">Clear</button>` : ""}
+              </div>
+              ${hasKey ? `<p class="settings-note" style="color:var(--ok,#4ecd82)">✓ AI ranking active — Compose will use Groq</p>` : `<p class="settings-note"><a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color:var(--accent)">Get a free Groq key →</a></p>`}`;
+            })()}
+          </div>
+          <div class="settings-section">
             <p class="settings-section-title">Data</p>
             ${(() => {
               const d = window.__ECC_DATA__;
@@ -2212,6 +2309,19 @@
           saveSettings();
           if (e.target.checked) window.Analytics?.optIn();
           else window.Analytics?.optOut();
+        });
+        document.getElementById("settingsLlmSave").addEventListener("click", () => {
+          const key = document.getElementById("settingsLlmKey").value.trim();
+          const provider = document.getElementById("settingsLlmProvider").value;
+          if (!key) { showToast("Enter an API key first."); return; }
+          try { localStorage.setItem(STORE_KEY_LLM, JSON.stringify({ provider, apiKey: key })); } catch {}
+          showToast("AI ranking key saved — Compose will use Groq.");
+          closeModal();
+        });
+        document.getElementById("settingsLlmClear")?.addEventListener("click", () => {
+          localStorage.removeItem(STORE_KEY_LLM);
+          showToast("AI key cleared — Compose will use local ranking.");
+          closeModal();
         });
         document.getElementById("settingsClearData").addEventListener("click", () => {
           if (!confirm("Clear all stored data? This removes your basket, settings, and custom recipes.")) return;
