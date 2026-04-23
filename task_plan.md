@@ -4,7 +4,7 @@
 Ge en snabb, sökbar, kategoriserad GUI-entry-point till ECC:s 183 skills + 79 commands utan att behöva scrolla `/`-listan i Claude Code. En lokal HTML-app med live-sök, kategori-filter och klick-för-att-kopiera slug till clipboard.
 
 ## Current Phase
-Phase 5: Package Assembler - Wave 1 in progress (2026-04-22)
+Phase 5: Package Assembler - Wave 3 in progress (2026-04-23)
 
 ## Wave 2 result (2026-04-21 ~05:00)
 - [x] Category overhaul: Misc 69 → 0 (`build.mjs` expanded deriveCategory with prp/multi/context/loop/blueprint/AI Ops/ECC-meta rules)
@@ -180,14 +180,17 @@ Filer: se `README.md`. Öppna med `bash ~/.claude/ecc-browser/launch.sh`. Keyboa
 - [x] `kickoff-template.mjs` - generator f”r sj„lvbeskrivande `KICKOFF.md`
 - [x] Enhetstester f”r kickoff-template-scenarier
 
-**Wave 2 - paketbygge + ZIP:**
-- [ ] `fflate`-baserad ZIP-generering i browser
-- [ ] Paketfiler: `KICKOFF.md`, `CLAUDE.md`, `README.md`, `workflows/<name>.yaml`
-- [ ] †teranv„nd befintliga exportfunktioner d„r det „r rimligt
-- [ ] Verifiering att ZIP-inneh†llet g†r att anv„nda utan extern dependency
+**Wave 2 - paketbygge + ZIP (verified via fallback runtime):**
+- [x] Client-side ZIP-generering i browser
+- [x] Paketfiler: `KICKOFF.md`, `CLAUDE.md`, `README.md`, `workflows/<name>.yaml`
+- [x] †teranv„nd befintliga exportfunktioner d„r det „r rimligt
+- [x] Verifiering att ZIP-inneh†llet g†r att anv„nda utan extern dependency
+
+**Wave 2 note:**
+- System-Node `v24.13.1` pa denna host kraschar fortfarande pa CSPRNG-init, men verifieringen kunde fullfoljas med lokal fallback-runtime `C:\Program Files\heroku\client\bin\node.exe` (`v20.17.0`).
 
 **Wave 3 - integration + polish:**
-- [ ] Navintegration i browser/playground/landing
-- [ ] README + handoff uppdaterade f”r assemblerfl”det
-- [ ] Regressionsskydd i testsvit
-- [ ] `node --test tests/*.test.mjs` fortsatt gr”nt
+- [x] Navintegration i browser/playground/landing
+- [x] README + handoff uppdaterade f”r assemblerfl”det
+- [x] Regressionsskydd i testsvit
+- [x] `node --test tests` fortsatt gr”nt i fungerande lokal runtime (`83/83`)

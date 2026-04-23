@@ -288,3 +288,11 @@ That's pairwise-without-position-swap, but good enough for a sanity check. If re
 Robin Westerlund · `analys@camjo.se`
 
 Domain for the product: **buildr.nu** (not deployed yet — near-term task).
+
+## 2026-04-23 Package Assembler update
+
+- `assembler.html` now supports the full Describe → Select → Review → Download flow.
+- Package output includes `KICKOFF.md`, `CLAUDE.md`, `README.md`, `workflows/<name>.yaml`, plus ZIP export.
+- `landing.html` and `README.md` now expose Package Assembler as a first-class mode.
+- System Node on this machine (`C:\Program Files\nodejs\node.exe`, `v24.13.1`) still crashes on `Assertion failed: ncrypto::CSPRNG(nullptr, 0)`.
+- Verification is nevertheless green via the local Heroku runtime at `C:\Program Files\heroku\client\bin\node.exe` (`v20.17.0`): `bundle.mjs` succeeds and `node --test tests` passes `83/83`.

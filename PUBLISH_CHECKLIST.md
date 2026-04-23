@@ -1,10 +1,10 @@
 # Publish checklist
 
-Manual pre-release verification for Skill Browser OSS release. Walk through every item before pushing to a public repo or npm.
+Manual pre-release verification for Skill Browser OSS release. Walk through every item before pushing to a public repo, npm, or GitHub Pages.
 
 ## Code quality
 
-- [ ] `bash test.sh` passes (19 tests, 0 fail)
+- [ ] `bash test.sh` passes
 - [ ] `node build.mjs` completes without warnings
 - [ ] `node bundle.mjs` produces `dist/skill-browser.html` (~350KB)
 - [ ] `node query.mjs --list-categories` — verify Misc count is ≤5
@@ -48,11 +48,19 @@ When releasing:
 ## Landing
 
 - [ ] `landing.html` opens correctly
-- [ ] All internal links work (`./index.html`)
+- [ ] All internal links work (`./index.html`, `./assembler.html`)
 - [ ] Screenshot mock renders (no broken CSS)
 - [ ] Mobile: test ≤640px width, layout doesn't break
 - [ ] Dark mode on landing toggled (if implemented) or left light-only
 - [ ] Remove placeholder refs to `buildr.nu` if domain isn't live yet, or point to a holding page
+
+## GitHub Pages
+
+- [ ] Repo Settings → Pages → Source is set to `GitHub Actions`
+- [ ] `.github/workflows/pages.yml` exists on `main`
+- [ ] `landing.html`, `assembler.html`, and `playground.html` deploy alongside the root app
+- [ ] Root URL serves the bundled app, not the raw repo landing page
+- [ ] Pages deployment completes successfully on the latest `main` push
 
 ## Public-facing content review
 
@@ -67,4 +75,5 @@ After publishing:
 - [ ] Download `dist/skill-browser.html` from release page on a clean machine, open in browser, verify basic flows
 - [ ] Clone the repo, run `bash launch.sh`, verify it works without modifications
 - [ ] CI run on `main` branch passes
+- [ ] GitHub Pages serves `/`, `/landing.html`, and `/assembler.html` without broken links
 - [ ] Share with 1-2 early users, collect first-impressions feedback
