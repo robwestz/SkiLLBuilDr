@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 
 import { buildKickoff, buildClaudeMd, buildReadme } from "./kickoff-template.mjs";
 import { buildZip } from "./zip-builder.mjs";
+import { LLMClient } from "./llm-client.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -345,6 +346,27 @@ function startServer() {
 
       if (!toolName) {
         process.stdout.write(makeError(id, -32602, "Missing required parameter: name"));
+        return;
+      }
+
+      // LLM-upgrade for rank_skills_for_goal when GROQ_API_KEY is set
+      if (toolName === "rank_skills_for_goal" && toolArgs.goal && process.env.GROQ_API_KEY) {
+        const apiKey = process.env.GROQ_API_KEY;
+        const provider = process.env.OPENROUTER_API_KEY ? "openrouter" : "groq";
+        const client = LLMClient.create({ provider, apiKey });
+        const limit = typeof toolArgs.limit === "number" ? toolArgs.limit : 15;
+        client.rankSkills(toolArgs.goal, catalog).then((ranked) => {
+          const items = ranked.slice(0, limit).map(r => {
+            const full = catalog.find(it => it.slug === r.slug);
+            return full ? { ...full, _score: r.score, _why: r.reason } : null;
+          }).filter(Boolean);
+          process.stdout.write(makeResult(id, { content: [{ type: "text", text: JSON.stringify(items) }] }));
+        }).catch(() => {
+          // Fallback to local IDF on LLM failure
+          const outcome = handleToolCall(toolName, toolArgs, catalog);
+          if (outcome.error) process.stdout.write(makeError(id, outcome.error.code, outcome.error.message));
+          else process.stdout.write(makeResult(id, outcome));
+        });
         return;
       }
 
