@@ -170,6 +170,160 @@
         "/everything-claude-code:prp-pr",
         "/everything-claude-code:code-review"
       ]
+    },
+    {
+      "id": "pkg-saas-mvp",
+      "title": "SaaS MVP",
+      "description": "Full-stack SaaS with auth, database, billing, and E2E tests. Covers architecture through deployment.",
+      "intent": "build a full-stack SaaS product from scratch with auth, payments, and database",
+      "packageTemplate": true,
+      "estimatedHours": 40,
+      "slugs": [
+        "/everything-claude-code:architect",
+        "/everything-claude-code:planner",
+        "/everything-claude-code:nextjs-turbopack",
+        "/everything-claude-code:frontend-patterns",
+        "/everything-claude-code:database-reviewer",
+        "/everything-claude-code:security-reviewer",
+        "/everything-claude-code:tdd-guide",
+        "/everything-claude-code:e2e-runner",
+        "/everything-claude-code:deployment-patterns"
+      ],
+      "steps": [
+        "Define product scope and data model with architect + planner",
+        "Scaffold Next.js app with nextjs-turbopack patterns",
+        "Implement auth and billing with security-reviewer guidance",
+        "Add database layer with database-reviewer for schema and migrations",
+        "Write unit + integration tests with tdd-guide",
+        "Add E2E coverage for auth and billing flows with e2e-runner",
+        "Deploy to Vercel with deployment-patterns"
+      ]
+    },
+    {
+      "id": "pkg-cli-tool",
+      "title": "CLI Tool (Node/npm)",
+      "description": "Production-grade Node CLI with argument parsing, tests, and npm publish workflow.",
+      "intent": "build a CLI tool in Node.js with full test coverage and publish it to npm",
+      "packageTemplate": true,
+      "estimatedHours": 16,
+      "slugs": [
+        "/everything-claude-code:planner",
+        "/everything-claude-code:typescript-reviewer",
+        "/everything-claude-code:tdd-guide",
+        "/everything-claude-code:build-error-resolver",
+        "/everything-claude-code:security-reviewer",
+        "/everything-claude-code:opensource-packager"
+      ],
+      "steps": [
+        "Define CLI interface and commands with planner",
+        "Implement core logic with TypeScript; typescript-reviewer validates types",
+        "Write tests first with tdd-guide (TDD cycle for each command)",
+        "Run build-error-resolver on any compilation issues",
+        "Security review: arg injection, file access with security-reviewer",
+        "Prepare npm package with opensource-packager (README, LICENSE, .npmignore)"
+      ]
+    },
+    {
+      "id": "pkg-api-service",
+      "title": "REST / GraphQL API Service",
+      "description": "Backend API with OpenAPI docs, database layer, auth middleware, tests, and Dockerised deploy.",
+      "intent": "build a REST or GraphQL API with documentation, tests, and deployment",
+      "packageTemplate": true,
+      "estimatedHours": 24,
+      "slugs": [
+        "/everything-claude-code:api-design",
+        "/everything-claude-code:backend-patterns",
+        "/everything-claude-code:database-reviewer",
+        "/everything-claude-code:security-reviewer",
+        "/everything-claude-code:tdd-guide",
+        "/everything-claude-code:docker-patterns",
+        "/everything-claude-code:deployment-patterns"
+      ],
+      "steps": [
+        "Design API contract (OpenAPI 3.1 or GraphQL schema) with api-design",
+        "Implement routes and business logic following backend-patterns",
+        "Design and migrate database schema with database-reviewer",
+        "Add auth middleware and input validation with security-reviewer",
+        "TDD all endpoints with tdd-guide",
+        "Containerise with docker-patterns",
+        "Deploy with deployment-patterns"
+      ]
+    },
+    {
+      "id": "pkg-ai-agent",
+      "title": "Custom Claude Agent",
+      "description": "Claude Code agent with custom tools, memory, MCP server, and evaluation harness.",
+      "intent": "build a custom AI agent with tools, memory, and a test harness",
+      "packageTemplate": true,
+      "estimatedHours": 20,
+      "slugs": [
+        "/everything-claude-code:planner",
+        "/everything-claude-code:claude-api",
+        "/everything-claude-code:mcp-server-patterns",
+        "/everything-claude-code:autonomous-agent-harness",
+        "/everything-claude-code:tdd-guide",
+        "/everything-claude-code:security-reviewer",
+        "/everything-claude-code:agent-eval"
+      ],
+      "steps": [
+        "Design agent goals, tools, and memory schema with planner",
+        "Implement core LLM loop with claude-api patterns",
+        "Expose tools as MCP server using mcp-server-patterns",
+        "Wire autonomous execution with autonomous-agent-harness",
+        "Write unit tests for each tool and memory operation with tdd-guide",
+        "Security review: prompt injection, tool call validation with security-reviewer",
+        "Evaluate agent quality with agent-eval (benchmark scenarios)"
+      ]
+    },
+    {
+      "id": "pkg-data-pipeline",
+      "title": "Data Pipeline (ETL / Analytics)",
+      "description": "Python ETL pipeline with orchestration, data quality checks, monitoring, and scheduled runs.",
+      "intent": "build a data pipeline or ETL process with scheduling and monitoring",
+      "packageTemplate": true,
+      "estimatedHours": 28,
+      "slugs": [
+        "/everything-claude-code:planner",
+        "/everything-claude-code:python-reviewer",
+        "/everything-claude-code:database-reviewer",
+        "/everything-claude-code:performance-optimizer",
+        "/everything-claude-code:tdd-guide",
+        "/everything-claude-code:docker-patterns"
+      ],
+      "steps": [
+        "Map data sources, transformations, and sinks with planner",
+        "Implement extraction and transformation scripts with python-reviewer",
+        "Design warehouse schema and load strategy with database-reviewer",
+        "Profile and optimise slow transforms with performance-optimizer",
+        "Write data quality assertion tests with tdd-guide",
+        "Containerise and schedule with docker-patterns"
+      ]
+    },
+    {
+      "id": "pkg-mobile-app",
+      "title": "Mobile App (Flutter)",
+      "description": "Cross-platform mobile app with CI/CD, deep linking, push notifications, and store packaging.",
+      "intent": "build a cross-platform mobile app with CI and store deployment",
+      "packageTemplate": true,
+      "estimatedHours": 48,
+      "slugs": [
+        "/everything-claude-code:planner",
+        "/everything-claude-code:flutter-reviewer",
+        "/everything-claude-code:frontend-patterns",
+        "/everything-claude-code:tdd-guide",
+        "/everything-claude-code:e2e-runner",
+        "/everything-claude-code:security-reviewer",
+        "/everything-claude-code:deployment-patterns"
+      ],
+      "steps": [
+        "Define screens, navigation, and state model with planner",
+        "Implement UI in Flutter with flutter-reviewer validating idioms",
+        "Apply frontend-patterns for theming, accessibility, responsive layout",
+        "Unit-test business logic and widget tests with tdd-guide",
+        "Add E2E device tests for core flows with e2e-runner",
+        "Security review: deep link handling, secure storage with security-reviewer",
+        "Configure CI/CD and release signing with deployment-patterns"
+      ]
     }
   ]
 }
