@@ -70,12 +70,13 @@ node ~/.claude/ecc-browser/intent.mjs "set up analytics" --format json
 
 # skill-browser-cli (registered npm bin)
 node ~/.claude/ecc-browser/cli.mjs --goal "build a SaaS with auth and billing" --limit 15
+node ~/.claude/ecc-browser/cli.mjs --goal "review Python for security" --ai    # GROQ_API_KEY required
 node ~/.claude/ecc-browser/cli.mjs --search "python review" --type skill
 node ~/.claude/ecc-browser/cli.mjs --get /everything-claude-code:python-reviewer
 node ~/.claude/ecc-browser/cli.mjs --sources --json
 ```
 
-`query.mjs` outputs TSV. `intent.mjs` outputs ranked results with scores and match reasons; supports `--format json|tsv`. `cli.mjs` wraps the MCP server handlers and supports `--json` for machine-readable output.
+`query.mjs` outputs TSV. `intent.mjs` outputs ranked results with scores and match reasons; supports `--format json|tsv`. `cli.mjs` wraps the MCP server handlers and supports `--json` for machine-readable output. The `--ai` flag on `--goal` uses Groq AI causal ranking (reads `GROQ_API_KEY` or `OPENROUTER_API_KEY` env var).
 
 See `~/.claude/skills/ecc-menu/SKILL.md` for agent-facing docs on when to use which tool.
 
@@ -104,7 +105,7 @@ Five tools: `search_skills`, `rank_skills_for_goal`, `get_skill`, `assemble_pack
 - `assembler.html` — Package Assembler wizard: 6 quick-start template cards, three ranking tiers, draft persistence, ZIP download
 - `playground.html` — 3-panel workflow builder with YAML/Prompt/CLAUDE.md export
 - `mcp-server.mjs` — stdio JSON-RPC 2.0 MCP server (5 tools); installable via `~/.claude/mcp.json`
-- `cli.mjs` — `skill-browser-cli` npm bin; `--goal`, `--search`, `--get`, `--sources`, `--json`
+- `cli.mjs` — `skill-browser-cli` npm bin; `--goal`, `--search`, `--get`, `--sources`, `--json`; `--ai` uses Groq causal ranking (`GROQ_API_KEY`)
 - `llm-client.mjs` — provider-agnostic LLM wrapper (`OfflineProvider` IDF fallback + `GroqProvider`)
 - `query.mjs` — substring filter CLI
 - `intent.mjs` — natural-language intent ranker (IDF + category-boost)
