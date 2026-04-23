@@ -7,6 +7,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { LLMClient } from "./llm-client.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "data.json");
@@ -30,13 +31,14 @@ function tokenize(text) {
 }
 
 function parseArgs(argv) {
-  const out = { text: [], limit: 10, format: "text", type: "all", scope: null };
+  const out = { text: [], limit: 10, format: "text", type: "all", scope: null, ai: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--limit") out.limit = parseInt(argv[++i], 10) || 10;
     else if (a === "--format") out.format = argv[++i];
     else if (a === "--type") out.type = argv[++i];
     else if (a === "--scope") out.scope = argv[++i];
+    else if (a === "--ai") out.ai = true;
     else if (a === "--help" || a === "-h") { out.help = true; }
     else out.text.push(a);
   }
@@ -140,7 +142,7 @@ function why(it, queryTokens) {
   return hits.slice(0, 4).join(" · ");
 }
 
-function main() {
+async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help || opts.text.length === 0) return usage();
 
@@ -159,12 +161,39 @@ function main() {
   }
 
   const { idf, docs } = buildIdf(items);
-  const scored = items
+  let scored = items
     .map((it, i) => ({ it, score: scoreItem(it, queryTokens, docs[i], idf) }))
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, opts.limit)
     .map(({ it, score }) => ({ ...it, _score: Math.round(score * 10) / 10, _why: why(it, queryTokens) }));
+
+  // LLM upgrade: re-rank with Groq when --ai flag set (reads GROQ_API_KEY or OPENROUTER_API_KEY)
+  if (opts.ai) {
+    const apiKey = process.env.GROQ_API_KEY || process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      process.stderr.write("Error: --ai requires GROQ_API_KEY or OPENROUTER_API_KEY environment variable\n");
+      process.exit(1);
+    }
+    const provider = process.env.OPENROUTER_API_KEY ? "openrouter" : "groq";
+    const client = LLMClient.create({ provider, apiKey });
+    if (opts.format === "text") process.stderr.write("✨ AI ranking via Groq…\n");
+    try {
+      const llmRanked = await client.rankSkills(query, items);
+      if (llmRanked.length > 0) {
+        const slugToItem = Object.fromEntries(items.map(it => [it.slug, it]));
+        scored = llmRanked
+          .slice(0, opts.limit)
+          .map(r => {
+            const full = slugToItem[r.slug];
+            return full ? { ...full, _score: r.score, _why: r.reason, _confidence: r.confidence } : null;
+          })
+          .filter(Boolean);
+      }
+    } catch (err) {
+      process.stderr.write(`AI ranking failed: ${err.message}\nFalling back to local results.\n`);
+    }
+  }
 
   if (opts.format === "json") {
     process.stdout.write(JSON.stringify(scored, null, 2) + "\n");
@@ -189,9 +218,10 @@ function main() {
   scored.forEach((it, i) => {
     const rank = String(i + 1).padStart(2, " ");
     const slug = it.slug.padEnd(48);
-    process.stdout.write(`${rank}.  [${it.type}] ${slug}  (score ${it._score})\n`);
+    const conf = it._confidence ? ` [${it._confidence}]` : "";
+    process.stdout.write(`${rank}.  [${it.type}] ${slug}  (score ${it._score}${conf})\n`);
     process.stdout.write(`     ${it.source}  ·  ${it.category}\n`);
-    if (it._why) process.stdout.write(`     match: ${it._why}\n`);
+    if (it._why) process.stdout.write(`     ${opts.ai ? "reason" : "match"}: ${it._why}\n`);
     const desc = (it.description || "").replace(/\s+/g, " ").slice(0, 160);
     if (desc) process.stdout.write(`     ${desc}\n`);
     process.stdout.write("\n");
