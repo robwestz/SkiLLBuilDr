@@ -942,6 +942,10 @@
           <button class="primary" id="runIntent">Find skills →</button>
           <div class="example-chips" id="exampleChips"></div>
         </div>
+        <div id="composeTierRow" style="display:none;align-items:center;gap:8px;padding:4px 0">
+          <span id="composeTierLocal" class="tier active" title="Local IDF ranking — always available" style="font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--fg-dim)">🏎 Local</span>
+          <span id="composeTierAI" class="tier" title="AI causal ranking — set API key in ⚙ Settings" style="font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--fg-dim)">✨ AI</span>
+        </div>
       </div>
       <div class="list" id="composeList">
         <div class="empty">Describe a goal above and press <b>Find skills</b>. Or try one of the example chips.</div>
@@ -1598,40 +1602,43 @@ Max 12 items. Reject skills with no direct causal path to the goal. No prose out
           .map(r => ({ ...slugToItem[r.slug], _score: typeof r.score === "number" ? r.score : 50, _why: r.reason || "" }));
       }
 
+      function setComposeTier(tier) {
+        // tier: "local" | "ai" | "loading"
+        const tierRow = document.getElementById("composeTierRow");
+        const localEl = document.getElementById("composeTierLocal");
+        const aiEl = document.getElementById("composeTierAI");
+        if (!tierRow) return;
+        tierRow.style.display = "flex";
+        if (localEl) localEl.style.opacity = (tier === "local" || tier === "loading") ? "1" : "0.5";
+        if (aiEl) {
+          aiEl.style.opacity = tier === "ai" ? "1" : "0.5";
+          aiEl.textContent = tier === "loading" ? "✨ AI…" : "✨ AI";
+          aiEl.style.color = tier === "ai" ? "var(--accent,#6aa9ff)" : "var(--fg-dim)";
+          aiEl.style.borderColor = tier === "ai" ? "var(--accent,#6aa9ff)" : "var(--border)";
+        }
+      }
+
       async function runIntent() {
         const input = document.getElementById("intentInput").value.trim();
         if (!input) return;
         // Show local results immediately
         state.composed = scoreIntent(input, state.items, 15);
         renderComposeList();
+        setComposeTier("local");
         // Upgrade to LLM ranking if key is available
         if (hasLLMKey()) {
-          const composeList = document.getElementById("composeList");
-          const aiNote = document.createElement("div");
-          aiNote.id = "composeAiNote";
-          aiNote.style.cssText = "font-size:11px;color:var(--fg-dim);padding:6px 0;";
-          aiNote.textContent = "✨ AI ranking…";
-          composeList.prepend(aiNote);
+          setComposeTier("loading");
           try {
             const llmResults = await rankWithGroqCompose(input, state.items);
             if (llmResults.length > 0) {
               state.composed = llmResults;
               renderComposeList();
-              const note2 = document.getElementById("composeAiNote");
-              if (note2) { note2.textContent = `✨ AI ranked ${llmResults.length} skills — add Groq key in ⚙ Settings to change`; }
-              else {
-                const note3 = document.createElement("div");
-                note3.style.cssText = "font-size:11px;color:var(--fg-dim);padding:6px 0;";
-                note3.textContent = `✨ AI ranked ${llmResults.length} skills`;
-                document.getElementById("composeList").prepend(note3);
-              }
+              setComposeTier("ai");
             } else {
-              const n = document.getElementById("composeAiNote");
-              if (n) n.remove();
+              setComposeTier("local");
             }
           } catch {
-            const n = document.getElementById("composeAiNote");
-            if (n) n.remove();
+            setComposeTier("local");
           }
         }
       }
