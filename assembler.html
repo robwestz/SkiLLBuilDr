@@ -262,6 +262,38 @@
     }
     .hint-chip:hover { border-color: var(--accent); color: var(--fg); }
 
+    .templates-section {
+      margin-bottom: 20px;
+    }
+    .templates-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--fg-dim);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .template-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      background: var(--bg-2);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .template-card:hover { border-color: var(--accent); background: var(--bg-3); }
+    .template-card.selected { border-color: var(--accent); background: rgba(217,119,87,0.08); }
+    .template-card-title { font-weight: 600; font-size: 13px; color: var(--fg); margin-bottom: 4px; }
+    .template-card-desc { font-size: 11px; color: var(--fg-dim); line-height: 1.45; margin-bottom: 8px; }
+    .template-card-meta { font-size: 10px; color: var(--fg-dim); }
+    .template-card-meta b { color: var(--accent); }
+
     .results-toolbar,
     .review-toolbar,
     .files-toolbar {
@@ -696,6 +728,11 @@
           <div class="stage-meta"><b id="catalogCount">Loading...</b><br />catalog items ready</div>
         </div>
 
+        <div class="templates-section">
+          <div class="templates-label">Quick-start templates</div>
+          <div class="templates-grid" id="templateCards"></div>
+        </div>
+
         <div class="field-grid">
           <div class="field-card">
             <label class="label" for="goalInput">Goal</label>
@@ -878,6 +915,57 @@
       { id: 2, title: "Select", desc: "Ranked local catalog suggestions" },
       { id: 3, title: "Review", desc: "Order and trim execution steps" },
       { id: 4, title: "Download", desc: "Generate files and export them" },
+    ];
+
+    const PACKAGE_TEMPLATES = [
+      {
+        id: "pkg-saas-mvp",
+        title: "SaaS MVP",
+        desc: "Auth, DB, billing, E2E tests — architecture through deployment.",
+        hours: 40,
+        goal: "Build a full-stack SaaS with auth, database, billing, and end-to-end tests — architecture through deployment.",
+        slugs: ["/everything-claude-code:architect","/everything-claude-code:planner","/everything-claude-code:nextjs-turbopack","/everything-claude-code:frontend-patterns","/everything-claude-code:database-reviewer","/everything-claude-code:security-reviewer","/everything-claude-code:tdd-guide","/everything-claude-code:e2e-runner","/everything-claude-code:deployment-patterns"],
+      },
+      {
+        id: "pkg-cli-tool",
+        title: "CLI Tool",
+        desc: "Node CLI with argument parsing, tests, npm publish workflow.",
+        hours: 16,
+        goal: "Build a production-grade Node.js CLI tool with argument parsing, a test suite, and an npm publish workflow.",
+        slugs: ["/everything-claude-code:planner","/everything-claude-code:typescript-reviewer","/everything-claude-code:tdd-guide","/everything-claude-code:build-error-resolver","/everything-claude-code:security-reviewer","/everything-claude-code:opensource-packager"],
+      },
+      {
+        id: "pkg-api-service",
+        title: "REST / GraphQL API",
+        desc: "Backend API with docs, database, auth middleware, tests, Docker.",
+        hours: 24,
+        goal: "Build a REST or GraphQL API service with OpenAPI docs, database layer, auth middleware, tests, and a Dockerised deployment.",
+        slugs: ["/everything-claude-code:api-design","/everything-claude-code:backend-patterns","/everything-claude-code:database-reviewer","/everything-claude-code:security-reviewer","/everything-claude-code:tdd-guide","/everything-claude-code:docker-patterns","/everything-claude-code:deployment-patterns"],
+      },
+      {
+        id: "pkg-ai-agent",
+        title: "Custom Claude Agent",
+        desc: "Agent with tools, memory, MCP server, and evaluation harness.",
+        hours: 20,
+        goal: "Build a custom Claude Code agent with tools, memory, an MCP server integration, and an evaluation harness.",
+        slugs: ["/everything-claude-code:planner","/everything-claude-code:claude-api","/everything-claude-code:mcp-server-patterns","/everything-claude-code:autonomous-agent-harness","/everything-claude-code:tdd-guide","/everything-claude-code:security-reviewer","/everything-claude-code:agent-eval"],
+      },
+      {
+        id: "pkg-data-pipeline",
+        title: "Data Pipeline",
+        desc: "Python ETL with orchestration, data quality checks, monitoring.",
+        hours: 28,
+        goal: "Build a Python ETL/analytics pipeline with orchestration, data quality checks, monitoring, and scheduled runs.",
+        slugs: ["/everything-claude-code:planner","/everything-claude-code:python-reviewer","/everything-claude-code:database-reviewer","/everything-claude-code:performance-optimizer","/everything-claude-code:tdd-guide","/everything-claude-code:docker-patterns"],
+      },
+      {
+        id: "pkg-mobile-app",
+        title: "Mobile App (Flutter)",
+        desc: "Cross-platform app with CI/CD, deep linking, push notifications.",
+        hours: 48,
+        goal: "Build a cross-platform Flutter mobile app with CI/CD, deep linking, push notifications, and app store packaging.",
+        slugs: ["/everything-claude-code:planner","/everything-claude-code:flutter-reviewer","/everything-claude-code:frontend-patterns","/everything-claude-code:tdd-guide","/everything-claude-code:e2e-runner","/everything-claude-code:security-reviewer","/everything-claude-code:deployment-patterns"],
+      },
     ];
 
     const EXAMPLES = [
@@ -1559,6 +1647,38 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       document.getElementById("catalogCount").textContent = String(state.catalog.length);
     }
 
+    function fillTemplateCards() {
+      const host = document.getElementById("templateCards");
+      if (!host) return;
+      host.innerHTML = PACKAGE_TEMPLATES.map((t) => `
+        <button class="template-card" type="button" data-tpl-id="${escapeHtml(t.id)}">
+          <div class="template-card-title">${escapeHtml(t.title)}</div>
+          <div class="template-card-desc">${escapeHtml(t.desc)}</div>
+          <div class="template-card-meta">~<b>${t.hours}h</b> &nbsp;·&nbsp; ${t.slugs.length} skills</div>
+        </button>`).join("");
+      host.querySelectorAll(".template-card").forEach((card, index) => {
+        card.addEventListener("click", () => {
+          // Deselect all, mark this one selected
+          host.querySelectorAll(".template-card").forEach((c) => c.classList.remove("selected"));
+          card.classList.add("selected");
+          const tpl = PACKAGE_TEMPLATES[index];
+          document.getElementById("goalInput").value = tpl.goal;
+          document.getElementById("packageNameInput").value = tpl.id;
+          state.goal = tpl.goal;
+          state.packageName = tpl.id;
+          // Pre-populate selections from catalog items matching the template slugs
+          if (state.catalog.length) {
+            const slugSet = new Set(tpl.slugs);
+            const matched = state.catalog.filter((it) => slugSet.has(it.slug));
+            if (matched.length) {
+              state.selected = matched.map(normalizeSelection);
+            }
+          }
+          updateDraft();
+        });
+      });
+    }
+
     function fillExampleChips() {
       const host = document.getElementById("exampleChips");
       host.innerHTML = EXAMPLES.map((text) => `<button class="hint-chip" type="button">${escapeHtml(text)}</button>`).join("");
@@ -1938,6 +2058,7 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
     }
 
     function wireUi() {
+      fillTemplateCards();
       fillExampleChips();
       document.getElementById("goalInput").addEventListener("input", updateDraft);
       document.getElementById("descriptionInput").addEventListener("input", updateDraft);
