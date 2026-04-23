@@ -1,0 +1,37 @@
+# WorkspaceBuildR generated workflow
+# Goal: build a well-tested CLI tool published to npm
+# Generated: 2026-04-22T19:52:06.408Z
+# Model: offline-token-overlap
+
+name: workspace-workflow
+goal: "build a well-tested CLI tool published to npm"
+
+desired_outcomes:
+  - "A workspace where every included skill has a written causal chain back to a production requirement"
+  - "Production cli requirements are all addressed: ergonomic argument parsing with help text; tested with unit and integration tests; published to npm with semantic versioning; documented with README and examples; handles errors gracefully with useful messages; works cross-platform (Node/Bun/Deno if applicable)"
+  - "Rejected skills are documented with explicit reasons, not silently excluded"
+
+steps:
+  - id: step_01__everything_claude_code_e2e_testing
+    name: "E2E Testing"
+    skill: "/everything-claude-code:e2e-testing"
+    role: optional
+    score: 10
+    causal_justification: >
+      [offline] Token overlap score 10/100. Skill tags [e2e, integration, playwright, cypress] matched goal tokens [build, well, tested, cli, tool]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_02_erything_claude_code_mcp_server_patterns
+    name: "MCP Server Patterns"
+    skill: "/everything-claude-code:mcp-server-patterns"
+    role: optional
+    score: 10
+    causal_justification: >
+      [offline] Token overlap score 10/100. Skill tags [mcp, tool-server, agent-tools, protocol] matched goal tokens [build, well, tested, cli, tool]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+metadata:
+  offline: true
+  total_skills: 2
+  core_skills: 0
+  supporting_skills: 0
+  optional_skills: 2
+  rejected_skills: 17

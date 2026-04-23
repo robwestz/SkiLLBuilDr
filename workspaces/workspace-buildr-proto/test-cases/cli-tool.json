@@ -1,0 +1,41 @@
+{
+  "goal": "build a well-tested CLI tool published to npm",
+  "expectedSkills": [
+    "/everything-claude-code:planner",
+    "/everything-claude-code:tdd-guide",
+    "/everything-claude-code:code-reviewer",
+    "/everything-claude-code:documentation-lookup",
+    "/everything-claude-code:typescript-reviewer"
+  ],
+  "causalExpectations": [
+    {
+      "skill": "/everything-claude-code:tdd-guide",
+      "causation": "TDD causes test files to exist for every CLI command before those commands are implemented, which this goal requires by definition because the goal explicitly names being well-tested as a primary quality property — TDD is the only practice that structurally guarantees tests exist for every command path rather than being added opportunistically after shipping"
+    },
+    {
+      "skill": "/everything-claude-code:documentation-lookup",
+      "causation": "Documentation causes the CLI to have a README with installation instructions, usage examples, and flag descriptions, which a published npm package requires because packages without documentation have zero adoption — a user encountering the package on npm for the first time has no path to first use without docs, making the publish step pointless"
+    },
+    {
+      "skill": "/everything-claude-code:typescript-reviewer",
+      "causation": "TypeScript review causes the CLI argument parsing, option types, and exported utilities to be type-safe, which a published npm CLI requires because TypeScript type errors in published packages cause integration failures in consumers' TypeScript projects — typed exports are part of the published surface area that cannot be patched without a new release"
+    },
+    {
+      "skill": "/everything-claude-code:code-reviewer",
+      "causation": "Code review causes the CLI error handling, exit codes, and cross-platform path handling to be validated, which a published npm tool requires because CLI tools run in diverse environments — missing error handling produces unhandled promise rejections, wrong exit codes break CI pipelines that consume the tool as a build step"
+    },
+    {
+      "skill": "/everything-claude-code:planner",
+      "causation": "Planning causes CLI development to be sequenced with argument schema designed before command implementations, tests written before publishing, and documentation completed before release, which the npm publish goal requires because a published package cannot be cleanly unpublished and a broken first release permanently damages the package reputation on the registry"
+    }
+  ],
+  "expectedOutcome": "A cross-platform CLI tool published to npm with semantic versioning, comprehensive test coverage on all command paths, typed exports, graceful error messages, and a README with installation and usage examples",
+  "notExpected": [
+    "/everything-claude-code:database-reviewer",
+    "/everything-claude-code:frontend-design",
+    "/everything-claude-code:frontend-patterns",
+    "/everything-claude-code:go-review",
+    "/everything-claude-code:mcp-server-patterns",
+    "/everything-claude-code:e2e-testing"
+  ]
+}
