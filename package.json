@@ -1,6 +1,6 @@
 {
   "name": "skill-browser",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Local browser for Claude Code skills and slash-commands across all installed plugins",
   "type": "module",
   "bin": {
@@ -42,6 +42,7 @@
     "assembler.html",
     "hash-router.js",
     "mcp-server.mjs",
+    "llm-client.mjs",
     "cli.mjs",
     "recipes.json",
     "README.md",

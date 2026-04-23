@@ -7,27 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-04-23
+
 ### Added
-- **`launch.mjs`**: cross-platform Node.js launcher replacing bash `launch.sh` as the npm `bin` entry for `skill-browser`. Works on Windows, macOS, Linux without a bash environment.
-- **`vercel.json`**: deployment config with clean-URL rewrites (`/assembler`, `/playground`, `/landing`) and security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy).
-- **`tests/e2e/assembler.spec.js`**: 10 Playwright specs for the 4-step Package Assembler wizard — load, goal→step2 transition, skill card selection, review, download, reset, and LLM settings modal.
-- **`tests/e2e/playground.spec.js`**: 10 Playwright specs for the Skill Playground — catalog search, canvas add, item name display, Prompt/YAML/CLAUDE.md export tabs, save modal, clear canvas (with confirm dialog), empty-save toast.
-- **5 additional `intent.mjs` tests** (total 8): stopwords-only query exits 1, `--limit 1` returns one line, `--format json` returns valid array with `_score`/`slug` fields, `--type skill` filter, non-ASCII input safety.
-- **`data.public.js` + `recipes.public.js`**: committed sanitized catalog snapshots (744 items, 37 sources, no absolute paths) used by GH Pages CI. Regenerate: `node build.mjs --sanitize && cp data.js data.public.js && cp recipes.js recipes.public.js`.
 - **Assembler ranking tier 3 — AI causal ranking**: `rerankSelections()` is now async; after IDF + semantic tiers, upgrades to Groq/OpenRouter LLM ranking if API key configured. Shows local results immediately, then replaces with AI results. Confidence badges (high/medium/low) and italic causal-reason text on result cards.
-- **Assembler Step 3 — AI Package Insights**: entering Step 3 with an API key configured triggers `buildPackageContextWithGroq()` (llama-3.3-70b-versatile). Renders: 2–3 sentence summary, risk list, first-moves checklist, estimated hours — in the summary sidebar. Falls back silently offline.
-- **`landing.html`**: Playground nav link added; Workflow Playground feature bullet; CTA row updated with Assembler + Playground buttons.
+- **Assembler Step 3 — AI Package Insights**: entering Step 3 with an API key configured triggers `buildPackageContextWithGroq()` (llama-3.3-70b-versatile). Renders: 2–3 sentence summary, risk list, first-moves checklist, estimated hours — in the summary sidebar. "↻ Re-analyze" button to regenerate after changing selections. Falls back silently offline.
+- **Compose mode AI ranking** (`index.html`): `runIntent()` now async — shows local IDF results immediately, then upgrades to Groq ranking when API key is configured. Tier indicator strip (🏎 Local / ✨ AI) shows current ranking source.
+- **Settings modal AI Ranking section** (`index.html`): provider select (Groq / OpenRouter), password-input for API key, save/clear buttons, active status indicator. Shared `assembler-llm-config-v1` key — one entry works in Compose mode and the Assembler.
+- **`cli.mjs --ai` flag**: reads `GROQ_API_KEY` (or `OPENROUTER_API_KEY`) env var, uses `LLMClient.rankSkills()` for causal ranking. Prints AI reason in dim text below each result. `printTable()` gains `showWhy` option.
+- **`intent.mjs --ai` flag**: same Groq upgrade for the intent CLI. Text output shows `[high/medium/low]` confidence and "reason:" label; TSV/JSON formats include `_confidence` field.
+- **MCP server LLM upgrade**: `rank_skills_for_goal` checks `GROQ_API_KEY` env var; uses `LLMClient.rankSkills()` when set and falls back to local IDF on failure. `handleToolCall()` export unchanged.
+- **`landing.html`**: Playground nav link; Workflow Playground feature bullet; CTA row with Assembler + Playground buttons.
+- **`launch.mjs`**: cross-platform Node.js launcher replacing bash `launch.sh` as the npm `bin` entry for `skill-browser`.
+- **`vercel.json`**: deployment config with clean-URL rewrites and security headers.
+- **`tests/e2e/assembler.spec.js`** (10 Playwright specs) and **`tests/e2e/playground.spec.js`** (10 Playwright specs).
+- **`data.public.js` + `recipes.public.js`**: committed sanitized catalog snapshots for GH Pages CI.
 
 ### Changed
 - `index.html`, `playground.html` title and OG meta tags updated to **buildr.nu** brand.
-- `package.json` `bin.skill-browser` updated from `./launch.sh` to `./launch.mjs`; `launch.mjs` added to `files` whitelist.
-- `bundle.mjs`: `--skip-build` flag skips `build.mjs` child-process; falls back to `data.public.js`/`recipes.public.js` when local files absent — enables CI deployment without plugins installed.
-- `.github/workflows/pages.yml`: uses `node bundle.mjs --skip-build` so the deployed site always has real catalog data.
-- `.gitignore`: un-ignores `data.public.js` and `recipes.public.js` via `!` negation rules.
-- `assembler.html` Step 1: 6 quick-start template cards (SaaS MVP, CLI Tool, REST API, Claude Agent, Data Pipeline, Flutter App) — pre-fill goal, packageName, and pre-select catalog items matching the template's skill slugs.
-- `assembler.html`: draft persistence — goal/description/packageName saved to `localStorage` key `assembler-draft-v1` on every `updateDraft()` call; restored on page load; cleared by Reset.
-- `build.mjs`: `--workflows <path>` flag — scans `<path>/.archon/workflows/*.yaml` for Archon workflows. `--project` now also auto-detects `<projectPath>/.archon/workflows/`. 2 new tests.
-- `tests/bundle.test.mjs`: `before()` now uses `--skip-build` to reuse `data.js` already generated by `build.test.mjs` rather than re-running the slow build step.
+- `package.json` `bin.skill-browser` updated from `./launch.sh` to `./launch.mjs`.
+- `bundle.mjs`: `--skip-build` flag; falls back to `data.public.js`/`recipes.public.js` when local files absent.
+- `.github/workflows/pages.yml`: uses `node bundle.mjs --skip-build`.
+- `.gitignore`: un-ignores `data.public.js` and `recipes.public.js`.
+- `assembler.html` Step 1: 6 quick-start template cards (SaaS MVP, CLI Tool, REST API, Claude Agent, Data Pipeline, Flutter App).
+- `assembler.html`: draft persistence (`assembler-draft-v1` localStorage).
+- `build.mjs`: `--workflows <path>` flag for Archon workflow scanning.
+- `tests/bundle.test.mjs`: uses `--skip-build` to avoid duplicate build runs.
 
 ## [0.7.0] - 2026-04-23
 
