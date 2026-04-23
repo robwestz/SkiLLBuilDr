@@ -380,6 +380,10 @@
       background: rgba(255, 255, 255, 0.04);
       border-color: var(--border);
     }
+    .badge.conf-high { color: var(--ok); background: rgba(78,205,130,0.1); border-color: rgba(78,205,130,0.2); }
+    .badge.conf-medium { color: var(--warn,#f0c040); background: rgba(240,192,64,0.1); border-color: rgba(240,192,64,0.2); }
+    .badge.conf-low { color: var(--fg-soft); background: rgba(255,255,255,0.04); border-color: var(--border); }
+    .why-text { font-style: italic; max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .result-card h3, .review-card h3 {
       margin: 0;
       font-size: 15px;
@@ -1334,6 +1338,107 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       buildKickoff: buildKickoffInline,
     };
 
+    // ---------------------------------------------------------------------------
+    // Groq ranking — inline browser implementation (mirrors llm-client.mjs)
+    // ---------------------------------------------------------------------------
+
+    const _GROQ_RANK_PROMPT = `You are a causal skill ranker for software workspace assembly.
+
+Your job: decide which skills have a genuine causal path to the goal's required outcome.
+
+## The Fundamental Rule
+
+Think causally, NOT associatively.
+
+For every skill you include, you must be able to complete:
+  "This skill CAUSES [specific artifact X], which the goal REQUIRES because [concrete reason Y]."
+
+If you cannot complete that sentence with specific, non-trivial content — reject the skill.
+
+REJECT skills that are only associatively related. Example: "uses Python" is NOT a reason to include a Python linter if the goal has no quality-review intent. The causal chain must be direct and specific.
+
+## Output
+
+Return ONLY a valid JSON object. No markdown fences, no prose outside JSON.
+
+Schema:
+{
+  "ranked": [
+    {
+      "slug": "<exact slug from input>",
+      "score": <integer 0-100>,
+      "reason": "<one sentence: CAUSES X which goal REQUIRES because Y>",
+      "confidence": "<high|medium|low>"
+    }
+  ]
+}
+
+Rules:
+- Maximum 12 items in "ranked"
+- Order ranked skills: foundational (planning, architecture) before dependent (testing, deployment)
+- Score guidance: 85-100 = directly causes a primary requirement; 60-84 = causes important quality property; 30-59 = indirect causal path; 0-29 = reject instead
+- confidence "high" = clear, direct causal path; "medium" = plausible but depends on interpretation; "low" = speculative
+- Skills not in "ranked" are implicitly rejected`;
+
+    async function rankSkillsWithGroq(goal, catalogItems) {
+      const cfg = loadLLMConfig();
+      if (!cfg.apiKey) throw new Error("No API key configured");
+      const provider = cfg.provider || "groq";
+      const baseUrl = provider === "groq"
+        ? "https://api.groq.com/openai/v1"
+        : "https://openrouter.ai/api/v1";
+      const model = provider === "groq" ? "llama3-8b-8192" : "meta-llama/llama-3.1-8b-instruct:free";
+
+      const catalogSummary = catalogItems.map(s => ({
+        slug: s.slug, name: s.name,
+        description: s.description, category: s.category,
+      }));
+
+      let response;
+      try {
+        response = await fetch(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${cfg.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: _GROQ_RANK_PROMPT },
+              { role: "user", content: JSON.stringify({ goal, catalog: catalogSummary }) },
+            ],
+            temperature: 0.1,
+            max_tokens: 4096,
+            response_format: { type: "json_object" },
+          }),
+        });
+      } catch {
+        throw new Error("LLM provider unreachable");
+      }
+
+      if (response.status === 401) throw new Error("Invalid API key");
+      if (response.status === 429) throw new Error("Rate limit reached — wait a moment and retry");
+      if (!response.ok) throw new Error(`LLM returned HTTP ${response.status}`);
+
+      let data;
+      try { data = await response.json(); } catch { throw new Error("LLM response was not valid JSON"); }
+
+      const raw = data?.choices?.[0]?.message?.content ?? "";
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch { throw new Error(`LLM response was not valid JSON. Raw: ${raw.slice(0, 200)}`); }
+
+      if (!parsed || !Array.isArray(parsed.ranked)) return [];
+      return parsed.ranked
+        .filter(item => item && typeof item.slug === "string")
+        .map(item => ({
+          slug: item.slug,
+          score: typeof item.score === "number" ? Math.min(100, Math.max(0, item.score)) : 50,
+          reason: item.reason ?? "",
+          confidence: ["high", "medium", "low"].includes(item.confidence) ? item.confidence : "medium",
+        }));
+    }
+
     function loadLLMConfig() {
       try { return JSON.parse(localStorage.getItem("assembler-llm-config-v1") || "{}"); }
       catch { return {}; }
@@ -1743,21 +1848,21 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       renderSummary();
     }
 
-    function rerankSelections(replaceCurrent) {
+    async function rerankSelections(replaceCurrent) {
       updateDraft();
       if (!state.goal && !state.description) {
         toast("Add a goal before ranking the catalog.");
         return;
       }
       const query = [state.goal, state.description].filter(Boolean).join(" ");
-      // Step 1: IDF scoring — always works
+      // Tier 1: IDF scoring — always works
       const idfResults = scoreIntent(query, state.catalog, 16);
 
       let activeTier = "local";
       let summaryText = "";
 
       if (window.SKILL_EMBEDDINGS && idfResults.length >= 2) {
-        // Step 2: compute centroid from top-5 IDF embeddings and re-rank all items
+        // Tier 2: semantic re-ranking (embedding centroid)
         const topSlugs = idfResults.slice(0, 5).map(item => item.slug);
         const centroid = computeCentroid(topSlugs);
         if (centroid) {
@@ -1792,6 +1897,45 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
         "No local matches yet. Try shorter or more concrete wording.";
       setRankingTier(activeTier);
       if (state.suggestions.length) setStep(2);
+
+      // Tier 3: LLM causal ranking — async upgrade if API key is configured
+      if (hasLLMKey()) {
+        setRankingTier("loading");
+        const summaryEl = document.getElementById("suggestionSummary");
+        summaryEl.textContent = "✨ AI ranking in progress…";
+        try {
+          const llmRanked = await rankSkillsWithGroq(state.goal, state.catalog);
+          if (llmRanked && llmRanked.length > 0) {
+            const slugToItem = Object.fromEntries(state.catalog.map(it => [it.slug, it]));
+            const merged = llmRanked
+              .map(r => {
+                const item = slugToItem[r.slug];
+                return item ? { ...item, _score: r.score, _why: r.reason, _confidence: r.confidence } : null;
+              })
+              .filter(Boolean);
+            if (merged.length > 0) {
+              state.suggestions = merged;
+              if (replaceCurrent) {
+                state.selected = merged.slice(0, 6).map(normalizeSelection);
+              }
+              renderSuggestions();
+              renderReview();
+              renderSidebar();
+              renderSummary();
+              summaryEl.textContent = `✨ AI ranked ${merged.length} skills causally for your goal.`;
+              setRankingTier("ai");
+              return;
+            }
+          }
+          // LLM returned empty — keep local results
+          summaryEl.textContent = summaryText || "No matches yet.";
+          setRankingTier(activeTier);
+        } catch (err) {
+          summaryEl.textContent = summaryText || "No matches yet.";
+          setRankingTier(activeTier);
+          toast(`AI ranking failed: ${err.message}`);
+        }
+      }
     }
 
     function toggleSelection(item) {
@@ -1832,13 +1976,14 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
           <article class="result-card ${added ? "added" : ""}" data-slug="${escapeHtml(item.slug || item.name)}">
             <div class="result-top">
               <span class="badge ${escapeHtml(item.type)}">${escapeHtml(item.type)}</span>
-              <span class="badge score">score ${item._score}</span>
+              <span class="badge score">${item._score != null ? `score ${typeof item._score === 'number' ? item._score.toFixed(0) : item._score}` : ""}</span>
+              ${item._confidence ? `<span class="badge conf-${escapeHtml(item._confidence)}" title="AI confidence">${escapeHtml(item._confidence)}</span>` : ""}
             </div>
             <h3>${escapeHtml(item.name)}</h3>
             <p>${body || "No description available."}</p>
             <div class="meta-line">
               <span>${escapeHtml(item.category || "uncategorized")}</span>
-              ${item._why ? `<span>${escapeHtml(item._why)}</span>` : ""}
+              ${item._why ? `<span class="why-text">${escapeHtml(item._why)}</span>` : ""}
             </div>
             <div class="meta-line"><code>${escapeHtml(item.slug || item.name)}</code></div>
             <div class="card-actions">
