@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bundle.mjs`: `--skip-build` flag skips `build.mjs` child-process; falls back to `data.public.js`/`recipes.public.js` when local files absent — enables CI deployment without plugins installed.
 - `.github/workflows/pages.yml`: uses `node bundle.mjs --skip-build` so the deployed site always has real catalog data.
 - `.gitignore`: un-ignores `data.public.js` and `recipes.public.js` via `!` negation rules.
+- `assembler.html` Step 1: 6 quick-start template cards (SaaS MVP, CLI Tool, REST API, Claude Agent, Data Pipeline, Flutter App) — pre-fill goal, packageName, and pre-select catalog items matching the template's skill slugs.
+- `assembler.html`: draft persistence — goal/description/packageName saved to `localStorage` key `assembler-draft-v1` on every `updateDraft()` call; restored on page load; cleared by Reset.
+- `build.mjs`: `--workflows <path>` flag — scans `<path>/.archon/workflows/*.yaml` for Archon workflows. `--project` now also auto-detects `<projectPath>/.archon/workflows/`. 2 new tests.
 
 ## [0.7.0] - 2026-04-23
 
