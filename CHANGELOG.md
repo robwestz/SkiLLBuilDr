@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`launch.mjs`**: cross-platform Node.js launcher replacing bash `launch.sh` as the npm `bin` entry for `skill-browser`. Works on Windows, macOS, Linux without a bash environment.
+- **`vercel.json`**: deployment config with clean-URL rewrites (`/assembler`, `/playground`, `/landing`) and security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy).
+- **`tests/e2e/assembler.spec.js`**: 10 Playwright specs for the 4-step Package Assembler wizard — load, goal→step2 transition, skill card selection, review, download, reset, and LLM settings modal.
+- **5 additional intent.mjs tests** (total 8): stopwords-only query exits 1, `--limit 1` returns one line, `--format json` returns valid array with `_score`/`slug` fields, `--type skill` filter, non-ASCII input safety.
+
+### Changed
+- `index.html`, `playground.html` title and OG meta tags updated to **buildr.nu** brand.
+- `package.json` `bin.skill-browser` updated from `./launch.sh` to `./launch.mjs`; `launch.mjs` added to `files` whitelist.
+
 ## [0.7.0] - 2026-04-23
 
 ### Added
