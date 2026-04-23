@@ -14,13 +14,35 @@ const HOME = homedir();
 const PLUGINS_ROOT = join(HOME, ".claude", "plugins", "cache");
 
 function parseArgs(argv) {
-  const out = { project: null, verbose: false };
+  const out = { project: null, verbose: false, sanitize: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--project") out.project = argv[++i];
     else if (a === "--verbose" || a === "-v") out.verbose = true;
+    else if (a === "--sanitize" || a === "-s") out.sanitize = true;
   }
   return out;
+}
+
+// Converts a raw absolute path-based source label into a canonical form safe
+// for hosted deployment (no machine-specific paths).
+// Examples:
+//   "C:\\Users\\robin\\.claude\\plugins\\cache\\posthog\\1.0.0\\posthog" → "plugin:posthog"
+//   "/home/user/.claude/plugins/cache/everything-claude-code/1.2.0/..." → "plugin:everything-claude-code"
+//   already canonical "plugin:posthog", "user", "project" → unchanged
+function toCanonicalSource(rawSource) {
+  if (!rawSource || typeof rawSource !== "string") return "unknown";
+  // Already canonical — no absolute path markers
+  if (!rawSource.includes("\\") && !rawSource.includes("/Users/") && !rawSource.includes("C:") && !rawSource.includes("/home/")) {
+    return rawSource;
+  }
+  // Extract plugin name from paths like:
+  //   C:\Users\robin\.claude\plugins\cache\posthog\1.0.0\posthog
+  //   ~/.claude/plugins/cache/everything-claude-code/1.2.0/everything-claude-code
+  const pluginMatch = rawSource.match(/plugins[/\\](?:cache[/\\])?([^/\\@]+)/);
+  if (pluginMatch) return `plugin:${pluginMatch[1]}`;
+  if (rawSource.includes(".claude") && !rawSource.includes("plugins")) return "user";
+  return "project";
 }
 
 function safeReaddir(p) {
@@ -577,6 +599,19 @@ function main() {
     return a.name.localeCompare(b.name);
   });
 
+  if (opts.sanitize) {
+    for (const item of items) {
+      // Remove machine-specific absolute path
+      delete item.path;
+      // Normalize source to canonical form (in case it ever contains a raw path)
+      if (item.source) item.source = toCanonicalSource(item.source);
+      // Normalize namespace if it somehow contains a path
+      if (item.namespace && (item.namespace.includes("\\") || item.namespace.includes("/"))) {
+        item.namespace = toCanonicalSource(item.namespace).replace("plugin:", "");
+      }
+    }
+  }
+
   const categories = {};
   const scopes = {};
   const sourcesCount = {};
@@ -600,7 +635,7 @@ function main() {
       scope: s.scope,
       namespace: s.namespace,
       label: s.label,
-      root: s.root,
+      root: opts.sanitize ? null : s.root,
       version: s.version ?? null,
     })),
     counts: {
@@ -639,7 +674,7 @@ function main() {
   }
 
   console.log(
-    `Wrote ${items.length} items (${data.counts.agents} agents + ${data.counts.skills} skills + ${data.counts.commands} commands + ${data.counts.rules} rules + ${data.counts.workflows} workflows) from ${sources.length} sources`
+    `Wrote ${items.length} items (${data.counts.agents} agents + ${data.counts.skills} skills + ${data.counts.commands} commands + ${data.counts.rules} rules + ${data.counts.workflows} workflows) from ${sources.length} sources${opts.sanitize ? " [sanitized]" : ""}`
   );
   if (opts.verbose) {
     console.error("scopes:", scopes);

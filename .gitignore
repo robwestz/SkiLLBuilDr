@@ -1,6 +1,7 @@
 node_modules/
 dist/
 data.json
+data.sanitized.json
 data.js
 recipes.js
 .DS_Store

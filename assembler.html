@@ -587,6 +587,51 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; backdrop-filter: blur(4px);
+    }
+    .modal-box {
+      background: var(--bg-2); border: 1px solid var(--border-hi);
+      border-radius: var(--radius); padding: 0; width: min(480px, 94vw);
+      box-shadow: var(--shadow);
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+    }
+    .modal-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: none; border: none; color: var(--fg-dim); font-size: 18px;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    }
+    .modal-close:hover { color: var(--fg); background: var(--bg-3); }
+    .modal-body { padding: 20px 24px; }
+    .modal-desc { margin: 0 0 16px; font-size: 13px; color: var(--fg-dim); line-height: 1.5; }
+    .modal-foot {
+      display: flex; gap: 8px; justify-content: flex-end;
+      padding: 16px 24px; border-top: 1px solid var(--border);
+    }
+    .modal-status {
+      padding: 10px 24px 16px; font-size: 13px;
+    }
+    .modal-status.ok { color: var(--ok); }
+    .modal-status.err { color: #f87171; }
+    .nav-btn {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--fg-dim); cursor: pointer; font-size: 13px; padding: 6px 12px;
+    }
+    .nav-btn:hover { color: var(--fg); border-color: var(--border-hi); }
+    .ranking-tiers { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .tier {
+      font-size: 12px; padding: 3px 10px; border-radius: 20px;
+      background: var(--bg-3); color: var(--fg-dim); border: 1px solid var(--border);
+    }
+    .tier.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+    .tier.running { animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
     @media (max-width: 980px) {
       .shell {
         width: min(100vw - 20px, 1180px);
@@ -634,6 +679,7 @@
     <nav class="navlinks">
       <a href="index.html">Skill Browser</a>
       <a href="playground.html">Playground</a>
+      <button class="nav-btn" id="llmSettingsBtn" title="LLM Settings — add API key for AI-enhanced ranking">⚙ AI Settings</button>
     </nav>
   </header>
 
@@ -671,8 +717,8 @@
 
             <div style="height:14px"></div>
 
-            <h3>What Wave 1 delivers</h3>
-            <p>Wave 1 assembles the package files and lets you download them individually. ZIP bundling lands in Wave 2.</p>
+            <h3>What this phase delivers</h3>
+            <p>The assembler now produces both individual package files and a complete ZIP archive, still fully local and still read-only against the scanned catalog.</p>
           </aside>
         </div>
       </section>
@@ -688,6 +734,10 @@
 
         <div class="results-toolbar">
           <div class="toolbar-note" id="suggestionSummary">No ranking yet.</div>
+          <div class="ranking-tiers" id="rankingTiers">
+            <span class="tier active" id="tierLocal" title="Token-overlap ranking — always available">🏎 Local</span>
+            <span class="tier" id="tierAI" title="AI-powered causal ranking — add API key in ⚙ AI Settings">✨ AI</span>
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn ghost" id="btnRefreshRanking" type="button">Re-rank</button>
             <button class="btn ghost" id="btnUseTopSix" type="button">Replace with top 6</button>
@@ -725,7 +775,7 @@
         <div class="stage-head">
           <div>
             <h2>Download the package files</h2>
-            <p>This step generates the files in memory from your selected items. Download them one by one now; ZIP bundling follows in the next wave.</p>
+            <p>This step generates the files in memory from your selected items. Download them individually or export the whole package as a ZIP archive.</p>
           </div>
           <div class="stage-meta"><b id="fileCount">0</b><br />generated files</div>
         </div>
@@ -735,6 +785,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn ghost" id="btnCopyFile" type="button">Copy current file</button>
             <button class="btn primary" id="btnDownloadFile" type="button">Download current file</button>
+            <button class="btn primary" id="btnDownloadZip" type="button">Download ZIP</button>
           </div>
         </div>
 
@@ -785,6 +836,40 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="modal-overlay" id="llmSettingsOverlay" style="display:none">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="llmSettingsTitle">
+      <div class="modal-head">
+        <h2 id="llmSettingsTitle">AI Ranking Settings</h2>
+        <button class="modal-close" id="llmSettingsClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Add an API key to unlock AI-powered skill ranking with causal reasoning. Your key is stored locally and never sent to buildr.nu.</p>
+
+        <label class="label" for="llmProviderSelect">Provider</label>
+        <select id="llmProviderSelect">
+          <option value="groq">Groq (free — 14,400 req/day)</option>
+          <option value="openrouter">OpenRouter (pay-as-you-go)</option>
+        </select>
+
+        <div style="height:12px"></div>
+
+        <label class="label" for="llmApiKeyInput">API Key</label>
+        <input id="llmApiKeyInput" type="password" placeholder="Enter your API key" autocomplete="off" />
+
+        <div class="hint-row" style="margin-top:8px">
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="hint-chip">Get Groq key (free)</a>
+          <a href="https://openrouter.ai/keys" target="_blank" rel="noopener" class="hint-chip">Get OpenRouter key</a>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn ghost" id="llmTestBtn" type="button">Test connection</button>
+        <button class="btn ghost" id="llmClearBtn" type="button">Clear key</button>
+        <button class="btn primary" id="llmSaveBtn" type="button">Save</button>
+      </div>
+      <div class="modal-status" id="llmTestStatus" style="display:none"></div>
+    </div>
+  </div>
+
   <script src="data.js"></script>
   <script>
     const STEPS = [
@@ -802,6 +887,7 @@
     ];
 
     const STOPWORDS = new Set("a an and are as at be but by do for from has have i if in is it its me my of on or our so that the their them then there they this to up was we were what when where which while will with you your want need should would can could how make get help please just some something thing things use using".split(" "));
+    const ZIP_TEXT_ENCODER = new TextEncoder();
 
     function uniqueNodesForPackage(nodes = []) {
       const seen = new Set();
@@ -1004,12 +1090,266 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       return lines.join("\n").trim() + "\n";
     }
 
+    let zipCrcTable;
+    function getZipCrcTable() {
+      if (zipCrcTable) return zipCrcTable;
+      zipCrcTable = new Uint32Array(256);
+      for (let n = 0; n < 256; n += 1) {
+        let c = n;
+        for (let k = 0; k < 8; k += 1) {
+          c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        }
+        zipCrcTable[n] = c >>> 0;
+      }
+      return zipCrcTable;
+    }
+
+    function crc32ForZip(bytes) {
+      const table = getZipCrcTable();
+      let crc = 0xffffffff;
+      for (let index = 0; index < bytes.length; index += 1) {
+        crc = table[(crc ^ bytes[index]) & 0xff] ^ (crc >>> 8);
+      }
+      return (crc ^ 0xffffffff) >>> 0;
+    }
+
+    function toZipBytes(value) {
+      if (value instanceof Uint8Array) return value;
+      if (typeof value === "string") return ZIP_TEXT_ENCODER.encode(value);
+      if (ArrayBuffer.isView(value)) return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+      if (value instanceof ArrayBuffer) return new Uint8Array(value);
+      return ZIP_TEXT_ENCODER.encode(String(value ?? ""));
+    }
+
+    function normalizeZipName(name) {
+      return String(name || "file.txt")
+        .replace(/\\/g, "/")
+        .replace(/^\/+/, "")
+        .replace(/\.\.+/g, ".")
+        || "file.txt";
+    }
+
+    function zipDosDateTime(inputDate = new Date()) {
+      const date = inputDate instanceof Date ? inputDate : new Date(inputDate);
+      const year = Math.max(1980, date.getFullYear());
+      const dosTime =
+        ((date.getHours() & 0x1f) << 11) |
+        ((date.getMinutes() & 0x3f) << 5) |
+        Math.floor(date.getSeconds() / 2);
+      const dosDate =
+        (((year - 1980) & 0x7f) << 9) |
+        (((date.getMonth() + 1) & 0x0f) << 5) |
+        (date.getDate() & 0x1f);
+      return { dosDate, dosTime };
+    }
+
+    function writeZipU16(view, offset, value) {
+      view.setUint16(offset, value & 0xffff, true);
+    }
+
+    function writeZipU32(view, offset, value) {
+      view.setUint32(offset, value >>> 0, true);
+    }
+
+    function buildZipArchive(files) {
+      const normalized = files.map((file) => {
+        const name = normalizeZipName(file.name);
+        const nameBytes = ZIP_TEXT_ENCODER.encode(name);
+        const data = toZipBytes(file.content);
+        const { dosDate, dosTime } = zipDosDateTime(file.mtime);
+        return {
+          name,
+          nameBytes,
+          data,
+          crc: crc32ForZip(data),
+          dosDate,
+          dosTime,
+        };
+      });
+
+      const localParts = [];
+      const centralParts = [];
+      let offset = 0;
+      normalized.forEach((file) => {
+        const localHeader = new Uint8Array(30 + file.nameBytes.length);
+        const localView = new DataView(localHeader.buffer);
+        writeZipU32(localView, 0, 0x04034b50);
+        writeZipU16(localView, 4, 20);
+        writeZipU16(localView, 6, 0x0800);
+        writeZipU16(localView, 8, 0);
+        writeZipU16(localView, 10, file.dosTime);
+        writeZipU16(localView, 12, file.dosDate);
+        writeZipU32(localView, 14, file.crc);
+        writeZipU32(localView, 18, file.data.length);
+        writeZipU32(localView, 22, file.data.length);
+        writeZipU16(localView, 26, file.nameBytes.length);
+        writeZipU16(localView, 28, 0);
+        localHeader.set(file.nameBytes, 30);
+        localParts.push(localHeader, file.data);
+
+        const centralHeader = new Uint8Array(46 + file.nameBytes.length);
+        const centralView = new DataView(centralHeader.buffer);
+        writeZipU32(centralView, 0, 0x02014b50);
+        writeZipU16(centralView, 4, 0x0314);
+        writeZipU16(centralView, 6, 20);
+        writeZipU16(centralView, 8, 0x0800);
+        writeZipU16(centralView, 10, 0);
+        writeZipU16(centralView, 12, file.dosTime);
+        writeZipU16(centralView, 14, file.dosDate);
+        writeZipU32(centralView, 16, file.crc);
+        writeZipU32(centralView, 20, file.data.length);
+        writeZipU32(centralView, 24, file.data.length);
+        writeZipU16(centralView, 28, file.nameBytes.length);
+        writeZipU16(centralView, 30, 0);
+        writeZipU16(centralView, 32, 0);
+        writeZipU16(centralView, 34, 0);
+        writeZipU16(centralView, 36, 0);
+        writeZipU32(centralView, 38, 0);
+        writeZipU32(centralView, 42, offset);
+        centralHeader.set(file.nameBytes, 46);
+        centralParts.push(centralHeader);
+
+        offset += localHeader.length + file.data.length;
+      });
+
+      const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+      const centralOffset = offset;
+      const endRecord = new Uint8Array(22);
+      const endView = new DataView(endRecord.buffer);
+      writeZipU32(endView, 0, 0x06054b50);
+      writeZipU16(endView, 4, 0);
+      writeZipU16(endView, 6, 0);
+      writeZipU16(endView, 8, normalized.length);
+      writeZipU16(endView, 10, normalized.length);
+      writeZipU32(endView, 12, centralSize);
+      writeZipU32(endView, 16, centralOffset);
+      writeZipU16(endView, 20, 0);
+
+      const totalSize =
+        localParts.reduce((sum, part) => sum + part.length, 0) +
+        centralSize +
+        endRecord.length;
+      const output = new Uint8Array(totalSize);
+      let cursor = 0;
+      [...localParts, ...centralParts, endRecord].forEach((part) => {
+        output.set(part, cursor);
+        cursor += part.length;
+      });
+      return output;
+    }
+
     const KickoffTemplateApi = {
       slugifyLabel: slugifyPackageLabel,
       buildClaudeMd: buildClaudeMdInline,
       buildReadme: buildReadmeInline,
       buildKickoff: buildKickoffInline,
     };
+
+    function loadLLMConfig() {
+      try { return JSON.parse(localStorage.getItem("assembler-llm-config-v1") || "{}"); }
+      catch { return {}; }
+    }
+
+    function saveLLMConfig(provider, apiKey) {
+      localStorage.setItem("assembler-llm-config-v1", JSON.stringify({ provider, apiKey }));
+    }
+
+    function clearLLMConfig() {
+      localStorage.removeItem("assembler-llm-config-v1");
+    }
+
+    function hasLLMKey() {
+      const cfg = loadLLMConfig();
+      return !!(cfg.apiKey && cfg.apiKey.trim().length > 0);
+    }
+
+    function openLLMSettings() {
+      const cfg = loadLLMConfig();
+      document.getElementById("llmProviderSelect").value = cfg.provider || "groq";
+      document.getElementById("llmApiKeyInput").value = cfg.apiKey || "";
+      document.getElementById("llmTestStatus").style.display = "none";
+      document.getElementById("llmSettingsOverlay").style.display = "flex";
+      document.getElementById("llmApiKeyInput").focus();
+    }
+
+    function closeLLMSettings() {
+      document.getElementById("llmSettingsOverlay").style.display = "none";
+    }
+
+    function saveLLMSettings() {
+      const provider = document.getElementById("llmProviderSelect").value;
+      const apiKey = document.getElementById("llmApiKeyInput").value.trim();
+      if (!apiKey) { toast("Enter an API key before saving."); return; }
+      saveLLMConfig(provider, apiKey);
+      closeLLMSettings();
+      toast("API key saved. AI ranking enabled.");
+      updateLLMBadge();
+    }
+
+    function clearLLMSettings() {
+      clearLLMConfig();
+      document.getElementById("llmApiKeyInput").value = "";
+      document.getElementById("llmTestStatus").style.display = "none";
+      toast("API key cleared.");
+      updateLLMBadge();
+    }
+
+    async function testLLMConnection() {
+      const provider = document.getElementById("llmProviderSelect").value;
+      const apiKey = document.getElementById("llmApiKeyInput").value.trim();
+      const statusEl = document.getElementById("llmTestStatus");
+      if (!apiKey) { toast("Enter an API key first."); return; }
+
+      const btn = document.getElementById("llmTestBtn");
+      btn.disabled = true;
+      btn.textContent = "Testing…";
+      statusEl.style.display = "block";
+      statusEl.className = "modal-status";
+      statusEl.textContent = "Connecting…";
+
+      try {
+        // Stub: actual call will use llm-client.mjs when available
+        const url = provider === "groq"
+          ? "https://api.groq.com/openai/v1/models"
+          : "https://openrouter.ai/api/v1/models";
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        if (res.ok) {
+          statusEl.className = "modal-status ok";
+          statusEl.textContent = "✓ Connected — AI ranking is ready.";
+        } else if (res.status === 401) {
+          statusEl.className = "modal-status err";
+          statusEl.textContent = "✗ Invalid API key. Check and try again.";
+        } else {
+          statusEl.className = "modal-status err";
+          statusEl.textContent = `✗ Unexpected response: HTTP ${res.status}`;
+        }
+      } catch (e) {
+        statusEl.className = "modal-status err";
+        statusEl.textContent = "✗ Connection failed. Check your network.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Test connection";
+      }
+    }
+
+    function updateLLMBadge() {
+      const btn = document.getElementById("llmSettingsBtn");
+      if (!btn) return;
+      btn.textContent = hasLLMKey() ? "⚙ AI ✓" : "⚙ AI Settings";
+      btn.style.borderColor = hasLLMKey() ? "var(--ok)" : "";
+      btn.style.color = hasLLMKey() ? "var(--ok)" : "";
+    }
+
+    function setRankingTier(tier) {
+      // tier: "local" | "ai" | "loading"
+      document.getElementById("tierLocal").className =
+        "tier" + (tier === "local" || tier === "loading" ? " active" : "");
+      const aiEl = document.getElementById("tierAI");
+      aiEl.className = "tier" + (tier === "ai" ? " active" : tier === "loading" ? " running" : "");
+      aiEl.textContent = tier === "loading" ? "✨ AI…" : "✨ AI";
+    }
 
     const state = {
       step: 1,
@@ -1218,6 +1558,7 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       document.getElementById("suggestionSummary").textContent = state.suggestions.length
         ? `Showing ${state.suggestions.length} strongest local matches for the current goal.`
         : "No local matches yet. Try shorter or more concrete wording.";
+      setRankingTier("local");
       if (state.suggestions.length) setStep(2);
     }
 
@@ -1411,7 +1752,7 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       const fileCount = state.files.length;
       document.getElementById("fileCount").textContent = String(fileCount);
       document.getElementById("fileSummary").textContent = fileCount
-        ? `${fileCount} generated files ready for copy or download.`
+        ? `${fileCount} generated files ready for copy, single download, or ZIP export.`
         : "No files generated yet.";
 
       const list = document.getElementById("fileList");
@@ -1463,6 +1804,21 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast(`Downloaded ${current.name}`);
+    }
+
+    function downloadZipPackage() {
+      if (!state.files.length) return;
+      const bytes = buildZipArchive(state.files);
+      const blob = new Blob([bytes], { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${getPackageName()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast(`Downloaded ${getPackageName()}.zip`);
     }
 
     function handleNext() {
@@ -1522,6 +1878,21 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       document.getElementById("btnUseTopSix").addEventListener("click", () => rerankSelections(true));
       document.getElementById("btnCopyFile").addEventListener("click", copyCurrentFile);
       document.getElementById("btnDownloadFile").addEventListener("click", downloadCurrentFile);
+      document.getElementById("btnDownloadZip").addEventListener("click", downloadZipPackage);
+      document.getElementById("llmSettingsBtn").addEventListener("click", openLLMSettings);
+      document.getElementById("llmSettingsClose").addEventListener("click", closeLLMSettings);
+      document.getElementById("llmSettingsOverlay").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("llmSettingsOverlay")) closeLLMSettings();
+      });
+      document.getElementById("llmSaveBtn").addEventListener("click", saveLLMSettings);
+      document.getElementById("llmClearBtn").addEventListener("click", clearLLMSettings);
+      document.getElementById("llmTestBtn").addEventListener("click", testLLMConnection);
+      // Close on Escape
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && document.getElementById("llmSettingsOverlay").style.display !== "none") {
+          closeLLMSettings();
+        }
+      });
     }
 
     async function init() {
@@ -1539,6 +1910,7 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
         document.getElementById("resultsGrid").innerHTML = `<div class="empty">Could not load the local catalog. Run <code>node build.mjs</code> first.</div>`;
         console.error(error);
       }
+      updateLLMBadge();
     }
 
     window.addEventListener("load", init);

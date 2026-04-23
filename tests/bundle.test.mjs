@@ -9,6 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const DIST = join(ROOT, "dist", "skill-browser.html");
 const DIST_PLAYGROUND = join(ROOT, "dist", "playground.html");
+const DIST_ASSEMBLER = join(ROOT, "dist", "assembler.html");
 
 before(() => {
   const r = spawnSync(process.execPath, [join(ROOT, "bundle.mjs")], { cwd: ROOT, stdio: "pipe" });
@@ -28,6 +29,14 @@ test("bundle: playground bundle exists and includes inlined data", () => {
   const content = readFileSync(DIST_PLAYGROUND, "utf8");
   assert.ok(content.includes("window.__ECC_DATA__"), "playground bundle must inline __ECC_DATA__");
   assert.ok(!/<script[^>]+src=["']data\.js["']/i.test(content), "playground bundle must not depend on external data.js");
+});
+
+test("bundle: assembler bundle exists and includes inlined data", () => {
+  assert.ok(existsSync(DIST_ASSEMBLER), "dist/assembler.html must exist");
+  const content = readFileSync(DIST_ASSEMBLER, "utf8");
+  assert.ok(content.includes("window.__ECC_DATA__"), "assembler bundle must inline __ECC_DATA__");
+  assert.ok(!/<script[^>]+src=["']data\.js["']/i.test(content), "assembler bundle must not depend on external data.js");
+  assert.ok(content.includes("btnDownloadZip"), "assembler bundle must include ZIP export UI");
 });
 
 test("bundle: is self-contained (no external script src refs)", () => {

@@ -14,7 +14,7 @@
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -84,5 +84,43 @@ test("each item has required fields (first 50 sampled)", () => {
     assert.ok(typeof it.slug === "string" && validSlug, `bad slug: ${it.slug}`);
     assert.ok(typeof it.category === "string", "item.category missing");
     assert.ok(typeof it.scope === "string", "item.scope missing");
+  }
+});
+
+// ---- --sanitize flag tests ----
+
+const SANITIZED_DATA = join(ROOT, "data.sanitized.json");
+
+test("--sanitize: build exits 0, writes valid data, prints [sanitized]", () => {
+  const r = spawnSync(process.execPath, [BUILD, "--sanitize"], { cwd: ROOT, encoding: "utf8" });
+  assert.equal(r.status, 0, `build.mjs --sanitize exited non-zero (stderr: ${r.stderr})`);
+  assert.ok(r.stdout.includes("[sanitized]"), `stdout should mention [sanitized], got: ${r.stdout}`);
+  // Snapshot the sanitized data.json before subsequent tests (or the before() hook) may overwrite it
+  const raw = readFileSync(DATA, "utf8");
+  writeFileSync(SANITIZED_DATA, raw, "utf8");
+});
+
+test("--sanitize: items count > 0 and counts.total matches", () => {
+  const data = JSON.parse(readFileSync(SANITIZED_DATA, "utf8"));
+  assert.ok(Array.isArray(data.items) && data.items.length > 0, "items array is empty after sanitize");
+  assert.equal(data.counts.total, data.items.length, "counts.total mismatch after sanitize");
+});
+
+test("--sanitize: no item retains a path field", () => {
+  const data = JSON.parse(readFileSync(SANITIZED_DATA, "utf8"));
+  for (const it of data.items) {
+    assert.ok(!("path" in it), `item "${it.name}" still has a path field: ${it.path}`);
+  }
+});
+
+test("--sanitize: no item source contains absolute path markers", () => {
+  const data = JSON.parse(readFileSync(SANITIZED_DATA, "utf8"));
+  const BAD_MARKERS = ["\\", "/Users/", "C:", "/home/"];
+  for (const it of data.items) {
+    const src = String(it.source ?? "");
+    for (const marker of BAD_MARKERS) {
+      assert.ok(!src.includes(marker),
+        `item "${it.name}" source "${src}" contains absolute path marker "${marker}"`);
+    }
   }
 });
