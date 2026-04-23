@@ -11,7 +11,7 @@
 //
 // Zero npm deps. Pure Node ESM: node:fs, node:path, node:child_process.
 
-import { readFileSync, writeFileSync, mkdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, statSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -48,6 +48,21 @@ function run() {
   const routerJs = readFileSync(routerPath, "utf8");
   const dataJs = readFileSync(dataPath, "utf8");
   const recipesJs = readFileSync(recipesPath, "utf8");
+
+  // Optionally inline embeddings if data.embeddings.json was produced by --embeddings flag
+  const embJsonPath = join(__dirname, "data.embeddings.json");
+  let embeddingsInlineScript = "";
+  if (existsSync(embJsonPath)) {
+    try {
+      const embRaw = readFileSync(embJsonPath, "utf8");
+      // Validate it's parseable JSON before inlining
+      JSON.parse(embRaw);
+      embeddingsInlineScript = `\nwindow.SKILL_EMBEDDINGS = ${embRaw};\n`;
+      console.log("[bundle] inlining data.embeddings.json → window.SKILL_EMBEDDINGS");
+    } catch (e) {
+      console.warn("[bundle] data.embeddings.json found but failed to parse, skipping:", e.message);
+    }
+  }
 
   // ---- 3. splice inline <script> blocks ----
   // Escape any literal "</script>" inside the JS so the browser doesn't end our inline tag early.
@@ -96,10 +111,14 @@ function run() {
     bundledPlayground = playgroundHtml.replace(playgroundDataTagRe, () => inlineData);
   }
 
+  // For the assembler, also inline embeddings if available
   const assemblerDataTagRe = /<script\s+src\s*=\s*["']data\.js["']\s*>\s*<\/script>/i;
   let bundledAssembler = assemblerHtml;
   if (assemblerDataTagRe.test(assemblerHtml)) {
-    bundledAssembler = assemblerHtml.replace(assemblerDataTagRe, () => inlineData);
+    const inlineDataWithEmbeddings = embeddingsInlineScript
+      ? `<script>\n${escapeScriptClose(dataJs)}${escapeScriptClose(embeddingsInlineScript)}\n</script>`
+      : inlineData;
+    bundledAssembler = assemblerHtml.replace(assemblerDataTagRe, () => inlineDataWithEmbeddings);
   }
 
   // ---- 4. write output ----

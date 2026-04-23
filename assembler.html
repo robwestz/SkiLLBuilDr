@@ -736,6 +736,7 @@
           <div class="toolbar-note" id="suggestionSummary">No ranking yet.</div>
           <div class="ranking-tiers" id="rankingTiers">
             <span class="tier active" id="tierLocal" title="Token-overlap ranking — always available">🏎 Local</span>
+            <span class="tier" id="tierEmbed" title="Semantic re-ranking (embeddings available)">🧠 Semantic</span>
             <span class="tier" id="tierAI" title="AI-powered causal ranking — add API key in ⚙ AI Settings">✨ AI</span>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1343,9 +1344,11 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
     }
 
     function setRankingTier(tier) {
-      // tier: "local" | "ai" | "loading"
+      // tier: "local" | "embed" | "ai" | "loading"
       document.getElementById("tierLocal").className =
         "tier" + (tier === "local" || tier === "loading" ? " active" : "");
+      const embedEl = document.getElementById("tierEmbed");
+      if (embedEl) embedEl.className = "tier" + (tier === "embed" ? " active" : "");
       const aiEl = document.getElementById("tierAI");
       aiEl.className = "tier" + (tier === "ai" ? " active" : tier === "loading" ? " running" : "");
       aiEl.textContent = tier === "loading" ? "✨ AI…" : "✨ AI";
@@ -1386,6 +1389,45 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
         .replace(/[^\w\s+/#.-]/g, " ")
         .split(/\s+/)
         .filter((token) => token.length > 1 && !STOPWORDS.has(token));
+    }
+
+    function cosineSim(a, b) {
+      // a, b are plain Arrays of equal length
+      let dot = 0, na = 0, nb = 0;
+      for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i]; na += a[i]*a[i]; nb += b[i]*b[i];
+      }
+      return dot / (Math.sqrt(na) * Math.sqrt(nb) + 1e-9);
+    }
+
+    function scoreWithEmbeddings(goalEmbedding, items) {
+      // goalEmbedding is Float32Array or Array (centroid of top IDF items)
+      // Returns [{slug, name, score, reason, ...item}] sorted desc
+      const emb = window.SKILL_EMBEDDINGS;
+      if (!emb) return null; // embeddings not loaded
+      return items
+        .filter(item => emb[item.slug])
+        .map(item => ({
+          ...item,
+          _score: Math.round(cosineSim(goalEmbedding, emb[item.slug]) * 100),
+          _why: 'semantic similarity'
+        }))
+        .sort((a, b) => b._score - a._score);
+    }
+
+    function computeCentroid(slugs) {
+      // Average of embedding vectors for given slugs
+      const emb = window.SKILL_EMBEDDINGS;
+      if (!emb) return null;
+      const vecs = slugs.map(s => emb[s]).filter(Boolean);
+      if (!vecs.length) return null;
+      const dim = vecs[0].length;
+      const centroid = new Array(dim).fill(0);
+      for (const v of vecs) {
+        for (let i = 0; i < dim; i++) centroid[i] += v[i];
+      }
+      for (let i = 0; i < dim; i++) centroid[i] /= vecs.length;
+      return centroid;
     }
 
     function scoreIntent(query, items, limit = 16) {
@@ -1547,7 +1589,37 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
         return;
       }
       const query = [state.goal, state.description].filter(Boolean).join(" ");
-      state.suggestions = scoreIntent(query, state.catalog, 16);
+      // Step 1: IDF scoring — always works
+      const idfResults = scoreIntent(query, state.catalog, 16);
+
+      let activeTier = "local";
+      let summaryText = "";
+
+      if (window.SKILL_EMBEDDINGS && idfResults.length >= 2) {
+        // Step 2: compute centroid from top-5 IDF embeddings and re-rank all items
+        const topSlugs = idfResults.slice(0, 5).map(item => item.slug);
+        const centroid = computeCentroid(topSlugs);
+        if (centroid) {
+          const reranked = scoreWithEmbeddings(centroid, state.catalog);
+          if (reranked && reranked.length > 0) {
+            state.suggestions = reranked.slice(0, 16);
+            activeTier = "embed";
+            summaryText = `Showing ${state.suggestions.length} semantically re-ranked matches (embedding centroid of top IDF hits).`;
+          } else {
+            state.suggestions = idfResults;
+            summaryText = `Showing ${state.suggestions.length} strongest local matches for the current goal.`;
+          }
+        } else {
+          state.suggestions = idfResults;
+          summaryText = `Showing ${state.suggestions.length} strongest local matches for the current goal.`;
+        }
+      } else {
+        state.suggestions = idfResults;
+        summaryText = state.suggestions.length
+          ? `Showing ${state.suggestions.length} strongest local matches for the current goal.`
+          : "No local matches yet. Try shorter or more concrete wording.";
+      }
+
       if (replaceCurrent) {
         state.selected = state.suggestions.slice(0, 6).map(normalizeSelection);
       }
@@ -1555,10 +1627,9 @@ ${skillLine}${node.body?.trim() ? `\n\nWorking note:\n${node.body.trim()}` : ""}
       renderReview();
       renderSidebar();
       renderSummary();
-      document.getElementById("suggestionSummary").textContent = state.suggestions.length
-        ? `Showing ${state.suggestions.length} strongest local matches for the current goal.`
-        : "No local matches yet. Try shorter or more concrete wording.";
-      setRankingTier("local");
+      document.getElementById("suggestionSummary").textContent = summaryText ||
+        "No local matches yet. Try shorter or more concrete wording.";
+      setRankingTier(activeTier);
       if (state.suggestions.length) setStep(2);
     }
 

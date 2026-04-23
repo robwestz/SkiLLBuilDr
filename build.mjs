@@ -14,12 +14,13 @@ const HOME = homedir();
 const PLUGINS_ROOT = join(HOME, ".claude", "plugins", "cache");
 
 function parseArgs(argv) {
-  const out = { project: null, verbose: false, sanitize: false };
+  const out = { project: null, verbose: false, sanitize: false, embeddings: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--project") out.project = argv[++i];
     else if (a === "--verbose" || a === "-v") out.verbose = true;
     else if (a === "--sanitize" || a === "-s") out.sanitize = true;
+    else if (a === "--embeddings") out.embeddings = true;
   }
   return out;
 }
@@ -567,7 +568,7 @@ function collectSource(source) {
 
 // ------------- Main -------------
 
-function main() {
+async function main() {
   const opts = parseArgs(process.argv.slice(2));
   const sources = discoverSources(opts);
   if (opts.verbose) {
@@ -680,6 +681,58 @@ function main() {
     console.error("scopes:", scopes);
     console.error("sources:", sourcesCount);
   }
+
+  if (opts.embeddings) {
+    await generateEmbeddings(items, jsPath);
+  }
 }
 
-main();
+async function generateEmbeddings(items, jsPath) {
+  // Graceful degradation if @xenova/transformers is not installed
+  let pipeline;
+  try {
+    const mod = await import("@xenova/transformers");
+    pipeline = mod.pipeline;
+  } catch (e) {
+    console.error(
+      "Install @xenova/transformers for embeddings: npm install @xenova/transformers"
+    );
+    process.exit(1);
+  }
+
+  console.log("Loading embedding model Xenova/all-MiniLM-L6-v2...");
+  const embed = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+
+  const embeddings = {};
+  const BATCH_SIZE = 32;
+  const total = items.length;
+
+  for (let i = 0; i < total; i += BATCH_SIZE) {
+    const batch = items.slice(i, i + BATCH_SIZE);
+    for (let j = 0; j < batch.length; j++) {
+      const item = batch[j];
+      const globalIdx = i + j + 1;
+      if (globalIdx % 50 === 0 || globalIdx === 1 || globalIdx === total) {
+        console.log(`Embedding ${globalIdx}/${total}...`);
+      }
+      const text = `${item.name}. ${item.description || ""}`;
+      const output = await embed(text, { pooling: "mean", normalize: true });
+      // output.data is a Float32Array of length 384
+      embeddings[item.slug] = Array.from(output.data);
+    }
+  }
+
+  const embJsonPath = join(__dirname, "data.embeddings.json");
+  writeFileSync(embJsonPath, JSON.stringify(embeddings), "utf8");
+  console.log(`Wrote embeddings for ${Object.keys(embeddings).length} items to data.embeddings.json`);
+
+  // Append to data.js so file:// loading works
+  const embJs = `window.SKILL_EMBEDDINGS = ${JSON.stringify(embeddings)};\n`;
+  const existing = readFileSync(jsPath, "utf8");
+  // Remove any previous SKILL_EMBEDDINGS assignment before appending
+  const cleaned = existing.replace(/\nwindow\.SKILL_EMBEDDINGS = [\s\S]*?;\n/g, "\n");
+  writeFileSync(jsPath, cleaned + embJs, "utf8");
+  console.log("Appended window.SKILL_EMBEDDINGS to data.js");
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });

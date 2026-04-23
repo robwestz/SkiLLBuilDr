@@ -124,3 +124,47 @@ test("--sanitize: no item source contains absolute path markers", () => {
     }
   }
 });
+
+// ---- --embeddings flag tests ----
+// Strategy: @xenova/transformers is a devDependency that may or may not be installed.
+// If installed → build must produce data.embeddings.json with correct structure.
+// If not installed → build must exit non-zero with a clear install message (graceful degradation).
+// The test passes in BOTH cases.
+
+test("--embeddings: either succeeds with valid data.embeddings.json, or fails with clear install message", () => {
+  const EMB_JSON = join(ROOT, "data.embeddings.json");
+  const r = spawnSync(process.execPath, [BUILD, "--sanitize", "--embeddings"], {
+    cwd: ROOT,
+    encoding: "utf8",
+    timeout: 120_000, // model download can take time
+  });
+
+  if (r.status === 0) {
+    // Embeddings were generated — validate output file
+    assert.ok(existsSync(EMB_JSON), "data.embeddings.json was not written despite exit 0");
+    const raw = readFileSync(EMB_JSON, "utf8");
+    const emb = JSON.parse(raw);
+    assert.equal(typeof emb, "object", "data.embeddings.json should be an object");
+    assert.ok(emb !== null && !Array.isArray(emb), "data.embeddings.json should be a plain object");
+    const slugs = Object.keys(emb);
+    assert.ok(slugs.length > 0, "data.embeddings.json has no entries");
+    // Spot-check: every value must be an Array of numbers
+    for (const slug of slugs.slice(0, 5)) {
+      const vec = emb[slug];
+      assert.ok(Array.isArray(vec), `embedding for "${slug}" should be an Array`);
+      assert.ok(vec.length > 0, `embedding for "${slug}" should be non-empty`);
+      assert.ok(typeof vec[0] === "number", `embedding[0] for "${slug}" should be a number`);
+    }
+  } else {
+    // Package not installed — must print a clear install instruction
+    const output = (r.stdout || "") + (r.stderr || "");
+    assert.ok(
+      output.includes("@xenova/transformers"),
+      `Expected install message mentioning @xenova/transformers. Got:\n${output}`
+    );
+    assert.ok(
+      output.includes("npm install"),
+      `Expected install message with npm install command. Got:\n${output}`
+    );
+  }
+});
