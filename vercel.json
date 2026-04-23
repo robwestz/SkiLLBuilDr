@@ -1,0 +1,23 @@
+{
+  "rewrites": [
+    { "source": "/assembler", "destination": "/assembler.html" },
+    { "source": "/playground", "destination": "/playground.html" },
+    { "source": "/landing", "destination": "/landing.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/dist/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }
+      ]
+    }
+  ]
+}
