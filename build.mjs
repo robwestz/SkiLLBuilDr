@@ -14,10 +14,11 @@ const HOME = homedir();
 const PLUGINS_ROOT = join(HOME, ".claude", "plugins", "cache");
 
 function parseArgs(argv) {
-  const out = { project: null, verbose: false, sanitize: false, embeddings: false };
+  const out = { project: null, verbose: false, sanitize: false, embeddings: false, workflows: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--project") out.project = argv[++i];
+    else if (a === "--workflows") out.workflows = argv[++i];
     else if (a === "--verbose" || a === "-v") out.verbose = true;
     else if (a === "--sanitize" || a === "-s") out.sanitize = true;
     else if (a === "--embeddings") out.embeddings = true;
@@ -335,6 +336,33 @@ function discoverSources(opts) {
         projectPath: p,
       });
     }
+    // Also scan <project>/.archon/workflows/ (root is project dir, not .claude subdir)
+    if (isDir(join(p, ".archon", "workflows"))) {
+      sources.push({
+        scope: "project",
+        namespace: null,
+        label: "project",
+        root: p,
+        projectPath: p,
+        workflowsOnly: true,
+      });
+    }
+  }
+
+  // Explicit --workflows <path>: root points to parent of .archon/ (or a dir with .archon/workflows/)
+  if (opts.workflows) {
+    const w = opts.workflows;
+    if (!isDir(w)) {
+      console.warn(`[build] --workflows path not found: ${w}`);
+    } else {
+      sources.push({
+        scope: "project",
+        namespace: null,
+        label: "workflows",
+        root: w,
+        workflowsOnly: true,
+      });
+    }
   }
 
   return sources;
@@ -563,6 +591,7 @@ function collectWorkflows(source) {
 }
 
 function collectSource(source) {
+  if (source.workflowsOnly) return collectWorkflows(source);
   return [...collectAgents(source), ...collectSkills(source), ...collectCommands(source), ...collectRules(source), ...collectWorkflows(source)];
 }
 

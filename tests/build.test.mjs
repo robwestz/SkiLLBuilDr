@@ -14,7 +14,7 @@
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, statSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -167,4 +167,50 @@ test("--embeddings: either succeeds with valid data.embeddings.json, or fails wi
       `Expected install message with npm install command. Got:\n${output}`
     );
   }
+});
+
+// ---- --workflows flag tests ----
+
+test("--workflows: scans .archon/workflows in given path and includes workflow items", () => {
+  // Create a temp directory tree: <tmp>/.archon/workflows/test-flow.yaml
+  const tmpDir = join(ROOT, "_workflow_test_fixture");
+  const archonDir = join(tmpDir, ".archon", "workflows");
+  mkdirSync(archonDir, { recursive: true });
+  writeFileSync(join(archonDir, "test-flow.yaml"), [
+    "name: test-workflow-fixture",
+    "description: A synthetic workflow for testing",
+    "on: workflow_dispatch",
+    "jobs:",
+    "  run:",
+    "    steps:",
+    "      - id: step-one",
+    "      - id: step-two",
+  ].join("\n"), "utf8");
+
+  try {
+    const r = spawnSync(process.execPath, [BUILD, "--workflows", tmpDir], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    assert.equal(r.status, 0, `build.mjs --workflows exited non-zero: ${r.stderr}`);
+
+    const data = JSON.parse(readFileSync(DATA, "utf8"));
+    const workflows = data.items.filter((it) => it.type === "workflow");
+    const fixture = workflows.find((w) => w.name === "test-workflow-fixture");
+    assert.ok(fixture, `workflow 'test-workflow-fixture' not found in catalog; all workflows: ${JSON.stringify(workflows.map((w) => w.name))}`);
+    assert.equal(fixture.type, "workflow");
+    assert.ok(fixture.slug.startsWith("workflow:"), `slug should start with workflow:, got ${fixture.slug}`);
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test("--workflows: missing path emits warning but exits 0", () => {
+  const r = spawnSync(process.execPath, [BUILD, "--workflows", "/nonexistent/path/xyz"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  assert.equal(r.status, 0, `should exit 0 even for missing --workflows path, got ${r.status}`);
+  const combined = r.stdout + r.stderr;
+  assert.ok(combined.includes("not found") || combined.includes("nonexistent"), `expected a warning about the missing path`);
 });
