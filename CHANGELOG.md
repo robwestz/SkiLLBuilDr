@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-04-23
+
+### Added
+- **MCP server** (`mcp-server.mjs`): zero-dep stdio JSON-RPC 2.0 server with 5 tools — `search_skills`, `rank_skills_for_goal`, `get_skill`, `assemble_package`, `list_sources`. Installable via `~/.claude/mcp.json`. Exports `handleToolCall` + `listTools` for unit testing.
+- **CLI** (`cli.mjs`): terminal interface — `--goal`, `--search`, `--get`, `--sources`, `--type`, `--limit`, `--json`, `--data` flags; formatted table + JSON output. Registered as `skill-browser-cli` bin.
+- **`llm-client.mjs`**: provider-agnostic LLM wrapper with `OfflineProvider` (IDF fallback) and `GroqProvider` (llama3-8b for ranking, llama-3.3-70b for context). Causal rank-skills system prompt; typed 401/429/network errors. API key never in error messages.
+- **Assembler LLM settings modal**: `⚙ AI` button in assembler topbar; provider select (Groq/OpenRouter), password input, test/clear/save. Stored in `localStorage` key `assembler-llm-config-v1`.
+- **Three ranking tiers in assembler Step 2**: `🏎 Local` (IDF, always active), `🧠 Semantic` (cosine centroid when embeddings present), `✨ AI` (Groq, opt-in).
+- **Semantic embeddings** (`build.mjs --embeddings`): runs `@xenova/transformers` all-MiniLM-L6-v2 at build time, writes `data.embeddings.json` + appends `window.SKILL_EMBEDDINGS` to `data.js`. Browser uses centroid of IDF top-5 to re-rank semantically. Graceful degradation if package not installed.
+- **`build.mjs --sanitize`**: strips absolute paths, normalises sources to `plugin:X` / `user` / `project`, removes `filePath` field. Enables hosted deployment.
+- **6 package templates** in `recipes.json` with `packageTemplate: true` and `estimatedHours`: `pkg-saas-mvp` (40h), `pkg-cli-tool` (16h), `pkg-api-service` (24h), `pkg-ai-agent` (20h), `pkg-data-pipeline` (28h), `pkg-mobile-app` (48h). Each has `steps[]`.
+- **`zip-builder.mjs`**: standalone STORE-mode ZIP encoder extracted from assembler; used by MCP server for `assemble_package`.
+- **GitHub Pages CI** (`.github/workflows/pages.yml`): push to `main` → `node bundle.mjs` → deploy to `robwestz.github.io/SkiLLBuilDr/`.
+- `tests/llm-client.test.mjs`: 18 tests (mock fetch, edge cases, security invariant).
+- `tests/mcp-server.test.mjs`: 10 tests with synthetic catalog — no `data.json` required.
+- `tests/zip-builder.test.mjs`: 2 tests for ZIP encode/decode round-trip.
+- `tests/build.test.mjs`: 4 new `--sanitize` tests + 1 `--embeddings` graceful-error test.
+
+### Changed
+- `package.json` `0.6.0` → `0.7.0`; `files` and `bin` updated; `devDependencies` adds `@xenova/transformers ^2.17.2`.
+- `bundle.mjs` inlines `data.embeddings.json` as `window.SKILL_EMBEDDINGS` in assembler bundle when file exists.
+- `landing.html` updated: eight feature cards including three ranking tiers and MCP/CLI.
+- `recipes.json` grows from 15 → 21 entries (6 new package templates).
+
 ## [0.6.0] - 2026-04-23
 
 ### Added
