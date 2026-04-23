@@ -19,17 +19,24 @@ import { spawnSync } from "node:child_process";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function run() {
-  // ---- 1. rebuild data ----
-  const forwardedArgs = process.argv.slice(2);
-  console.log(`[bundle] running build.mjs ${forwardedArgs.join(" ")}`.trim());
-  const result = spawnSync(
-    process.execPath,
-    [join(__dirname, "build.mjs"), ...forwardedArgs],
-    { cwd: __dirname, stdio: "inherit" }
-  );
-  if (result.status !== 0) {
-    console.error(`[bundle] build.mjs exited with status ${result.status}`);
-    process.exit(result.status ?? 1);
+  // ---- 1. rebuild data (skip when --skip-build is passed) ----
+  const rawArgs = process.argv.slice(2);
+  const skipBuild = rawArgs.includes("--skip-build");
+  const forwardedArgs = rawArgs.filter((a) => a !== "--skip-build");
+
+  if (skipBuild) {
+    console.log("[bundle] --skip-build: skipping build.mjs (using existing data files)");
+  } else {
+    console.log(`[bundle] running build.mjs ${forwardedArgs.join(" ")}`.trim());
+    const result = spawnSync(
+      process.execPath,
+      [join(__dirname, "build.mjs"), ...forwardedArgs],
+      { cwd: __dirname, stdio: "inherit" }
+    );
+    if (result.status !== 0) {
+      console.error(`[bundle] build.mjs exited with status ${result.status}`);
+      process.exit(result.status ?? 1);
+    }
   }
 
   // ---- 2. read inputs ----
@@ -38,8 +45,28 @@ function run() {
   const assemblerPath = join(__dirname, "assembler.html");
   const analyticsPath = join(__dirname, "analytics.js");
   const routerPath = join(__dirname, "hash-router.js");
-  const dataPath = join(__dirname, "data.js");
-  const recipesPath = join(__dirname, "recipes.js");
+  // Prefer data.js (local build); fall back to data.public.js (committed sanitized snapshot)
+  const dataPath = existsSync(join(__dirname, "data.js"))
+    ? join(__dirname, "data.js")
+    : join(__dirname, "data.public.js");
+  const recipesPath = existsSync(join(__dirname, "recipes.js"))
+    ? join(__dirname, "recipes.js")
+    : join(__dirname, "recipes.public.js");
+
+  if (!existsSync(dataPath)) {
+    console.error(
+      "[bundle] No data.js or data.public.js found.\n" +
+      "  Run: node build.mjs --sanitize  then copy data.js → data.public.js"
+    );
+    process.exit(1);
+  }
+  if (!existsSync(recipesPath)) {
+    console.error(
+      "[bundle] No recipes.js or recipes.public.js found.\n" +
+      "  Run: node build.mjs  then copy recipes.js → recipes.public.js"
+    );
+    process.exit(1);
+  }
 
   const indexHtml = readFileSync(indexPath, "utf8");
   const playgroundHtml = readFileSync(playgroundPath, "utf8");
@@ -48,6 +75,7 @@ function run() {
   const routerJs = readFileSync(routerPath, "utf8");
   const dataJs = readFileSync(dataPath, "utf8");
   const recipesJs = readFileSync(recipesPath, "utf8");
+  console.log(`[bundle] using data: ${dataPath}`);
 
   // Optionally inline embeddings if data.embeddings.json was produced by --embeddings flag
   const embJsonPath = join(__dirname, "data.embeddings.json");

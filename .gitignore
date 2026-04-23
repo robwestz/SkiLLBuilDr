@@ -4,6 +4,9 @@ data.json
 data.sanitized.json
 data.js
 recipes.js
+# Sanitized public snapshots ARE committed (used by GH Pages CI via bundle.mjs --skip-build)
+!data.public.js
+!recipes.public.js
 .DS_Store
 *.log
 .env

@@ -29,7 +29,10 @@ jobs:
           node-version: 20
 
       - name: Build catalog + bundle
-        run: node bundle.mjs
+        # data.public.js / recipes.public.js are committed sanitized snapshots.
+        # Generate them locally: node build.mjs --sanitize && cp data.js data.public.js && cp recipes.js recipes.public.js
+        # --skip-build skips running build.mjs (no ~/.claude/plugins on CI).
+        run: node bundle.mjs --skip-build
 
       - name: Assemble Pages artifact
         run: |
