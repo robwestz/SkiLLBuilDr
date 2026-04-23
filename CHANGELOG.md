@@ -11,11 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`launch.mjs`**: cross-platform Node.js launcher replacing bash `launch.sh` as the npm `bin` entry for `skill-browser`. Works on Windows, macOS, Linux without a bash environment.
 - **`vercel.json`**: deployment config with clean-URL rewrites (`/assembler`, `/playground`, `/landing`) and security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy).
 - **`tests/e2e/assembler.spec.js`**: 10 Playwright specs for the 4-step Package Assembler wizard — load, goal→step2 transition, skill card selection, review, download, reset, and LLM settings modal.
-- **5 additional intent.mjs tests** (total 8): stopwords-only query exits 1, `--limit 1` returns one line, `--format json` returns valid array with `_score`/`slug` fields, `--type skill` filter, non-ASCII input safety.
+- **`tests/e2e/playground.spec.js`**: 10 Playwright specs for the Skill Playground — catalog search, canvas add, item name display, Prompt/YAML/CLAUDE.md export tabs, save modal, clear canvas (with confirm dialog), empty-save toast.
+- **5 additional `intent.mjs` tests** (total 8): stopwords-only query exits 1, `--limit 1` returns one line, `--format json` returns valid array with `_score`/`slug` fields, `--type skill` filter, non-ASCII input safety.
+- **`data.public.js` + `recipes.public.js`**: committed sanitized catalog snapshots (744 items, 37 sources, no absolute paths) used by GH Pages CI. Regenerate: `node build.mjs --sanitize && cp data.js data.public.js && cp recipes.js recipes.public.js`.
 
 ### Changed
 - `index.html`, `playground.html` title and OG meta tags updated to **buildr.nu** brand.
 - `package.json` `bin.skill-browser` updated from `./launch.sh` to `./launch.mjs`; `launch.mjs` added to `files` whitelist.
+- `bundle.mjs`: `--skip-build` flag skips `build.mjs` child-process; falls back to `data.public.js`/`recipes.public.js` when local files absent — enables CI deployment without plugins installed.
+- `.github/workflows/pages.yml`: uses `node bundle.mjs --skip-build` so the deployed site always has real catalog data.
+- `.gitignore`: un-ignores `data.public.js` and `recipes.public.js` via `!` negation rules.
 
 ## [0.7.0] - 2026-04-23
 
