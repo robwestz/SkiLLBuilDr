@@ -20,7 +20,15 @@ playwright/.cache/
 # Tool/editor dirs
 .codeboarding/
 .cursor/
-.claude/
+
+# Ignore .claude/ ephemeral state but track repo-managed artifacts
+# (skills, commands, identity, ecc-tools, homunculus instincts).
+.claude/*
+!.claude/commands/
+!.claude/skills/
+!.claude/homunculus/
+!.claude/identity.json
+!.claude/ecc-tools.json
 
 # Probe/debug files
 probe*.html
