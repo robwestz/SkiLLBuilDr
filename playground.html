@@ -390,6 +390,8 @@
   <div class="topbar-actions">
     <button class="btn ghost" onclick="window.location='index.html'">← Browser</button>
     <button class="btn ghost" onclick="window.location='assembler.html'">Assembler 📦</button>
+    <button class="btn" id="btnAiSuggest" title="Describe your goal and let AI pick skills">⚗️ AI Suggest</button>
+    <button class="btn ghost" id="btnLlmSettings" title="Configure AI provider (shared with Assembler)">⚙</button>
     <button class="btn" id="btnSave">Save workflow</button>
     <button class="btn primary" id="btnExport">Export ▾</button>
   </div>
@@ -492,6 +494,46 @@
       <button class="btn" id="btnExportPrompt">Copy prompt</button>
       <button class="btn" id="btnExportYaml">Copy YAML</button>
       <button class="btn primary" id="btnExportDownload">Download YAML</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI SUGGEST MODAL -->
+<div class="modal-backdrop hidden" id="suggestModal">
+  <div class="modal">
+    <h3>⚗️ AI Suggest skills</h3>
+    <label>Describe your goal</label>
+    <input id="suggestGoal" placeholder="e.g. review a python project for security issues" />
+    <div style="display:flex;gap:8px;align-items:center;font-size:11px;color:var(--fg-dim);margin-top:4px">
+      <span id="suggestTier">Using: <b>local ranker</b></span>
+      <span id="suggestStatus" style="margin-left:auto"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btnSuggestCancel">Cancel</button>
+      <button class="btn primary" id="btnSuggestRun">Suggest top 6</button>
+    </div>
+  </div>
+</div>
+
+<!-- LLM SETTINGS MODAL -->
+<div class="modal-backdrop hidden" id="llmSettingsModal">
+  <div class="modal">
+    <h3>⚙ AI provider</h3>
+    <p style="font-size:11px;color:var(--fg-dim);margin:0 0 8px">
+      Settings are shared with Assembler and Browser (localStorage key <code>assembler-llm-config-v1</code>).
+      Key is stored locally in your browser only.
+    </p>
+    <label>Provider</label>
+    <select id="llmProvider" style="width:100%;padding:6px 8px;background:var(--bg-3);color:var(--fg);border:1px solid var(--border-hi);border-radius:6px">
+      <option value="groq">Groq (free tier — fast)</option>
+      <option value="openrouter">OpenRouter (free llama-3.1-8b)</option>
+    </select>
+    <label>API key</label>
+    <input id="llmApiKey" type="password" placeholder="gsk_…" autocomplete="off" />
+    <div class="modal-actions">
+      <button class="btn ghost" id="btnLlmClear">Clear</button>
+      <button class="btn" id="btnLlmCancel">Cancel</button>
+      <button class="btn primary" id="btnLlmSave">Save</button>
     </div>
   </div>
 </div>
@@ -1012,6 +1054,201 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     document.getElementById("btnSave").click();
   }
+});
+
+// ── LLM CONFIG (shared with assembler.html + index.html) ──
+const STORE_KEY_LLM = "assembler-llm-config-v1";
+
+function loadLLMConfig() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY_LLM) || "{}") || {}; }
+  catch { return {}; }
+}
+function saveLLMConfig(cfg) {
+  localStorage.setItem(STORE_KEY_LLM, JSON.stringify(cfg));
+}
+function hasLLMKey() {
+  const c = loadLLMConfig();
+  return typeof c.apiKey === "string" && c.apiKey.trim().length > 0;
+}
+
+const _SUGGEST_SYSTEM_PROMPT = `You are a causal skill router. Given a user's goal and a catalog of Claude Code skills/commands, return the top ~6 items that DIRECTLY CAUSE progress toward the goal.
+
+Rules:
+- Reject merely-associative matches (same keyword, vaguely related topic).
+- Prefer skills whose stated purpose CAUSES X which the goal REQUIRES.
+- Order by causal strength. Include a short one-line reason per pick.
+
+Respond with JSON: { "ranked": [ { "slug": "…", "reason": "…", "confidence": "high|medium|low" } ] }`;
+
+async function suggestWithGroq(goal, catalogItems) {
+  const cfg = loadLLMConfig();
+  if (!cfg.apiKey) throw new Error("No API key configured");
+  const provider = cfg.provider || "groq";
+  const baseUrl = provider === "groq" ? "https://api.groq.com/openai/v1" : "https://openrouter.ai/api/v1";
+  const model = provider === "groq" ? "llama3-8b-8192" : "meta-llama/llama-3.1-8b-instruct:free";
+
+  // Pre-filter to top 80 via local token overlap, to stay well under context
+  const tokens = goal.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+  const scored = catalogItems.map(it => {
+    const hay = `${it.name} ${it.description || ""} ${it.category || ""}`.toLowerCase();
+    const s = tokens.reduce((a, t) => a + (hay.includes(t) ? 1 : 0), 0);
+    return { it, s };
+  }).sort((a, b) => b.s - a.s).slice(0, 80).map(x => x.it);
+
+  const catalogLines = scored.map(it => `- ${it.slug} [${it.type}] — ${(it.description || it.name).slice(0, 140)}`).join("\n");
+  const userMsg = `Goal: ${goal}\n\nCatalog:\n${catalogLines}\n\nReturn JSON with the top 6 items.`;
+
+  const r = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${cfg.apiKey}` },
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: _SUGGEST_SYSTEM_PROMPT },
+        { role: "user", content: userMsg },
+      ],
+    }),
+  });
+  if (!r.ok) throw new Error(`${provider} API ${r.status}`);
+  const data = await r.json();
+  const content = data?.choices?.[0]?.message?.content || "{}";
+  const parsed = JSON.parse(content);
+  const ranked = Array.isArray(parsed.ranked) ? parsed.ranked : [];
+  const bySlug = new Map(catalogItems.map(it => [it.slug, it]));
+  return ranked
+    .map(r => ({ item: bySlug.get(r.slug), reason: r.reason || "", confidence: r.confidence || "medium" }))
+    .filter(x => x.item);
+}
+
+// Local fallback ranker — same IDF idea as intent.mjs, simplified.
+function suggestLocal(goal, catalogItems, limit = 6) {
+  const tokens = goal.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+  if (!tokens.length) return [];
+  const STOP = new Set(["the","and","for","with","this","that","from","into","your"]);
+  const useful = tokens.filter(t => !STOP.has(t));
+  if (!useful.length) return [];
+  // IDF over catalog
+  const docs = catalogItems.map(it => `${it.name} ${it.description || ""} ${it.category || ""}`.toLowerCase());
+  const idf = {};
+  for (const t of useful) {
+    const df = docs.reduce((a, d) => a + (d.includes(t) ? 1 : 0), 0);
+    idf[t] = Math.log((catalogItems.length + 1) / (df + 1));
+  }
+  return catalogItems
+    .map((it, i) => {
+      const hay = docs[i];
+      const score = useful.reduce((a, t) => a + (hay.includes(t) ? idf[t] : 0), 0);
+      return { item: it, score };
+    })
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(x => ({ item: x.item, reason: `Matched: ${useful.filter(t => docs[catalogItems.indexOf(x.item)].includes(t)).join(", ")}`, confidence: "low" }));
+}
+
+async function runSuggest() {
+  const goal = document.getElementById("suggestGoal").value.trim();
+  const status = document.getElementById("suggestStatus");
+  if (!goal) { status.textContent = "Type a goal first"; return; }
+
+  // Always show local results first (fast feedback)
+  const localResults = suggestLocal(goal, state.catalog, 6);
+  if (!localResults.length) { status.textContent = "No matches found"; return; }
+
+  // Add local results to canvas
+  let added = 0;
+  for (const { item } of localResults) {
+    if (!state.nodes.some(n => n.slug === item.slug)) {
+      state.nodes.push({
+        id: uid(), type: item.type, name: item.name, slug: item.slug,
+        description: item.description || "", content: item.body || item.description || "", isCustom: false,
+      });
+      added++;
+    }
+  }
+  renderCanvas(); updatePreview();
+  status.textContent = `Added ${added} (local)`;
+
+  // If AI key is set, upgrade silently
+  if (hasLLMKey()) {
+    status.textContent = `Added ${added} (local) · upgrading with AI…`;
+    try {
+      const aiResults = await suggestWithGroq(goal, state.catalog);
+      if (aiResults.length) {
+        // Remove local-added nodes, add AI-ranked ones in AI order
+        const localSlugs = new Set(localResults.map(r => r.item.slug));
+        state.nodes = state.nodes.filter(n => !localSlugs.has(n.slug));
+        for (const { item } of aiResults) {
+          if (!state.nodes.some(n => n.slug === item.slug)) {
+            state.nodes.push({
+              id: uid(), type: item.type, name: item.name, slug: item.slug,
+              description: item.description || "", content: item.body || item.description || "", isCustom: false,
+            });
+          }
+        }
+        renderCanvas(); updatePreview();
+        status.textContent = `✨ ${aiResults.length} AI-ranked skills added`;
+        toast(`✨ AI Suggest: ${aiResults.length} skills added`);
+      }
+    } catch (e) {
+      status.textContent = `(AI upgrade failed: ${e.message} — kept local)`;
+    }
+  } else {
+    toast(`Added ${added} skills (local). Configure AI in ⚙ for causal ranking.`);
+  }
+
+  setTimeout(() => {
+    document.getElementById("suggestModal").classList.add("hidden");
+    document.getElementById("suggestGoal").value = "";
+    document.getElementById("suggestStatus").textContent = "";
+  }, 1200);
+}
+
+// ── WIRE: AI Suggest + LLM Settings ──
+document.getElementById("btnAiSuggest").addEventListener("click", () => {
+  const tier = document.getElementById("suggestTier");
+  tier.innerHTML = `Using: <b>${hasLLMKey() ? "AI (" + (loadLLMConfig().provider || "groq") + ") + local fallback" : "local ranker"}</b>`;
+  document.getElementById("suggestModal").classList.remove("hidden");
+  setTimeout(() => document.getElementById("suggestGoal").focus(), 50);
+});
+document.getElementById("btnSuggestCancel").addEventListener("click", () =>
+  document.getElementById("suggestModal").classList.add("hidden")
+);
+document.getElementById("suggestModal").addEventListener("click", (e) => {
+  if (e.target.id === "suggestModal") document.getElementById("suggestModal").classList.add("hidden");
+});
+document.getElementById("btnSuggestRun").addEventListener("click", runSuggest);
+document.getElementById("suggestGoal").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); runSuggest(); }
+});
+
+document.getElementById("btnLlmSettings").addEventListener("click", () => {
+  const cfg = loadLLMConfig();
+  document.getElementById("llmProvider").value = cfg.provider || "groq";
+  document.getElementById("llmApiKey").value = cfg.apiKey || "";
+  document.getElementById("llmSettingsModal").classList.remove("hidden");
+});
+document.getElementById("btnLlmCancel").addEventListener("click", () =>
+  document.getElementById("llmSettingsModal").classList.add("hidden")
+);
+document.getElementById("llmSettingsModal").addEventListener("click", (e) => {
+  if (e.target.id === "llmSettingsModal") document.getElementById("llmSettingsModal").classList.add("hidden");
+});
+document.getElementById("btnLlmSave").addEventListener("click", () => {
+  const provider = document.getElementById("llmProvider").value;
+  const apiKey = document.getElementById("llmApiKey").value.trim();
+  if (!apiKey) { toast("Enter an API key or click Clear"); return; }
+  saveLLMConfig({ provider, apiKey });
+  document.getElementById("llmSettingsModal").classList.add("hidden");
+  toast("✓ AI key saved (shared with Assembler)");
+});
+document.getElementById("btnLlmClear").addEventListener("click", () => {
+  localStorage.removeItem(STORE_KEY_LLM);
+  document.getElementById("llmApiKey").value = "";
+  document.getElementById("llmSettingsModal").classList.add("hidden");
+  toast("AI config cleared");
 });
 
 // ── INIT ──

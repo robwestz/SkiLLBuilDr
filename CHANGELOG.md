@@ -8,7 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Playground AI Suggest**: `playground.html` now has a `⚗️ AI Suggest` topbar button that accepts a goal description, runs the local IDF ranker for instant feedback, then silently upgrades to Groq/OpenRouter causal ranking when an API key is configured. Ranked skills are appended directly to the canvas.
+- **Playground LLM Settings modal**: `⚙` button in playground topbar opens a provider/key editor. Reads/writes the shared `assembler-llm-config-v1` localStorage key — configure once in Assembler, Browser, or Playground and it works everywhere.
 - **3 new seed recipes** in `recipes.json` (total 24 entries / 18 ready-made recipes + 6 package templates): `session-handoff`, `repo-strategy-constraints`, and `external-agent-handoff`.
+
+### Tests
+- `tests/zip-builder.test.mjs` expanded from 2 → 7 tests: empty archive, unicode content, unicode filenames, CRC-32 determinism, and large-file (>64 KB) round-trip.
+- `tests/e2e/playground.spec.js` expanded from 10 → 13 tests: AI Suggest local fallback, LLM Settings save/load roundtrip, and tier-indicator reflecting configured key. Desktop-only (skipped on mobile viewports where the topbar overflow is a known limitation).
 
 ## [0.8.0] - 2026-04-23
 
