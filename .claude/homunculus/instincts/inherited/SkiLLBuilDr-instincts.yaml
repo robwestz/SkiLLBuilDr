@@ -1,0 +1,412 @@
+# Instincts generated from https://github.com/robwestz/SkiLLBuilDr
+# Generated: 2026-04-24T01:25:58.518Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: SkiLLBuilDr-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/robwestz/SkiLLBuilDr
+---
+
+# SkiLLBuilDr Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: chore, test, feat
+
+## Evidence
+
+- 5 commits analyzed
+- Detected conventional commit pattern
+- Examples: chore: v0.6.0 — CHANGELOG + version bump, test: assembler logic — 18 tests via node:vm extraction
+
+---
+id: SkiLLBuilDr-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/robwestz/SkiLLBuilDr
+---
+
+# SkiLLBuilDr Commit Length
+
+## Action
+
+Write moderate-length commit messages (~60 characters)
+
+## Evidence
+
+- Average commit message length: 60 chars
+- Based on 5 commits
+
+---
+id: SkiLLBuilDr-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/robwestz/SkiLLBuilDr
+---
+
+# SkiLLBuilDr Naming Files
+
+## Action
+
+Use PascalCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: PascalCase
+
+---
+id: SkiLLBuilDr-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/robwestz/SkiLLBuilDr
+---
+
+# SkiLLBuilDr Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: SkiLLBuilDr-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/robwestz/SkiLLBuilDr
+---
+
+# SkiLLBuilDr Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: SkiLLBuilDr-workflow-add-new-workspace-or-prototype
+trigger: "when doing add new workspace or prototype"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/robwestz/SkiLLBuilDr
+---
+
+# SkiLLBuilDr Workflow Add New Workspace Or Prototype
+
+## Action
+
+Follow the add-new-workspace-or-prototype workflow:
+1. Create a new directory under workspaces/ with the workspace name.
+2. Add agent logic files (e.g., agent/bdi.mjs, agent/llm.mjs, agent/assembler.mjs, agent/ranker.mjs).
+3. Add prompts (e.g., prompts/rank-skills.md).
+4. Add test cases (e.g., test-cases/*.json).
+5. Add outputs for sample runs (e.g., outputs/<project>/CLAUDE.md, KICKOFF.md, REASONING.md, workflows/main.yaml).
+6. Add or update package.json for the workspace.
+7. Include documentation files (e.g., CLAUDE.md, KICKOFF.md).
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: workspaces/<workspace-name>/agent/*.mjs, workspaces/<workspace-name>/prompts/*.md, workspaces/<workspace-name>/test-cases/*.json
+
+---
+id: SkiLLBuilDr-workflow-release-version-bump-and-changelog
+trigger: "when doing release version bump and changelog"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/robwestz/SkiLLBuilDr
+---
+
+# SkiLLBuilDr Workflow Release Version Bump And Changelog
+
+## Action
+
+Follow the release-version-bump-and-changelog workflow:
+1. Update CHANGELOG.md with all notable changes since the previous release.
+2. Update the version number in package.json.
+3. Commit both files with a chore: message indicating the new version.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: CHANGELOG.md, package.json
+
+---
+id: skillbuildr-instinct-file-naming
+trigger: "When creating a new file in the codebase"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct File Naming
+
+## Action
+
+Name files using PascalCase (e.g., MyFile.ts)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.files: PascalCase
+
+---
+id: skillbuildr-instinct-function-naming
+trigger: "When defining a new function"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Function Naming
+
+## Action
+
+Name functions using camelCase (e.g., doSomething)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.functions: camelCase
+
+---
+id: skillbuildr-instinct-class-naming
+trigger: "When defining a new class"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Class Naming
+
+## Action
+
+Name classes using PascalCase (e.g., MyClass)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.classes: PascalCase
+
+---
+id: skillbuildr-instinct-constant-naming
+trigger: "When defining a constant"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Constant Naming
+
+## Action
+
+Name constants using SCREAMING_SNAKE_CASE (e.g., MAX_LENGTH)
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.constants: SCREAMING_SNAKE_CASE
+
+---
+id: skillbuildr-instinct-import-style
+trigger: "When importing modules"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Import Style
+
+## Action
+
+Use absolute import paths
+
+## Evidence
+
+- Pattern in codeStyle.importStyle: absolute
+
+---
+id: skillbuildr-instinct-export-style
+trigger: "When exporting from a module"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle: named
+
+---
+id: skillbuildr-instinct-try-catch-errors
+trigger: "When handling errors in code"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Try Catch Errors
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Pattern in errorHandling.style: try-catch
+
+---
+id: skillbuildr-instinct-test-location
+trigger: "When adding new tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Test Location
+
+## Action
+
+Place test files in the 'tests' folder, separate from source code
+
+## Evidence
+
+- Pattern in architecture.folderStructure.testLocation: separate
+- Common folder: tests
+
+---
+id: skillbuildr-instinct-test-file-format
+trigger: "When writing tests for a workspace"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Test File Format
+
+## Action
+
+Write test cases as JSON files in workspaces/<workspace-name>/test-cases/
+
+## Evidence
+
+- Workflow filesInvolved: workspaces/<workspace-name>/test-cases/*.json
+
+---
+id: skillbuildr-instinct-commit-format
+trigger: "When making a git commit"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Commit Format
+
+## Action
+
+Use Conventional Commits format with prefixes chore, test, or feat (e.g., 'chore: ...', 'test: ...', 'feat: ...')
+
+## Evidence
+
+- Pattern in commits.type: conventional
+- Prefix examples: chore, test, feat
+- Seen in commit: 'chore: v0.6.0 — CHANGELOG + version bump'
+
+---
+id: skillbuildr-instinct-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Commit Length
+
+## Action
+
+Keep commit messages around 60 characters on average
+
+## Evidence
+
+- Pattern in commits.averageLength: 60
+
+---
+id: skillbuildr-instinct-add-workspace
+trigger: "When introducing a new experimental workspace or agent-based prototype"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Add Workspace
+
+## Action
+
+Create a new directory under workspaces/, add agent logic, prompts, test cases, outputs, and documentation as per workflow steps
+
+## Evidence
+
+- Workflow: add-new-workspace-or-prototype
+- Commit sequence and filesInvolved in workflow definition
+
+---
+id: skillbuildr-instinct-release-version-bump
+trigger: "When preparing a new release"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: robwestz/SkiLLBuilDr
+---
+
+# Skillbuildr Instinct Release Version Bump
+
+## Action
+
+Update CHANGELOG.md and package.json version, then commit both with a 'chore:' message indicating the new version
+
+## Evidence
+
+- Workflow: release-version-bump-and-changelog
+- Commit sequence and filesInvolved in workflow definition
+- Seen in commit: 'chore: v0.6.0 — CHANGELOG + version bump'
+

@@ -1,0 +1,227 @@
+{
+  "version": "1.3",
+  "schemaVersion": "1.0",
+  "generatedBy": "ecc-tools",
+  "generatedAt": "2026-04-24T01:25:36.732Z",
+  "repo": "https://github.com/robwestz/SkiLLBuilDr",
+  "profiles": {
+    "requested": "security",
+    "recommended": "security",
+    "effective": "developer",
+    "requestedAlias": "security",
+    "recommendedAlias": "security",
+    "effectiveAlias": "developer"
+  },
+  "requestedProfile": "security",
+  "profile": "developer",
+  "recommendedProfile": "security",
+  "effectiveProfile": "developer",
+  "tier": "free",
+  "requestedComponents": [
+    "repo-baseline",
+    "workflow-automation",
+    "security-audits"
+  ],
+  "selectedComponents": [
+    "repo-baseline",
+    "workflow-automation"
+  ],
+  "requestedAddComponents": [],
+  "requestedRemoveComponents": [],
+  "blockedRemovalComponents": [],
+  "tierFilteredComponents": [
+    "security-audits"
+  ],
+  "requestedRootPackages": [
+    "runtime-core",
+    "workflow-pack",
+    "agentshield-pack"
+  ],
+  "selectedRootPackages": [
+    "runtime-core",
+    "workflow-pack"
+  ],
+  "requestedPackages": [
+    "runtime-core",
+    "workflow-pack",
+    "agentshield-pack"
+  ],
+  "requestedAddPackages": [],
+  "requestedRemovePackages": [],
+  "selectedPackages": [
+    "runtime-core",
+    "workflow-pack"
+  ],
+  "packages": [
+    "runtime-core",
+    "workflow-pack"
+  ],
+  "blockedRemovalPackages": [],
+  "tierFilteredRootPackages": [
+    "agentshield-pack"
+  ],
+  "tierFilteredPackages": [
+    "agentshield-pack"
+  ],
+  "conflictingPackages": [],
+  "dependencyGraph": {
+    "runtime-core": [],
+    "workflow-pack": [
+      "runtime-core"
+    ]
+  },
+  "resolutionOrder": [
+    "runtime-core",
+    "workflow-pack"
+  ],
+  "requestedModules": [
+    "runtime-core",
+    "workflow-pack",
+    "agentshield-pack"
+  ],
+  "selectedModules": [
+    "runtime-core",
+    "workflow-pack"
+  ],
+  "modules": [
+    "runtime-core",
+    "workflow-pack"
+  ],
+  "managedFiles": [
+    ".claude/skills/SkiLLBuilDr/SKILL.md",
+    ".agents/skills/SkiLLBuilDr/SKILL.md",
+    ".agents/skills/SkiLLBuilDr/agents/openai.yaml",
+    ".claude/identity.json",
+    ".codex/config.toml",
+    ".codex/AGENTS.md",
+    ".codex/agents/explorer.toml",
+    ".codex/agents/reviewer.toml",
+    ".codex/agents/docs-researcher.toml",
+    ".claude/homunculus/instincts/inherited/SkiLLBuilDr-instincts.yaml",
+    ".claude/commands/add-new-workspace-or-prototype.md",
+    ".claude/commands/release-version-bump-and-changelog.md"
+  ],
+  "packageFiles": {
+    "runtime-core": [
+      ".claude/skills/SkiLLBuilDr/SKILL.md",
+      ".agents/skills/SkiLLBuilDr/SKILL.md",
+      ".agents/skills/SkiLLBuilDr/agents/openai.yaml",
+      ".claude/identity.json",
+      ".codex/config.toml",
+      ".codex/AGENTS.md",
+      ".codex/agents/explorer.toml",
+      ".codex/agents/reviewer.toml",
+      ".codex/agents/docs-researcher.toml",
+      ".claude/homunculus/instincts/inherited/SkiLLBuilDr-instincts.yaml"
+    ],
+    "workflow-pack": [
+      ".claude/commands/add-new-workspace-or-prototype.md",
+      ".claude/commands/release-version-bump-and-changelog.md"
+    ]
+  },
+  "moduleFiles": {
+    "runtime-core": [
+      ".claude/skills/SkiLLBuilDr/SKILL.md",
+      ".agents/skills/SkiLLBuilDr/SKILL.md",
+      ".agents/skills/SkiLLBuilDr/agents/openai.yaml",
+      ".claude/identity.json",
+      ".codex/config.toml",
+      ".codex/AGENTS.md",
+      ".codex/agents/explorer.toml",
+      ".codex/agents/reviewer.toml",
+      ".codex/agents/docs-researcher.toml",
+      ".claude/homunculus/instincts/inherited/SkiLLBuilDr-instincts.yaml"
+    ],
+    "workflow-pack": [
+      ".claude/commands/add-new-workspace-or-prototype.md",
+      ".claude/commands/release-version-bump-and-changelog.md"
+    ]
+  },
+  "files": [
+    {
+      "moduleId": "runtime-core",
+      "path": ".claude/skills/SkiLLBuilDr/SKILL.md",
+      "description": "Repository-specific Claude Code skill generated from git history."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".agents/skills/SkiLLBuilDr/SKILL.md",
+      "description": "Codex-facing copy of the generated repository skill."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".agents/skills/SkiLLBuilDr/agents/openai.yaml",
+      "description": "Codex skill metadata so the repo skill appears cleanly in the skill interface."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".claude/identity.json",
+      "description": "Suggested identity.json baseline derived from repository conventions."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".codex/config.toml",
+      "description": "Repo-local Codex MCP and multi-agent baseline aligned with ECC defaults."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".codex/AGENTS.md",
+      "description": "Codex usage guide that points at the generated repo skill and workflow bundle."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".codex/agents/explorer.toml",
+      "description": "Read-only explorer role config for Codex multi-agent work."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".codex/agents/reviewer.toml",
+      "description": "Read-only reviewer role config focused on correctness and security."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".codex/agents/docs-researcher.toml",
+      "description": "Read-only docs researcher role config for API verification."
+    },
+    {
+      "moduleId": "runtime-core",
+      "path": ".claude/homunculus/instincts/inherited/SkiLLBuilDr-instincts.yaml",
+      "description": "Continuous-learning instincts derived from repository patterns."
+    },
+    {
+      "moduleId": "workflow-pack",
+      "path": ".claude/commands/add-new-workspace-or-prototype.md",
+      "description": "Workflow command scaffold for add-new-workspace-or-prototype."
+    },
+    {
+      "moduleId": "workflow-pack",
+      "path": ".claude/commands/release-version-bump-and-changelog.md",
+      "description": "Workflow command scaffold for release-version-bump-and-changelog."
+    }
+  ],
+  "workflows": [
+    {
+      "command": "add-new-workspace-or-prototype",
+      "path": ".claude/commands/add-new-workspace-or-prototype.md"
+    },
+    {
+      "command": "release-version-bump-and-changelog",
+      "path": ".claude/commands/release-version-bump-and-changelog.md"
+    }
+  ],
+  "adapters": {
+    "claudeCode": {
+      "skillPath": ".claude/skills/SkiLLBuilDr/SKILL.md",
+      "identityPath": ".claude/identity.json",
+      "commandPaths": [
+        ".claude/commands/add-new-workspace-or-prototype.md",
+        ".claude/commands/release-version-bump-and-changelog.md"
+      ]
+    },
+    "codex": {
+      "configPath": ".codex/config.toml",
+      "agentsGuidePath": ".codex/AGENTS.md",
+      "skillPath": ".agents/skills/SkiLLBuilDr/SKILL.md"
+    }
+  }
+}
