@@ -1,0 +1,94 @@
+# WorkspaceBuildR generated workflow
+# Goal: build a production-ready REST API in TypeScript
+# Generated: 2026-04-22T19:52:06.426Z
+# Model: offline-token-overlap
+
+name: workspace-workflow
+goal: "build a production-ready REST API in TypeScript"
+
+desired_outcomes:
+  - "A workspace where every included skill has a written causal chain back to a production requirement"
+  - "Production api requirements are all addressed: typed request/response contracts; authentication and authorization; input validation and sanitization; error handling with consistent error shapes; rate limiting awareness; OpenAPI or equivalent documentation; tested routes with integration tests; deployable via container or platform"
+  - "Rejected skills are documented with explicit reasons, not silently excluded"
+  - "Language-specific quality for typescript is enforced by the right specialist skills"
+
+steps:
+  - id: step_01__everything_claude_code_code_reviewer
+    name: "Code Reviewer"
+    skill: "/everything-claude-code:code-reviewer"
+    role: supporting
+    score: 35
+    causal_justification: >
+      [offline] Token overlap score 35/100. Skill tags [review, quality, code, standards] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_02_erything_claude_code_typescript_reviewer
+    name: "TypeScript Reviewer"
+    skill: "/everything-claude-code:typescript-reviewer"
+    role: supporting
+    score: 35
+    causal_justification: >
+      [offline] Token overlap score 35/100. Skill tags [typescript, types, typed, ts] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_03__everything_claude_code_backend_patterns
+    name: "Backend Patterns"
+    skill: "/everything-claude-code:backend-patterns"
+    role: supporting
+    score: 35
+    causal_justification: >
+      [offline] Token overlap score 35/100. Skill tags [backend, server, middleware, di] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_04_erything_claude_code_deployment_patterns
+    name: "Deployment Patterns"
+    skill: "/everything-claude-code:deployment-patterns"
+    role: supporting
+    score: 35
+    causal_justification: >
+      [offline] Token overlap score 35/100. Skill tags [deployment, docker, ci, cd] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_05_everything_claude_code_postgres_patterns
+    name: "Postgres Patterns"
+    skill: "/everything-claude-code:postgres-patterns"
+    role: supporting
+    score: 35
+    causal_justification: >
+      [offline] Token overlap score 35/100. Skill tags [postgres, postgresql, sql, indexes] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_06__everything_claude_code_frontend_design
+    name: "Frontend Design"
+    skill: "/everything-claude-code:frontend-design"
+    role: supporting
+    score: 31
+    causal_justification: >
+      [offline] Token overlap score 31/100. Skill tags [frontend, ui, ux, dashboard] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_07_everything_claude_code_frontend_patterns
+    name: "Frontend Patterns"
+    skill: "/everything-claude-code:frontend-patterns"
+    role: supporting
+    score: 31
+    causal_justification: >
+      [offline] Token overlap score 31/100. Skill tags [react, state, routing, forms] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_08__everything_claude_code_python_patterns
+    name: "Python Patterns"
+    skill: "/everything-claude-code:python-patterns"
+    role: supporting
+    score: 31
+    causal_justification: >
+      [offline] Token overlap score 31/100. Skill tags [python, click, async, pydantic] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_09__everything_claude_code_api_design
+    name: "API Design"
+    skill: "/everything-claude-code:api-design"
+    role: optional
+    score: 12
+    causal_justification: >
+      [offline] Token overlap score 12/100. Skill tags [api, rest, openapi, endpoints] matched goal tokens [build, production, ready, rest, api]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+metadata:
+  offline: true
+  total_skills: 9
+  core_skills: 0
+  supporting_skills: 8
+  optional_skills: 1
+  rejected_skills: 10

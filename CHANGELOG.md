@@ -7,35 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-23
+
 ### Added
-- `analytics.js` IIFE module (same pattern as `hash-router.js`): GDPR-first opt-in PostHog analytics. Disabled by default — no network calls until explicit consent. Events: `app.opened`, `tab.switched`, `filter.changed`, `basket.action`, `deeplink.arrived`. Set `POSTHOG_KEY` in `index.html` to your PostHog project key to activate.
-- Settings panel (⚙ gear icon in header): Appearance (theme toggle), Analytics (opt-in toggle), Data (clear all stored data).
-- Welcome modal now includes analytics consent ("Got it · Share data" / "Skip analytics") so first-visit users can choose without hunting for settings.
-- `docs/privacy.md`: full accounting of what is and isn't collected, storage mechanism, and opt-out instructions.
-- `tests/analytics.test.mjs`: 13 tests covering enabled/disabled state, event shape, `$lib` injection, opt-in/out round-trips, and props immutability.
-- CSP `<meta>` tag in `index.html`: restricts external connections to PostHog EU endpoints; blocks object embeds and unlisted sources.
-- `bundle.mjs` now inlines `analytics.js`; bundle grows ~9 KB to 382 KB.
-- Skill detail panel: clicking any catalog row opens a right slide-in panel with the full `SKILL.md` / command file body rendered as Markdown. Panel has "Copy slug" and "+ Basket" buttons; closes on `Esc` or clicking the overlay. Works from Browse and Compose tabs.
-- `build.mjs` now extracts the Markdown body (everything below the YAML frontmatter) from each skill/command file and includes it as a `body` field on every catalog item; bundle grows from 382 KB → ~5 MB (all 574 item bodies inlined).
-- Basic Markdown renderer built into `index.html` (no external deps): headings, bold/italic, fenced code blocks, inline code, lists, blockquotes, tables, links, HR.
-- Playwright e2e test suite (`tests/e2e/`): 30 smoke specs across 6 files — `catalog`, `tabs`, `basket`, `theme`, `deeplink`, `search` — verified on Chromium, Firefox, mobile Chrome 360 / 414, and tablet 768 px viewports.
-- `playwright.config.js`: 5 browser projects locally (chromium, firefox, mobile-chrome-360, mobile-chrome-414, tablet-768); WebKit added automatically in CI (Linux only).
-- `tests/e2e/_setup.mjs`: global setup that rebuilds `dist/skill-browser.html` before specs run.
-- `tests/e2e/_helpers.mjs`: shared `gotoApp` helper that suppresses the welcome overlay and waits for data to load regardless of which tab is active.
-- GitHub Actions `e2e` job in `.github/workflows/test.yml`: runs after unit tests on `ubuntu-latest` with all three Playwright browser engines; uploads report artifact on failure.
-- `package.json` script `"e2e": "playwright test"` and `@playwright/test` devDependency.
-- Responsive CSS hardening: `touch-action: manipulation` on all interactive elements eliminates the 300 ms double-tap-zoom delay; keyboard-shortcut hints hidden on screens ≤ 480 px; browse sidebar collapsed at ≤ 480 px; basket buttons enlarged to meet 44 px minimum touch target on mobile.
-- Deep-link hash router (`hash-router.js`): 8 combinable URL-hash keys — `basket`, `q`, `type`, `scope`, `source`, `category`, `item`, `tab` — so agents and humans can share or link to a specific view. Unknown keys are preserved on round-trip for forward compatibility.
-- `🔗 Copy filter URL` button in the search bar (appears when any filter or non-default tab is active); copies the current view without the basket.
-- `Copy share link` in the basket drawer now includes the current filter state as well as the basket, so shared links reproduce both view and selection.
-- Browser back/forward navigates between filter states via `history.pushState` + `popstate`.
-- 33 router unit tests (`tests/router.test.mjs`) covering all 8 keys, combinations, URL-encoding round-trips, unknown-key preservation, and backward-compat with the old `#basket=` format.
-- `tests/bundle.test.mjs` asserts the single-file bundle inlines the hash-router.
+- **Package Assembler** (`assembler.html`): 4-step wizard — Describe → Select → Review → Download. Local IDF skill scoring, profile detection (cli/saas/data/general), generates `KICKOFF.md`, `CLAUDE.md`, `README.md`, and `workflows/<name>.yaml`. ZIP download packages all 4 files in one click (pure-JS STORE-mode, zero npm deps).
+- **Playground** (`playground.html`): 3-panel workflow builder — catalog search, drag-reorder canvas, live preview with Prompt/YAML/Recipe/CLAUDE.md export tabs. Saves to localStorage; exports Archon-compatible YAML with `depends_on` chains.
+- **Workflow item type**: 5th catalog type (alongside skill/command/agent/rule). Scanned from `.archon/workflows/*.yaml`. Orange badge `#ff8c69`, toggle in Browse, visible in bundle cards.
+- Assembler 📦 nav link in Browse tab row next to Playground ⚗️; full cross-navigation triangle: Browser ↔ Playground ↔ Assembler.
+- `bundle.mjs` now produces `dist/assembler.html` (data.js inlined) alongside the existing skill-browser and playground bundles.
+- `kickoff-template.mjs`: profile-aware `buildKickoff`, `buildClaudeMd`, `buildReadme` — deliverables, success criteria, first moves, execution plan per package type.
+- `analytics.js` IIFE: GDPR-first opt-in PostHog analytics. No network calls until explicit consent. Events: `app.opened`, `tab.switched`, `filter.changed`, `basket.action`, `deeplink.arrived`.
+- Settings panel (⚙ header icon): Appearance / Analytics opt-in / Data. Welcome modal now prompts for analytics consent on first visit (`docs/privacy.md` documents the full data contract).
+- `tests/analytics.test.mjs`: 13 tests covering enabled/disabled state, event shapes, opt-in/out round-trips.
+- CSP `<meta>` in `index.html`: external connections restricted to PostHog EU endpoints.
+- Skill detail panel: click any catalog row → right slide-in with full `SKILL.md` body rendered as Markdown. "Copy slug" + "+ Basket" buttons; closes on `Esc` or overlay click.
+- `build.mjs` extracts `body` field (full Markdown below frontmatter) for every skill/command; bundle grows to ~5 MB with all bodies inlined.
+- Built-in Markdown renderer (zero external deps): headings, bold/italic, fenced code, inline code, lists, blockquotes, tables, links, HR.
+- Playwright e2e suite (`tests/e2e/`): 30 smoke specs across `catalog`, `tabs`, `basket`, `theme`, `deeplink`, `search` — Chromium, Firefox, mobile Chrome 360/414, tablet 768 px.
+- GitHub Actions `e2e` job in `test.yml`; uploads report artifact on failure.
+- Responsive CSS hardening: `touch-action: manipulation` eliminates 300 ms tap delay; sidebar collapsed ≤ 480 px; basket touch targets ≥ 44 px.
+- Deep-link hash router (`hash-router.js`): 8 combinable URL-hash keys — `basket`, `q`, `type`, `scope`, `source`, `category`, `item`, `tab`. Unknown keys preserved on round-trip.
+- `🔗 Copy filter URL` in search bar; "Copy share link" in basket drawer includes filter state. Browser back/forward navigates filter states.
+- 33 router unit tests (`tests/router.test.mjs`); `tests/bundle.test.mjs` asserts hash-router is inlined.
+- Professional GitHub setup: `CODEOWNERS` (`@robwestz` required on all PRs), PR checklist template, `lint-commits.yml` (Conventional Commits enforced on PRs), `commitlint.config.cjs`.
+- **GitHub Pages** (`pages.yml`): push to `main` → `node bundle.mjs` → deploy to `https://robwestz.github.io/SkiLLBuilDr/` via `actions/deploy-pages@v4`.
 
 ### Changed
-- `bundle.mjs` now inlines `hash-router.js` alongside `data.js` and `recipes.js`; the bundle is still self-contained (no external `<script src=>` references) and grows from ~360 KB → ~372 KB.
-- `package.json` `files` whitelist includes `hash-router.js`.
-- `index.html` `loadBasket()` no longer parses the URL hash; all hash handling is centralized in `applyHashStateFromUrl()`.
+- `bundle.mjs` inlines `analytics.js` + `hash-router.js` alongside `data.js` / `recipes.js`; all three dist outputs are fully self-contained.
+- `package.json` version 0.5.0 → 0.6.0; `files` whitelist updated to include all new modules.
+- `index.html` basket URL parsing centralised in `applyHashStateFromUrl()` (removed ad-hoc `loadBasket` hash parsing).
 
 ## [0.4.0] - 2026-04-21
 

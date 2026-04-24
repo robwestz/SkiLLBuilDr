@@ -1,0 +1,41 @@
+{
+  "goal": "build a SaaS MVP with auth, payments, and a dashboard",
+  "expectedSkills": [
+    "/everything-claude-code:planner",
+    "/everything-claude-code:security-reviewer",
+    "/everything-claude-code:tdd-guide",
+    "/everything-claude-code:frontend-design",
+    "/everything-claude-code:database-reviewer",
+    "/everything-claude-code:backend-patterns",
+    "/everything-claude-code:code-reviewer"
+  ],
+  "causalExpectations": [
+    {
+      "skill": "/everything-claude-code:security-reviewer",
+      "causation": "Security review causes authentication flows, payment handling, and session management to be validated against known attack patterns, which a SaaS MVP requires because auth and payments handle credentials and financial data where a single vulnerability causes direct irreversible user harm and regulatory liability"
+    },
+    {
+      "skill": "/everything-claude-code:frontend-design",
+      "causation": "Frontend design causes the dashboard UI to have a coherent component architecture and usable UX patterns, which a SaaS MVP requires because the product value is experienced through the UI — a technically correct backend with a confusing dashboard causes user abandonment before retention can be measured"
+    },
+    {
+      "skill": "/everything-claude-code:database-reviewer",
+      "causation": "Database review causes multi-tenant schema design, row-level security, and migration safety to be validated, which a SaaS product requires because tenant data isolation is a contractual obligation — a missing RLS policy leaks one customer's data to another, which is not recoverable from a trust perspective"
+    },
+    {
+      "skill": "/everything-claude-code:backend-patterns",
+      "causation": "Backend patterns cause the server to apply layered architecture separating auth middleware, payment webhooks, and business logic, which a SaaS MVP requires because these three concerns have different security profiles and must not share state — mixing them causes auth bypasses and payment state corruption"
+    },
+    {
+      "skill": "/everything-claude-code:planner",
+      "causation": "Planning causes MVP features to be sequenced correctly — auth before protected routes, payments before billing UI, schema before services — which the SaaS build requires because wrong sequencing means placeholder implementations reach users and real payment data arrives before the system is ready to handle it"
+    }
+  ],
+  "expectedOutcome": "A deployable SaaS MVP with working authentication, payment integration, multi-tenant data isolation, and a functional dashboard UI, with tests covering all critical user paths",
+  "notExpected": [
+    "/everything-claude-code:go-review",
+    "/everything-claude-code:rust-patterns",
+    "/everything-claude-code:python-testing",
+    "/everything-claude-code:mcp-server-patterns"
+  ]
+}

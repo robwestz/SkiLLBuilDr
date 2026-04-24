@@ -1,6 +1,6 @@
 {
   "name": "skill-browser",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Local browser for Claude Code skills and slash-commands across all installed plugins",
   "type": "module",
   "bin": {
@@ -32,6 +32,7 @@
     "query.mjs",
     "intent.mjs",
     "kickoff-template.mjs",
+    "zip-builder.mjs",
     "launch.sh",
     "index.html",
     "playground.html",

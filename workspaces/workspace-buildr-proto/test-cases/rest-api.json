@@ -1,0 +1,42 @@
+{
+  "goal": "build a production-ready REST API in TypeScript",
+  "expectedSkills": [
+    "/everything-claude-code:planner",
+    "/everything-claude-code:tdd-guide",
+    "/everything-claude-code:code-reviewer",
+    "/everything-claude-code:security-reviewer",
+    "/everything-claude-code:typescript-reviewer",
+    "/everything-claude-code:api-design",
+    "/everything-claude-code:backend-patterns"
+  ],
+  "causalExpectations": [
+    {
+      "skill": "/everything-claude-code:typescript-reviewer",
+      "causation": "TypeScript reviewer causes strict type safety to be enforced at every API boundary, which a production REST API requires because typed contracts prevent runtime type errors and make the codebase refactorable without silent breakage across route handlers and service interfaces"
+    },
+    {
+      "skill": "/everything-claude-code:api-design",
+      "causation": "API design causes a well-defined HTTP contract with consistent URL structure, proper HTTP semantics, versioning strategy, and OpenAPI documentation, which production APIs require because external consumers depend on the contract being stable and discoverable"
+    },
+    {
+      "skill": "/everything-claude-code:security-reviewer",
+      "causation": "Security review causes authentication weaknesses, input validation gaps, and injection vulnerabilities to be identified before deployment, which a production REST API requires because it is a networked surface where security defects cause data breaches that cannot be patched retroactively"
+    },
+    {
+      "skill": "/everything-claude-code:tdd-guide",
+      "causation": "TDD causes test files to precede implementation code, establishing a regression safety net, which a production REST API requires because route handlers without test coverage silently break when middleware, schemas, or library versions change"
+    },
+    {
+      "skill": "/everything-claude-code:backend-patterns",
+      "causation": "Backend patterns cause layered architecture and dependency injection to be applied, which production APIs require because ad hoc unstructured server code becomes untestable and unmaintainable as route and feature count grows"
+    }
+  ],
+  "expectedOutcome": "A typed, tested, documented REST API deployable to production with consistent error handling, authentication, input validation, and an OpenAPI specification",
+  "notExpected": [
+    "/everything-claude-code:flutter-review",
+    "/everything-claude-code:python-patterns",
+    "/everything-claude-code:go-review",
+    "/everything-claude-code:frontend-design",
+    "/everything-claude-code:mcp-server-patterns"
+  ]
+}

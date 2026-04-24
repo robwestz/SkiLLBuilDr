@@ -1,0 +1,101 @@
+# WorkspaceBuildR generated workflow
+# Goal: build a SaaS MVP with auth, payments, and a dashboard
+# Generated: 2026-04-22T19:52:06.438Z
+# Model: offline-token-overlap
+
+name: workspace-workflow
+goal: "build a SaaS MVP with auth, payments, and a dashboard"
+
+desired_outcomes:
+  - "A workspace where every included skill has a written causal chain back to a production requirement"
+  - "Production saas requirements are all addressed: multi-tenant data isolation; authentication (session or JWT); payment integration if billing required; dashboard UI with meaningful data display; tested critical paths; deployable with environment config; security hardened (CSRF, XSS, injection); payment processing with webhook handling"
+  - "Rejected skills are documented with explicit reasons, not silently excluded"
+
+steps:
+  - id: step_01__everything_claude_code_frontend_design
+    name: "Frontend Design"
+    skill: "/everything-claude-code:frontend-design"
+    role: supporting
+    score: 50
+    causal_justification: >
+      [offline] Token overlap score 50/100. Skill tags [frontend, ui, ux, dashboard] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_02_everything_claude_code_security_reviewer
+    name: "Security Reviewer"
+    skill: "/everything-claude-code:security-reviewer"
+    role: supporting
+    score: 46
+    causal_justification: >
+      [offline] Token overlap score 46/100. Skill tags [security, auth, injection, secrets] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_03_everything_claude_code_frontend_patterns
+    name: "Frontend Patterns"
+    skill: "/everything-claude-code:frontend-patterns"
+    role: supporting
+    score: 38
+    causal_justification: >
+      [offline] Token overlap score 38/100. Skill tags [react, state, routing, forms] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_04__everything_claude_code_api_design
+    name: "API Design"
+    skill: "/everything-claude-code:api-design"
+    role: optional
+    score: 21
+    causal_justification: >
+      [offline] Token overlap score 21/100. Skill tags [api, rest, openapi, endpoints] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_05__everything_claude_code_planner
+    name: "Planner"
+    skill: "/everything-claude-code:planner"
+    role: optional
+    score: 17
+    causal_justification: >
+      [offline] Token overlap score 17/100. Skill tags [planning, decomposition, architecture, workflow] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_06_erything_claude_code_typescript_reviewer
+    name: "TypeScript Reviewer"
+    skill: "/everything-claude-code:typescript-reviewer"
+    role: optional
+    score: 13
+    causal_justification: >
+      [offline] Token overlap score 13/100. Skill tags [typescript, types, typed, ts] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_07_everything_claude_code_database_reviewer
+    name: "Database Reviewer"
+    skill: "/everything-claude-code:database-reviewer"
+    role: optional
+    score: 13
+    causal_justification: >
+      [offline] Token overlap score 13/100. Skill tags [database, sql, schema, migrations] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_08__everything_claude_code_python_testing
+    name: "Python Testing"
+    skill: "/everything-claude-code:python-testing"
+    role: optional
+    score: 13
+    causal_justification: >
+      [offline] Token overlap score 13/100. Skill tags [python, pytest, testing, fixtures] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_09_rything_claude_code_documentation_lookup
+    name: "Documentation Lookup"
+    skill: "/everything-claude-code:documentation-lookup"
+    role: optional
+    score: 13
+    causal_justification: >
+      [offline] Token overlap score 13/100. Skill tags [docs, documentation, readme, openapi] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+  - id: step_10__everything_claude_code_e2e_testing
+    name: "E2E Testing"
+    skill: "/everything-claude-code:e2e-testing"
+    role: optional
+    score: 13
+    causal_justification: >
+      [offline] Token overlap score 13/100. Skill tags [e2e, integration, playwright, cypress] matched goal tokens [build, saas, mvp, with, auth]. Full causal reasoning requires Groq — set GROQ_API_KEY for LLM analysis.
+
+metadata:
+  offline: true
+  total_skills: 10
+  core_skills: 0
+  supporting_skills: 3
+  optional_skills: 7
+  rejected_skills: 9

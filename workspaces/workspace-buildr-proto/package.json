@@ -1,0 +1,13 @@
+{
+  "name": "workspace-buildr-proto",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "BDI-based workspace assembler prototype — causality-driven skill selection",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "assemble": "node agent/assembler.mjs",
+    "test": "node agent/assembler.mjs --test-all"
+  }
+}
