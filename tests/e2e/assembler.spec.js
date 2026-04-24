@@ -239,4 +239,53 @@ test.describe('Assembler wizard', () => {
     await expect(page.locator('#llmSettingsTitle')).toContainText(/AI.*Settings/i);
   });
 
+  // 11. LLM settings — save roundtrip persists provider + key to localStorage
+  test('LLM settings save roundtrip persists to localStorage', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'AI Settings button may overflow topbar on mobile — desktop-only');
+    await gotoAssembler(page);
+
+    await page.evaluate(() => localStorage.removeItem('assembler-llm-config-v1'));
+
+    await page.locator('#llmSettingsBtn').click();
+    await expect(page.locator('#llmSettingsOverlay')).toBeVisible({ timeout: 5_000 });
+
+    await page.locator('#llmProviderSelect').selectOption('groq');
+    await page.locator('#llmApiKeyInput').fill('gsk_test_fake_for_e2e');
+    await page.locator('#llmSaveBtn').click();
+
+    const cfg = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('assembler-llm-config-v1') || '{}')
+    );
+    expect(cfg.provider).toBe('groq');
+    expect(cfg.apiKey).toBe('gsk_test_fake_for_e2e');
+
+    await page.evaluate(() => localStorage.removeItem('assembler-llm-config-v1'));
+  });
+
+  // 12. LLM settings — clear button empties the stored apiKey
+  test('LLM settings clear button empties localStorage', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'AI Settings button may overflow topbar on mobile — desktop-only');
+    await gotoAssembler(page);
+
+    await page.evaluate(() => {
+      localStorage.setItem('assembler-llm-config-v1', JSON.stringify({
+        provider: 'groq',
+        apiKey: 'gsk_to_be_cleared',
+      }));
+    });
+
+    await page.locator('#llmSettingsBtn').click();
+    await expect(page.locator('#llmSettingsOverlay')).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('#llmApiKeyInput')).toHaveValue('gsk_to_be_cleared');
+
+    await page.locator('#llmClearBtn').click();
+
+    const hasKey = await page.evaluate(() => {
+      const raw = localStorage.getItem('assembler-llm-config-v1');
+      if (!raw) return false;
+      try { return !!JSON.parse(raw).apiKey; } catch { return false; }
+    });
+    expect(hasKey).toBe(false);
+  });
+
 });

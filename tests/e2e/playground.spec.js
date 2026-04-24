@@ -259,4 +259,90 @@ test.describe('Skill Playground', () => {
     expect(toastText.toLowerCase()).toContain('empty');
   });
 
+  // 11. AI Suggest — local fallback path (no API key) adds skills to canvas
+  test('AI Suggest falls back to local ranker and adds skills when no key is set', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'AI Suggest button overflows topbar on mobile viewports — desktop-only feature');
+    await gotoPlayground(page);
+
+    // Ensure no LLM key is set in localStorage
+    await page.evaluate(() => localStorage.removeItem('assembler-llm-config-v1'));
+
+    // Open the AI Suggest modal
+    await page.locator('#btnAiSuggest').click();
+    await expect(page.locator('#suggestModal')).toBeVisible();
+
+    // Tier indicator should show "local ranker" when no key is configured
+    const tierText = await page.locator('#suggestTier').innerText();
+    expect(tierText.toLowerCase()).toContain('local ranker');
+
+    // Type a goal and run
+    await page.locator('#suggestGoal').fill('review python code for security');
+    await page.locator('#btnSuggestRun').click();
+
+    // Modal auto-hides after ~1200ms — wait, then verify nodes were added
+    await page.waitForTimeout(1600);
+    await expect(page.locator('#suggestModal')).toBeHidden();
+
+    // Canvas should now have at least one node
+    const nodeCount = await page.locator('#nodeList .node-card').count();
+    expect(nodeCount).toBeGreaterThan(0);
+  });
+
+  // 12. LLM Settings modal — save and reload preserves the key
+  test('LLM Settings modal saves provider + key to localStorage', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'LLM Settings button overflows topbar on mobile viewports — desktop-only feature');
+    await gotoPlayground(page);
+
+    await page.evaluate(() => localStorage.removeItem('assembler-llm-config-v1'));
+
+    await page.locator('#btnLlmSettings').click();
+    await expect(page.locator('#llmSettingsModal')).toBeVisible();
+
+    await page.locator('#llmProvider').selectOption('groq');
+    await page.locator('#llmApiKey').fill('gsk_test_fake_key_xyz');
+    await page.locator('#btnLlmSave').click();
+
+    await expect(page.locator('#llmSettingsModal')).toBeHidden();
+
+    const cfg = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('assembler-llm-config-v1') || '{}')
+    );
+    expect(cfg.provider).toBe('groq');
+    expect(cfg.apiKey).toBe('gsk_test_fake_key_xyz');
+
+    // Reopening settings shows the saved values
+    await page.locator('#btnLlmSettings').click();
+    const shownKey = await page.locator('#llmApiKey').inputValue();
+    expect(shownKey).toBe('gsk_test_fake_key_xyz');
+
+    // Clean up
+    await page.locator('#btnLlmClear').click();
+    const cleared = await page.evaluate(() => localStorage.getItem('assembler-llm-config-v1'));
+    expect(cleared).toBeNull();
+  });
+
+  // 13. AI Suggest tier indicator reflects configured key
+  test('AI Suggest tier indicator switches to "AI" when key is configured', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'AI Suggest button overflows topbar on mobile viewports — desktop-only feature');
+    await gotoPlayground(page);
+
+    await page.evaluate(() => {
+      localStorage.setItem('assembler-llm-config-v1', JSON.stringify({
+        provider: 'groq',
+        apiKey: 'gsk_fake_for_ui_check',
+      }));
+    });
+
+    await page.locator('#btnAiSuggest').click();
+    await expect(page.locator('#suggestModal')).toBeVisible();
+
+    const tierText = await page.locator('#suggestTier').innerText();
+    expect(tierText.toLowerCase()).toContain('ai');
+    expect(tierText.toLowerCase()).toContain('groq');
+
+    // Close via Escape — more reliable cross-browser than clicking behind animations
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => localStorage.removeItem('assembler-llm-config-v1'));
+  });
+
 });
