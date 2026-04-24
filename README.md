@@ -10,7 +10,7 @@ A local, offline browser for Claude Code skills and slash-commands — across ev
 
 - **Browse** — filter by type/scope/source/category + live search. Click to copy slug.
 - **Compose** — describe a goal in plain language, get ranked skill suggestions with "why this matched" hints. Pure local IDF + category inference, no API calls.
-- **Recipes** — 15 ready-made chains (code review, PRD→plan→implement, onboard repo, security audit, E2E setup, team-factory, session-start, product-blueprint, debug-loop, posthog-setup, frontend-foundations, ship-commit-pr, …). Save your own baskets as custom recipes. Export/import as JSON.
+- **Recipes** — 18 ready-made chains plus 6 package templates (24 total): code review, PRD→plan→implement, onboard repo, security audit, E2E setup, team-factory, session-start, product-blueprint, debug-loop, posthog-setup, frontend-foundations, ship-commit-pr, session-handoff, repo-strategy-constraints, external-agent-handoff, … Save your own baskets as custom recipes. Export/import as JSON.
 - **Assembler** — describe a build, review the selected skills, and generate a local package with `KICKOFF.md`, `CLAUDE.md`, `README.md`, workflow YAML, and ZIP export.
 
 The **basket** (bottom drawer, toggle with `B`) lets you select multiple skills, reorder them, and generate a numbered multi-step prompt ready to paste into Claude Code. Share a basket via URL: `#basket=/slug1,/slug2`.
@@ -116,7 +116,7 @@ Five tools: `search_skills`, `rank_skills_for_goal`, `get_skill`, `assemble_pack
 - `launch.mjs` — cross-platform Node.js opener (npm bin entry for `skill-browser`)
 - `launch.sh` — bash launcher (kept for direct shell use)
 - `analytics.js` — GDPR-first opt-in PostHog analytics IIFE
-- `recipes.json` — 21 entries (15 recipes + 6 package templates with `packageTemplate: true`)
+- `recipes.json` — 24 entries (18 recipes + 6 package templates with `packageTemplate: true`)
 - `data.public.js` / `recipes.public.js` — committed sanitized snapshots for GH Pages CI
 - `landing.html` — public-facing marketing page
 - `vercel.json` — clean-URL rewrites + security headers for buildr.nu / Vercel deploy

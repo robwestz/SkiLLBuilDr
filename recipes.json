@@ -172,6 +172,39 @@
       ]
     },
     {
+      "id": "session-handoff",
+      "title": "Pause → save → resume session",
+      "description": "Create a clean handoff before stopping, then load the exact context in the next session.",
+      "intent": "pause work safely now and resume later without losing context",
+      "slugs": [
+        "/gsd:pause-work",
+        "/everything-claude-code:save-session",
+        "/everything-claude-code:resume-session"
+      ]
+    },
+    {
+      "id": "repo-strategy-constraints",
+      "title": "Repo strategy + constraint map",
+      "description": "Map an unfamiliar repo, surface hidden constraints, then turn them into a concrete execution path.",
+      "intent": "understand an unfamiliar repo before deciding what to build or change",
+      "slugs": [
+        "/repo-strategy-orchestrator",
+        "/everything-claude-code:product-capability",
+        "/workspace-planner"
+      ]
+    },
+    {
+      "id": "external-agent-handoff",
+      "title": "External agent handoff",
+      "description": "Prepare a strong startup prompt for another LLM or a fresh coding session instead of improvising from scratch.",
+      "intent": "write a high-quality handoff prompt for another agent or a new session",
+      "slugs": [
+        "/portable-kit-prompt-compiler",
+        "/session-launcher",
+        "/everything-claude-code:prompt-optimizer"
+      ]
+    },
+    {
       "id": "pkg-saas-mvp",
       "title": "SaaS MVP",
       "description": "Full-stack SaaS with auth, database, billing, and E2E tests. Covers architecture through deployment.",

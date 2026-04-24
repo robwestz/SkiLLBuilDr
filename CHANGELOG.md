@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **3 new seed recipes** in `recipes.json` (total 24 entries / 18 ready-made recipes + 6 package templates): `session-handoff`, `repo-strategy-constraints`, and `external-agent-handoff`.
+
 ## [0.8.0] - 2026-04-23
 
 ### Added
