@@ -1,0 +1,142 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776991238732,
+  "projectRoot": "C:\\Users\\robin\\.claude\\ecc-browser",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=18",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "@playwright/test",
+        "version": "1.59.1",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": "Node.js 18"
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": null,
+    "devCommand": "npm run start",
+    "scripts": {
+      "build": "node build.mjs",
+      "bundle": "node bundle.mjs",
+      "test": "bash test.sh",
+      "start": "bash launch.sh",
+      "e2e": "playwright test"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "tests"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 3,
+      "lastAccessed": 1776991238277,
+      "keyFiles": [
+        "assembler.html",
+        "playground.html",
+        "skill-browser.html"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 5,
+      "lastAccessed": 1776991238437,
+      "keyFiles": [
+        "privacy.md",
+        "the-longform-guide.md",
+        "the-security-guide.md",
+        "the-shortform-guide.md",
+        "week-plan-v0.7.md"
+      ]
+    },
+    "test-results": {
+      "path": "test-results",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1776991238439,
+      "keyFiles": []
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 12,
+      "lastAccessed": 1776991238441,
+      "keyFiles": [
+        "analytics.test.mjs",
+        "assembler.test.mjs",
+        "build.test.mjs",
+        "bundle.test.mjs",
+        "intent.test.mjs"
+      ]
+    },
+    "vendor": {
+      "path": "vendor",
+      "purpose": "Third-party code",
+      "fileCount": 0,
+      "lastAccessed": 1776991238442,
+      "keyFiles": []
+    },
+    "workspaces": {
+      "path": "workspaces",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1776991238444,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "playground.html",
+      "accessCount": 8,
+      "lastAccessed": 1776993909967,
+      "type": "file"
+    },
+    {
+      "path": "tests\\e2e\\playground.spec.js",
+      "accessCount": 5,
+      "lastAccessed": 1776993502012,
+      "type": "file"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "accessCount": 2,
+      "lastAccessed": 1776993951598,
+      "type": "file"
+    },
+    {
+      "path": "tests\\e2e\\assembler.spec.js",
+      "accessCount": 2,
+      "lastAccessed": 1776994054694,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
