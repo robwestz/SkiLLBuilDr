@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Draft and insert greeting line",
+    "skills": ["git-master", "writer"],
+    "done": "README.md has the new greeting line and `git diff README.md` shows exactly one added line."
+  },
+  {
+    "name": "Verify and commit locally",
+    "dependsOn": [1],
+    "skills": ["git-master", "verifier"],
+    "done": "Tests green and a single conventional commit lands on the feature branch (no push)."
+  }
+]

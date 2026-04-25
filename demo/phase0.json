@@ -1,0 +1,15 @@
+{
+  "restatement": "Append a single greeting line to the project README's top section so a human reader sees it immediately upon opening the file.",
+  "skillScan": "perfect-fit",
+  "dod": {
+    "acceptanceCriteria": [
+      "README.md gains exactly one new line containing the greeting (no other content moves).",
+      "The change is committed locally on a feature branch with a conventional-commit message.",
+      "`node --test tests/*.test.mjs` still reports `fail 0` after the change."
+    ],
+    "verification": "smoke",
+    "directlyUsable": "Run `head -5 README.md` after the chunk and observe the new greeting line within the first 5 lines."
+  },
+  "signedBy": "operator (demo-autonomous-loop.sh)",
+  "timestamp": "__SCRIPT_FILLS_THIS__"
+}
