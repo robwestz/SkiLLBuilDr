@@ -260,8 +260,24 @@ const TIER_DEFS = {
   },
 };
 
-export function buildPhase0Block({ goal = "", tier = "production", chunkPlan = null } = {}) {
+export function buildPhase0Block({
+  goal = "",
+  tier = "production",
+  chunkPlan = null,
+  prefill = null,
+} = {}) {
   const tierDef = TIER_DEFS[tier] || TIER_DEFS.production;
+  const p = prefill || {};
+
+  // Pre-fill skill-scan checkbox by classification
+  const scanCls = (p.skillScan || "").toLowerCase();
+  const fitMark = scanCls === "perfect-fit" ? "x" : " ";
+  const partialMark = scanCls === "partial" ? "x" : " ";
+  const missMark = scanCls === "miss" ? "x" : " ";
+
+  const restatementLine = p.restatement
+    ? `Your restatement: **${p.restatement}**`
+    : "Your restatement: _<fill in before starting>_";
 
   const lines = [
     "## Phase 0 — Preflight Contract (MANDATORY)",
@@ -269,19 +285,21 @@ export function buildPhase0Block({ goal = "", tier = "production", chunkPlan = n
     "Before starting work, complete every block below. Do not edit/write code until 0.6 is signed.",
     "Source: `frameworks/COMPOUND.md` (Gap Scan) + `frameworks/QUALITY_GATE.md`.",
     "",
+    prefill ? "> **PRE-FILLED by operator** — review and re-sign 0.6 with your own agent id if you accept." : "",
+    "",
     "### 0.1 Goal restate (your own words, one sentence)",
     "",
     `> Original: ${goal || "(no goal provided)"}`,
     "",
-    "Your restatement: _<fill in before starting>_",
+    restatementLine,
     "",
     "### 0.2 Skill-scan (against the loaded catalog)",
     "",
     "Match the goal against the included skills (see `CLAUDE.md`). Classify the loadout:",
     "",
-    "- [ ] **Perfect-fit:** every needed capability is covered by an included skill — proceed to 0.4.",
-    "- [ ] **Partial:** some gaps exist — list them in 0.3, do not skip.",
-    "- [ ] **Miss:** no included skill covers a critical capability — **mandatory** 0.3.",
+    `- [${fitMark}] **Perfect-fit:** every needed capability is covered by an included skill — proceed to 0.4.`,
+    `- [${partialMark}] **Partial:** some gaps exist — list them in 0.3, do not skip.`,
+    `- [${missMark}] **Miss:** no included skill covers a critical capability — **mandatory** 0.3.`,
     "",
     "### 0.3 Skill-first fallback (when 0.2 is partial or miss)",
     "",
@@ -304,12 +322,13 @@ export function buildPhase0Block({ goal = "", tier = "production", chunkPlan = n
     "Required:",
     "",
     "- Acceptance criteria (observable behavior, not implementation):",
-    "  - _<criterion 1>_",
-    "  - _<criterion 2>_",
+    ...(p.dod?.acceptanceCriteria?.length
+      ? p.dod.acceptanceCriteria.map((c) => `  - **${c}**`)
+      : ["  - _<criterion 1>_", "  - _<criterion 2>_"]),
     "- Verification method (test / smoke / demo / canary):",
-    "  - _<method>_",
+    p.dod?.verification ? `  - **${p.dod.verification}**` : "  - _<method>_",
     "- \"Directly usable\" check: when a user runs the result, what command or action confirms success?",
-    "  - _<command or action>_",
+    p.dod?.directlyUsable ? `  - **${p.dod.directlyUsable}**` : "  - _<command or action>_",
     "",
     "### 0.5 Hard gates (what you may NOT do without escalating to operator)",
     "",
@@ -323,8 +342,9 @@ export function buildPhase0Block({ goal = "", tier = "production", chunkPlan = n
     "",
     "By writing your name/agent-id below, you certify 0.1–0.5 are filled in:",
     "",
-    "_Signed by: <agent or operator>_",
-    "_Timestamp: <ISO-8601>_",
+    p.signedBy ? `_Signed by: **${p.signedBy}**_` : "_Signed by: <agent or operator>_",
+    p.timestamp ? `_Timestamp: **${p.timestamp}**_` : "_Timestamp: <ISO-8601>_",
+    ...(prefill ? ["", "> If you are the executing agent and accept this pre-fill, append your own signature below as well."] : []),
     "",
     "---",
     "",
@@ -528,24 +548,40 @@ export function buildKickoffWithPhase0({
   tier = "production",
   chunkPlan = null,
   gatePath = null,
+  prefill = null,
+  autoOnboard = false,
 } = {}) {
   const baseKickoff = buildKickoff({ goal, description, packageName, nodes });
-  const phase0 = buildPhase0Block({ goal, tier, chunkPlan });
+  const phase0 = buildPhase0Block({ goal, tier, chunkPlan, prefill });
   const compound = buildCompoundBlock();
   const evalLoop = buildEvalLoopBlock({ tier });
   const scenarioGate = buildScenarioGateBlock({ gatePath });
   const qualityGate = buildQualityGateBlock({ tier });
+
+  // Optional pre-onboarding banner — operator certifies onboarding occurred upstream
+  const onboardingBlock = autoOnboard
+    ? [
+        "## Pre-onboarding (operator-confirmed)",
+        "",
+        "> The operator has confirmed that the executing agent has read",
+        "> `AGENT_ONBOARDING.md` and verified all 8 onboarding gates upstream of",
+        "> this package. The executing agent should still append its own",
+        "> `ONBOARDED:` signature line in its first user-facing message,",
+        "> certifying that it personally completed the gates.",
+        "",
+      ].join("\n")
+    : "";
 
   // Order at end: Compound (per-chunk rituals) → Eval Loop (critique+praise) → Scenario Gate (blind eval if enabled) → Quality Gate (final).
   const tailBlocks = [compound, evalLoop, scenarioGate, qualityGate].filter(Boolean).join("\n");
 
   const headerEnd = baseKickoff.indexOf("\n## Goal");
   if (headerEnd === -1) {
-    return `${phase0}\n${baseKickoff}\n${tailBlocks}`.trim() + "\n";
+    return `${onboardingBlock}\n${phase0}\n${baseKickoff}\n${tailBlocks}`.trim() + "\n";
   }
   const head = baseKickoff.slice(0, headerEnd);
   const tail = baseKickoff.slice(headerEnd);
-  return `${head}\n\n${phase0}${tail}\n\n${tailBlocks}`.trim() + "\n";
+  return `${head}\n\n${onboardingBlock}${onboardingBlock ? "\n" : ""}${phase0}${tail}\n\n${tailBlocks}`.trim() + "\n";
 }
 
 export const TIERS = Object.keys(TIER_DEFS);

@@ -48,6 +48,9 @@ function parseArgs(argv) {
     ai: false,
     auto: false,
     scenarioGate: null,
+    chunkPlan: null,
+    autoOnboard: false,
+    autoPhase0: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -55,13 +58,29 @@ function parseArgs(argv) {
     if (arg === "--help" || arg === "-h") args.help = true;
     else if (arg === "--ai") args.ai = true;
     else if (arg === "--auto") args.auto = true;
+    else if (arg === "--auto-onboard") args.autoOnboard = true;
     else if (arg === "--goal") args.goal = argv[++i] ?? "";
     else if (arg === "--tier") args.tier = argv[++i] ?? "production";
     else if (arg === "--limit") args.limit = Number(argv[++i] ?? 12);
     else if (arg === "--out") args.out = argv[++i] ?? "./out";
     else if (arg === "--scenario-gate") args.scenarioGate = argv[++i] ?? null;
+    else if (arg === "--chunk-plan") args.chunkPlan = argv[++i] ?? null;
+    else if (arg === "--auto-phase0") args.autoPhase0 = argv[++i] ?? null;
   }
   return args;
+}
+
+function loadJsonOrDie(path, label) {
+  if (!existsSync(path)) {
+    console.error(`Error: ${label} file not found: ${path}\n`);
+    process.exit(1);
+  }
+  try {
+    return JSON.parse(readFileSync(path, "utf-8"));
+  } catch (err) {
+    console.error(`Error: ${label} file is not valid JSON: ${err.message}\n`);
+    process.exit(1);
+  }
 }
 
 function printUsage() {
@@ -80,6 +99,15 @@ Options:
   --scenario-gate <path>  Wire a scenario-factory dir as blind-eval gate
                           between chunks (e.g. --scenario-gate factory/v1).
                           Path must contain scenarios/runner.sh.
+  --chunk-plan <json>     Pre-fill the chunk plan in Phase 0. JSON file
+                          with array of {name, dependsOn, skills, done}.
+  --auto-onboard          Add a "Pre-onboarding (operator-confirmed)"
+                          banner stating that onboarding occurred upstream.
+                          Agent still appends own ONBOARDED: line.
+  --auto-phase0 <json>    Pre-fill Phase 0 sections from JSON. Object with
+                          {restatement, skillScan, dod:{acceptanceCriteria,
+                          verification, directlyUsable}, signedBy, timestamp}.
+                          Executing agent should re-sign 0.6 if it accepts.
   --help, -h        Show this help
 
 Examples:
@@ -207,6 +235,32 @@ async function main() {
     console.log(`🛡  Scenario gate: ${args.scenarioGate}`);
   }
 
+  // Load --chunk-plan if given
+  let chunkPlan = null;
+  if (args.chunkPlan) {
+    chunkPlan = loadJsonOrDie(args.chunkPlan, "--chunk-plan");
+    if (!Array.isArray(chunkPlan)) {
+      console.error("Error: --chunk-plan JSON must be an array of {name, dependsOn?, skills?, done?}\n");
+      process.exit(1);
+    }
+    console.log(`📋 Chunk plan: ${chunkPlan.length} chunk(s) pre-filled`);
+  }
+
+  // Load --auto-phase0 if given
+  let prefill = null;
+  if (args.autoPhase0) {
+    prefill = loadJsonOrDie(args.autoPhase0, "--auto-phase0");
+    if (typeof prefill !== "object" || Array.isArray(prefill)) {
+      console.error("Error: --auto-phase0 JSON must be an object with {restatement, skillScan, dod, signedBy, timestamp}\n");
+      process.exit(1);
+    }
+    console.log(`✍  Phase 0 prefill: signed by ${prefill.signedBy || "operator"}`);
+  }
+
+  if (args.autoOnboard) {
+    console.log("📥 Auto-onboarding banner enabled");
+  }
+
   // 1. Load catalog
   const catalog = loadCatalog();
   if (!catalog || !Array.isArray(catalog.items) || !catalog.items.length) {
@@ -274,8 +328,10 @@ async function main() {
     packageName,
     nodes,
     tier: args.tier,
-    chunkPlan: null, // operator fills in during 0.1–0.6 (Phase 0 step)
+    chunkPlan,
     gatePath: args.scenarioGate,
+    prefill,
+    autoOnboard: args.autoOnboard,
   });
   const claudeMd = buildClaudeMd({ nodes });
   const readme = buildReadme({ goal: args.goal, packageName, nodes });

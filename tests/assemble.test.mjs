@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, mkdtempSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -159,6 +159,33 @@ test("buildKickoffWithPhase0 omits Scenario Gate block when gatePath is null", (
   assert.doesNotMatch(noGate, /Scenario Gate/);
 });
 
+test("buildKickoffWithPhase0 renders auto-onboarding and Phase 0 prefill", () => {
+  const out = buildKickoffWithPhase0({
+    goal: "x",
+    nodes: [{ slug: "/x", name: "X" }],
+    tier: "production",
+    autoOnboard: true,
+    prefill: {
+      restatement: "Build the requested package without extra operator questions.",
+      skillScan: "partial",
+      dod: {
+        acceptanceCriteria: ["KICKOFF is prefilled", "Agent can re-sign Phase 0"],
+        verification: "Inspect generated KICKOFF.md",
+        directlyUsable: "Run assemble.mjs with --auto-phase0",
+      },
+      signedBy: "operator",
+      timestamp: "2026-04-25T12:00:00.000Z",
+    },
+  });
+
+  assert.match(out, /Pre-onboarding \(operator-confirmed\)/);
+  assert.match(out, /PRE-FILLED by operator/);
+  assert.match(out, /Your restatement: \*\*Build the requested package/);
+  assert.match(out, /- \[x\] \*\*Partial:\*\*/);
+  assert.match(out, /\*\*KICKOFF is prefilled\*\*/);
+  assert.match(out, /_Signed by: \*\*operator\*\*_/);
+});
+
 test("assemble.mjs --scenario-gate with non-existent path exits 1", () => {
   const r = spawnSync(
     process.execPath,
@@ -201,6 +228,86 @@ test("assemble.mjs --scenario-gate factory/v1 produces KICKOFF with gate block",
 });
 
 // ─── CLI integration tests (spawn subprocess) ─────────────────────────────
+
+test("assemble.mjs --chunk-plan + --auto-phase0 + --auto-onboard prefill KICKOFF", () => {
+  if (!existsSync(join(ROOT, "data.json")) && !existsSync(join(ROOT, "data.public.js"))) return;
+  const tempOut = mkdtempSync(join(tmpdir(), "assemble-prefill-test-"));
+  const chunkPlanPath = join(tempOut, "chunk-plan.json");
+  const phase0Path = join(tempOut, "phase0.json");
+  writeFileSync(
+    chunkPlanPath,
+    JSON.stringify([
+      {
+        name: "Implement CLI prefill",
+        dependsOn: [],
+        skills: ["/harness-engineering"],
+        done: "Generated KICKOFF includes prefilled Phase 0.",
+      },
+      {
+        name: "Verify package",
+        dependsOn: [1],
+        done: "ZIP can be parsed and inspected.",
+      },
+    ])
+  );
+  writeFileSync(
+    phase0Path,
+    JSON.stringify({
+      restatement: "Prefill onboarding and Phase 0 from operator-supplied JSON.",
+      skillScan: "perfect-fit",
+      dod: {
+        acceptanceCriteria: ["Phase 0 has concrete criteria"],
+        verification: "Parse KICKOFF.md from ZIP",
+        directlyUsable: "node assemble.mjs --auto-phase0 phase0.json",
+      },
+      signedBy: "operator-prefill",
+      timestamp: "2026-04-25T12:34:56.000Z",
+    })
+  );
+
+  try {
+    const r = spawnSync(
+      process.execPath,
+      [
+        ASSEMBLE,
+        "--goal",
+        "build agent onboarding prefill",
+        "--tier",
+        "production",
+        "--limit",
+        "4",
+        "--auto",
+        "--chunk-plan",
+        chunkPlanPath,
+        "--auto-phase0",
+        phase0Path,
+        "--auto-onboard",
+        "--out",
+        tempOut,
+      ],
+      { encoding: "utf-8", timeout: 30_000 }
+    );
+    assert.equal(r.status, 0, `expected exit 0, got ${r.status}. stderr: ${r.stderr}`);
+    assert.match(r.stdout, /Chunk plan: 2 chunk/);
+    assert.match(r.stdout, /Phase 0 prefill: signed by operator-prefill/);
+    assert.match(r.stdout, /Auto-onboarding banner enabled/);
+
+    const zipFiles = readdirSync(tempOut).filter((f) => f.endsWith(".zip"));
+    const zipBytes = readFileSync(join(tempOut, zipFiles[0]));
+    const files = parseStoreZip(new Uint8Array(zipBytes));
+    const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
+    assert.match(kickoff, /Pre-onboarding \(operator-confirmed\)/);
+    assert.match(kickoff, /PRE-FILLED by operator/);
+    assert.match(kickoff, /Your restatement: \*\*Prefill onboarding and Phase 0/);
+    assert.match(kickoff, /- \[x\] \*\*Perfect-fit:\*\*/);
+    assert.match(kickoff, /## Chunk Plan \(logical-order DAG\)/);
+    assert.match(kickoff, /### C1 . Implement CLI prefill/);
+    assert.match(kickoff, /\*\*Depends on:\*\* C1/);
+    assert.match(kickoff, /_Signed by: \*\*operator-prefill\*\*_/);
+  } finally {
+    rmSync(tempOut, { recursive: true, force: true });
+  }
+});
 
 test("assemble.mjs --help exits 0 and prints usage", () => {
   const r = spawnSync(process.execPath, [ASSEMBLE, "--help"], { encoding: "utf-8" });
