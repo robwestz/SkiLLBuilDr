@@ -1,4 +1,0 @@
-Scenario: S-104
-DESC: Leak scan rejects scenario identifiers and fixture fingerprints in builder-visible output while allowing clean artifacts.
-STATUS: PASS
-SUMMARY: leak-scan accepted clean output and rejected seeded holdout markers

@@ -1,4 +1,0 @@
-Scenario: S-103
-DESC: 5xx twin mode returns deterministic upstream failure classification and preserves full operator diagnostics in artifacts.
-STATUS: PASS
-SUMMARY: 5xx twin produced a stable upstream failure classification with operator artifacts

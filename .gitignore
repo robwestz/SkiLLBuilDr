@@ -31,6 +31,9 @@ playwright/.cache/
 !.claude/identity.json
 !.claude/ecc-tools.json
 
+# Scenario factory run output (ephemeral)
+factory/v1/artifacts/
+
 # Probe/debug files
 probe*.html
 probe*.js

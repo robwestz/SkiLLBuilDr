@@ -1,7 +1,0 @@
-{
-  "scenario_id": "S-103",
-  "status": "PASS",
-  "class": "none",
-  "symptom": "scenario satisfied expected behavior",
-  "high_level_repro": "rerun via bash scenarios/runner.sh"
-}
