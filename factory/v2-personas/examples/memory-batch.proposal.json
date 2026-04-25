@@ -1,0 +1,12 @@
+{
+  "title": "Strategic memory batch for autonomous build handoffs",
+  "question": "Should the proposed batch be accepted into persistent memory?",
+  "signals": {
+    "research_backed": "pass",
+    "unlock": "pass",
+    "composition": "pass",
+    "not_redundant": "pass",
+    "permanent_value": "pass",
+    "operator_safe": "pass"
+  }
+}

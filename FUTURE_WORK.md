@@ -40,20 +40,18 @@ back-to-back agent runs).
 
 ---
 
-## 3. Generalized N-Persona Debate Substrate
+## 3. Generalized N-Persona Debate Substrate ✅ SHIPPED 2026-04-25
 
-**Status:** Not started — generalizes existing 2-persona pattern  
-**Why deferred:** Memory-Architect already implements Researcher + Gatekeeper as a hardcoded pair.
-Generalizing to N roles (decision, critic, reflect, architect, risk-officer, …) needs a
-configuration DSL and a loop driver; building that correctly without regressions takes focused time.  
-**Prerequisites:**
-- Audit current 2-persona implementation in `frameworks/MEMORY_ARCHITECT.md` to extract the
-  minimal interface (persona name, system prompt template, vote weight, escalation threshold).
-- Design a `personas.config.json` that lists N personas with those fields.
-- Build a `lib/debate.mjs` runner that accepts any config and returns a structured verdict.
-
-**Rough effort:** 2–3 days (DSL design + runner + at least 3 persona configs as smoke tests).  
-**Where this lives:** Seed → `frameworks/MEMORY_ARCHITECT.md`; new code → `lib/debate.mjs`.
+**Status:** Shipped as `factory/v2-personas/` (Codex worker P2, commit pending).  
+**Where it lives:** `factory/v2-personas/debate.mjs` (runner) + `examples/*.config.json` (3 configs:
+memory-architect, release-readiness, operator-ask) + `debate.test.mjs` (5 tests, all green).  
+**Adapter contract:** `runDebate(config, proposal, { responder })` returns a
+`v2-personas.decision.v1` artifact. Default responder is deterministic; LLM responder is pluggable
+via the same interface — no network or runtime deps required.  
+**Next integration steps (separate from substrate itself):**
+- `assemble.mjs --debate <topic>` flag — wires substrate into KICKOFF Phase 0.4 (see #9 below).
+- EVAL LOOP block calls `factory/v2-personas/debate.mjs` instead of agent self-evaluation
+  (see #8, now unblocked).
 
 ---
 
@@ -133,11 +131,11 @@ human review).
 
 ## 8. Live Eval Loop Replacing User Asks
 
-**Status:** Not started — depends on #3  
-**Why deferred:** This is the highest-leverage but also highest-risk feature: replacing interactive
-user prompts with an autonomous mini-debate means an agent can go fully dark for multi-hour runs.
-Requires the N-Persona Debate Substrate (#3) to be stable first, plus a confidence threshold
-below which escalation to the human is still mandatory.  
+**Status:** Unblocked 2026-04-25 — #3 shipped; integration in progress.  
+**Why deferred (until 2026-04-25):** This is the highest-leverage but also highest-risk feature:
+replacing interactive user prompts with an autonomous mini-debate means an agent can go fully
+dark for multi-hour runs. Required the N-Persona Debate Substrate (#3) to be stable first, plus
+a confidence threshold below which escalation to the human is still mandatory.  
 **Prerequisites:**
 - N-Persona Debate Substrate (#3) shipped.
 - Define an `escalation_policy`: minimum confidence score, maximum debate rounds, and a
@@ -152,4 +150,20 @@ test simulating a full no-human-ask run).
 
 ---
 
-*Last updated: 2026-04-24. All estimates are single-engineer, focused-session days.*
+## 9. Assembler Wiring for Debate + Auto-Skill-Dev
+
+**Status:** Net new — added 2026-04-25 to track ongoing CLI integration.  
+**Why this exists separately:** #3 ships the substrate; #8 ships the eval-loop policy. This item
+covers the glue inside `assemble.mjs` and `kickoff-template.mjs` so a generated package carries:
+
+- `--debate "<topic>"` flag → emits a "Pre-decision debate" block in KICKOFF Phase 0.4 with a
+  paste-ready `factory/v2-personas/debate.mjs` invocation.
+- `--auto-phase0` skill-scan = `partial`/`miss` → KICKOFF Phase 0.3 contains a concrete
+  `/skill-development` invocation block instead of free-form text.
+- factory/v2-personas/ bundled into the generated ZIP so the package is still self-contained.
+
+**Where this lives:** `assemble.mjs` (flag + bundling), `kickoff-template.mjs` (block templates).
+
+---
+
+*Last updated: 2026-04-25. All estimates are single-engineer, focused-session days.*

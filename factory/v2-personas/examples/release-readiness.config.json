@@ -1,0 +1,58 @@
+{
+  "schema": "v2-personas.config.v1",
+  "name": "Release Readiness Council",
+  "decision": {
+    "question": "Can this package be released?",
+    "options": [
+      { "id": "approve", "label": "Release" },
+      { "id": "revise", "label": "Fix before release" },
+      { "id": "escalate", "label": "Escalate release decision" }
+    ]
+  },
+  "debate": {
+    "rounds": 2,
+    "consensusThreshold": 0.62,
+    "minimumMargin": 0.04,
+    "requireAllConfident": true
+  },
+  "personas": [
+    {
+      "id": "maintainer",
+      "name": "Maintainer",
+      "role": "Protects codebase maintainability and future edits.",
+      "systemPrompt": "Prefer release only if the package is readable, documented, and locally testable.",
+      "weight": 1,
+      "escalationThreshold": 0.5,
+      "criteria": [
+        { "id": "tests_green", "question": "Do targeted tests pass?", "weight": 1.2 },
+        { "id": "docs_ready", "question": "Are integration notes sufficient?", "weight": 1 },
+        { "id": "api_stable", "question": "Is the public API stable enough to reuse?", "weight": 1 }
+      ]
+    },
+    {
+      "id": "risk_officer",
+      "name": "Risk Officer",
+      "role": "Blocks risky, irreversible, or under-verified releases.",
+      "systemPrompt": "Escalate when verification is missing or the blast radius is unclear.",
+      "weight": 1.3,
+      "escalationThreshold": 0.6,
+      "criteria": [
+        { "id": "tests_green", "question": "Is verification objective and reproducible?", "weight": 1.4 },
+        { "id": "blast_radius_small", "question": "Is the change isolated?", "weight": 1 },
+        { "id": "rollback_clear", "question": "Is rollback or isolation clear?", "weight": 0.8 }
+      ]
+    },
+    {
+      "id": "user_proxy",
+      "name": "User Proxy",
+      "role": "Checks whether a downstream worker can use the package without clarification.",
+      "systemPrompt": "Approve only when commands, expected outputs, and failure modes are visible.",
+      "weight": 1,
+      "escalationThreshold": 0.52,
+      "criteria": [
+        { "id": "docs_ready", "question": "Can a new worker understand usage?", "weight": 1.1 },
+        { "id": "examples_ready", "question": "Are examples executable and varied?", "weight": 1.1 }
+      ]
+    }
+  ]
+}

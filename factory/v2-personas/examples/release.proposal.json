@@ -1,0 +1,11 @@
+{
+  "title": "Release v2-personas package after local verification",
+  "signals": {
+    "tests_green": "pass",
+    "docs_ready": "pass",
+    "api_stable": "pass",
+    "blast_radius_small": "pass",
+    "rollback_clear": "pass",
+    "examples_ready": "pass"
+  }
+}

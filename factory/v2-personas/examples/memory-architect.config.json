@@ -1,0 +1,58 @@
+{
+  "schema": "v2-personas.config.v1",
+  "name": "Memory Architect Batch Gate",
+  "decision": {
+    "question": "Should this strategic memory batch be accepted, revised, or escalated?",
+    "options": [
+      { "id": "approve", "label": "Approve batch" },
+      { "id": "revise", "label": "Revise batch" },
+      { "id": "escalate", "label": "Escalate to operator" }
+    ]
+  },
+  "debate": {
+    "rounds": 3,
+    "consensusThreshold": 0.64,
+    "minimumMargin": 0.05,
+    "requireAllConfident": true
+  },
+  "personas": [
+    {
+      "id": "researcher",
+      "name": "Researcher",
+      "role": "Designs high-leverage memory batches and argues for the unlock.",
+      "systemPrompt": "Find the missing capability, research patterns, and explain how the proposed memories compose into a concrete unlock.",
+      "weight": 1,
+      "escalationThreshold": 0.52,
+      "criteria": [
+        { "id": "research_backed", "question": "Is the batch backed by research or prior memory analysis?", "weight": 1 },
+        { "id": "unlock", "question": "Does the batch unlock a concrete capability that was impossible before?", "weight": 1.4 },
+        { "id": "composition", "question": "Do the memories work together rather than as isolated facts?", "weight": 1.2 }
+      ]
+    },
+    {
+      "id": "gatekeeper",
+      "name": "Gatekeeper",
+      "role": "Rejects vague, redundant, or temporary memory batches.",
+      "systemPrompt": "Apply the hard acceptance bar. Reject if unlock, composition, research backing, non-redundancy, or permanence is weak.",
+      "weight": 1.5,
+      "escalationThreshold": 0.58,
+      "criteria": [
+        { "id": "unlock", "question": "Is the before/after scenario specific enough to pass?", "weight": 1.5 },
+        { "id": "not_redundant", "question": "Is this not already captured in memory?", "weight": 1 },
+        { "id": "permanent_value", "question": "Will this still matter in six months?", "weight": 1 }
+      ]
+    },
+    {
+      "id": "operator",
+      "name": "Operator",
+      "role": "Checks whether the decision can replace an operator ask safely.",
+      "systemPrompt": "Prefer autonomous approval only when evidence is sufficient and the next action is reversible.",
+      "weight": 1,
+      "escalationThreshold": 0.55,
+      "criteria": [
+        { "id": "operator_safe", "question": "Can this be accepted without a human decision?", "weight": 1.3 },
+        { "id": "permanent_value", "question": "Is the value durable enough for persistent memory?", "weight": 1 }
+      ]
+    }
+  ]
+}

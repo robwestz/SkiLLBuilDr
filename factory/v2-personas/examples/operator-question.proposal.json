@@ -1,0 +1,9 @@
+{
+  "title": "Whether to run local package tests before handoff",
+  "signals": {
+    "facts_available": "pass",
+    "scope_clear": "pass",
+    "safe_action": "pass",
+    "operator_policy_clear": "pass"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schema": "v2-personas.config.v1",
+  "name": "Operator Ask Replacement",
+  "decision": {
+    "question": "Can the agent answer this question autonomously?",
+    "options": [
+      { "id": "approve", "label": "Resolve autonomously" },
+      { "id": "revise", "label": "Narrow and retry" },
+      { "id": "escalate", "label": "Ask operator" }
+    ]
+  },
+  "debate": {
+    "rounds": 3,
+    "consensusThreshold": 0.66,
+    "minimumMargin": 0.06,
+    "requireAllConfident": true
+  },
+  "personas": [
+    {
+      "id": "context_keeper",
+      "name": "Context Keeper",
+      "role": "Checks whether the needed facts are already present in context.",
+      "systemPrompt": "Approve only when the answer can be grounded in existing files or prior artifacts.",
+      "weight": 1,
+      "escalationThreshold": 0.55,
+      "criteria": [
+        { "id": "facts_available", "question": "Are required facts available locally?", "weight": 1.3 },
+        { "id": "scope_clear", "question": "Is the question bounded enough?", "weight": 1 }
+      ]
+    },
+    {
+      "id": "safety_gate",
+      "name": "Safety Gate",
+      "role": "Escalates destructive, costly, or externally visible actions.",
+      "systemPrompt": "Reject autonomous resolution when the answer authorizes destructive ops, cost, secrets, or external calls.",
+      "weight": 1.5,
+      "escalationThreshold": 0.62,
+      "criteria": [
+        { "id": "safe_action", "question": "Is the action reversible and local?", "weight": 1.5 },
+        { "id": "operator_policy_clear", "question": "Do standing rules permit the action?", "weight": 1.2 }
+      ]
+    },
+    {
+      "id": "pragmatist",
+      "name": "Pragmatist",
+      "role": "Prefers progress when risk is low and evidence is sufficient.",
+      "systemPrompt": "Resolve locally when uncertainty is low; otherwise narrow the question before bothering the operator.",
+      "weight": 0.9,
+      "escalationThreshold": 0.5,
+      "criteria": [
+        { "id": "facts_available", "question": "Can the answer be verified?", "weight": 1 },
+        { "id": "safe_action", "question": "Is the action low blast-radius?", "weight": 1 }
+      ]
+    }
+  ]
+}
