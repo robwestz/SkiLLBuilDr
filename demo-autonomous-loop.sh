@@ -28,6 +28,7 @@ OUT_DIR="out/demo-loop"
 AUTO_EXECUTE=0
 KEEP=0
 
+POSITIONAL_GOAL=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --goal) GOAL="$2"; shift 2 ;;
@@ -38,9 +39,23 @@ while [[ $# -gt 0 ]]; do
       sed -n '2,30p' "$0"
       exit 0
       ;;
-    *) echo "unknown arg: $1" >&2; exit 2 ;;
+    --*) echo "unknown arg: $1" >&2; exit 2 ;;
+    *)
+      # First non-flag arg is treated as positional goal — convenient short form:
+      #   bash demo-autonomous-loop.sh "create a function that reverses a string"
+      if [[ -z "$POSITIONAL_GOAL" ]]; then
+        POSITIONAL_GOAL="$1"
+        shift
+      else
+        echo "unexpected extra arg: $1" >&2; exit 2
+      fi
+      ;;
   esac
 done
+# Positional goal beats the default; an explicit --goal still wins over both.
+if [[ -n "$POSITIONAL_GOAL" && "$GOAL" == "Add a one-line greeting to the project README and commit locally." ]]; then
+  GOAL="$POSITIONAL_GOAL"
+fi
 
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO_ROOT"
@@ -86,6 +101,15 @@ echo " phase0:       $PHASE0_FIXTURE  (ts=$ISO_TS)"
 echo " chunks:       $CHUNK_FIXTURE"
 echo
 
+# Wire factory/v1 as blind-eval gate when it exists — the demo's Definition
+# of Done says scenarios PASS for trivial goals, so this exercises the gate
+# even though no real failure is expected.
+SCENARIO_ARGS=()
+if [[ -f factory/v1/scenarios/runner.sh ]]; then
+  SCENARIO_ARGS=(--scenario-gate factory/v1)
+  echo " scenario-gate: factory/v1 (runner present)"
+fi
+
 node assemble.mjs \
   --goal "$GOAL" \
   --tier mvp \
@@ -94,6 +118,7 @@ node assemble.mjs \
   --auto-onboard \
   --auto-phase0 "$PHASE0_TMP" \
   --chunk-plan "$CHUNK_FIXTURE" \
+  "${SCENARIO_ARGS[@]}" \
   --out "$OUT_DIR"
 
 # Find the produced ZIP — assemble.mjs writes one under $OUT_DIR.
@@ -217,14 +242,51 @@ echo
 cat "$HANDOFF"
 
 if [[ $AUTO_EXECUTE -eq 1 ]]; then
-  if command -v claude >/dev/null 2>&1; then
-    echo
-    echo "→ --auto-execute: spawning claude in $SANDBOX"
-    ( cd "$SANDBOX" && claude < KICKOFF.md ) || {
-      echo "claude exited non-zero (non-fatal for the demo)" >&2
-    }
-  else
+  if ! command -v claude >/dev/null 2>&1; then
     echo "⚠ --auto-execute requested but 'claude' not on PATH; skipping spawn"
+  else
+    echo
+    echo "→ --auto-execute: spawning claude in $SANDBOX (transcript → $HANDOFF)"
+
+    TRANSCRIPT="$OUT_DIR/agent-transcript.log"
+    {
+      echo "── BEGIN AGENT TRANSCRIPT ($(date -u +%Y-%m-%dT%H:%M:%SZ)) ──"
+      ( cd "$SANDBOX" && claude < KICKOFF.md ) 2>&1 || true
+      echo "── END AGENT TRANSCRIPT ──"
+    } | tee -a "$TRANSCRIPT"
+
+    # Verify the agent honored the contract: must surface ONBOARDED:, at least
+    # one [EVAL LOOP] block, and at least one [COMPOUND] register entry.
+    AGENT_GAPS=()
+    grep -q "ONBOARDED:"  "$TRANSCRIPT" || AGENT_GAPS+=("ONBOARDED: signature line")
+    grep -q "EVAL LOOP"   "$TRANSCRIPT" || AGENT_GAPS+=("[EVAL LOOP] block")
+    grep -q "COMPOUND"    "$TRANSCRIPT" || AGENT_GAPS+=("[COMPOUND] register")
+
+    {
+      echo
+      echo "## Agent execution result"
+      echo
+      if [[ ${#AGENT_GAPS[@]} -eq 0 ]]; then
+        echo "✓ All required markers present in transcript:"
+        echo "  - ONBOARDED:"
+        echo "  - [EVAL LOOP]"
+        echo "  - [COMPOUND]"
+      else
+        echo "✗ Agent transcript is missing required markers:"
+        printf '  - %s\n' "${AGENT_GAPS[@]}"
+        echo
+        echo "Demo did not prove the contract. Re-run after fixing whichever"
+        echo "step the agent skipped."
+      fi
+      echo
+      echo "Full transcript: \`$TRANSCRIPT\`"
+    } >> "$HANDOFF"
+
+    if [[ ${#AGENT_GAPS[@]} -gt 0 ]]; then
+      echo
+      echo "⚠ agent execution did not produce all required markers — see $HANDOFF"
+      exit 3
+    fi
   fi
 fi
 
