@@ -47,6 +47,7 @@ function parseArgs(argv) {
     out: "./out",
     ai: false,
     auto: false,
+    scenarioGate: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -58,6 +59,7 @@ function parseArgs(argv) {
     else if (arg === "--tier") args.tier = argv[++i] ?? "production";
     else if (arg === "--limit") args.limit = Number(argv[++i] ?? 12);
     else if (arg === "--out") args.out = argv[++i] ?? "./out";
+    else if (arg === "--scenario-gate") args.scenarioGate = argv[++i] ?? null;
   }
   return args;
 }
@@ -75,6 +77,9 @@ Options:
   --out <dir>       Output directory  (default: ./out)
   --ai              Use Groq/OpenRouter for causal ranking (reads GROQ_API_KEY)
   --auto            Skip interactive review; pick top-N automatically
+  --scenario-gate <path>  Wire a scenario-factory dir as blind-eval gate
+                          between chunks (e.g. --scenario-gate factory/v1).
+                          Path must contain scenarios/runner.sh.
   --help, -h        Show this help
 
 Examples:
@@ -192,6 +197,16 @@ async function main() {
     process.exit(1);
   }
 
+  // Validate --scenario-gate if given: path must exist and contain scenarios/runner.sh
+  if (args.scenarioGate) {
+    const runnerPath = join(args.scenarioGate, "scenarios", "runner.sh");
+    if (!existsSync(runnerPath)) {
+      console.error(`Error: --scenario-gate "${args.scenarioGate}" missing required scenarios/runner.sh\n`);
+      process.exit(1);
+    }
+    console.log(`🛡  Scenario gate: ${args.scenarioGate}`);
+  }
+
   // 1. Load catalog
   const catalog = loadCatalog();
   if (!catalog || !Array.isArray(catalog.items) || !catalog.items.length) {
@@ -260,6 +275,7 @@ async function main() {
     nodes,
     tier: args.tier,
     chunkPlan: null, // operator fills in during 0.1–0.6 (Phase 0 step)
+    gatePath: args.scenarioGate,
   });
   const claudeMd = buildClaudeMd({ nodes });
   const readme = buildReadme({ goal: args.goal, packageName, nodes });

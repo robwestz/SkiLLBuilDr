@@ -397,6 +397,45 @@ export function buildCompoundBlock() {
   ].join("\n");
 }
 
+export function buildScenarioGateBlock({
+  gatePath = null,
+  runnerCmd = null,
+} = {}) {
+  if (!gatePath) return "";
+  const cmd = runnerCmd || `bash ${gatePath}/scenarios/runner.sh --json --timeout 15`;
+  return [
+    "## Scenario Gate (blind-eval, runs between every chunk)",
+    "",
+    `**Gate enabled at:** \`${gatePath}\``,
+    "",
+    "Source: `frameworks/FACTORY_OPERATING_MANUAL.md` — build/eval separation.",
+    "The gate runs **after** every chunk's `[EVAL LOOP]` and **before**",
+    "`[COMPOUND]` register. The chunk does not close until the gate passes.",
+    "",
+    "**Required command at chunk end:**",
+    "",
+    "```bash",
+    cmd,
+    "```",
+    "",
+    "**Pass policy:**",
+    "",
+    "- All scenarios `PASS` or `SKIP` → chunk allowed to close, proceed to `[COMPOUND]`",
+    "- Any `FAIL` or `TIMEOUT` → chunk blocked. Read only the `builder_feedback.json`",
+    "  artifacts for failing scenarios. Do **not** open `human_debug.txt` or",
+    "  `twin_call_log.jsonl` — those are operator-only per the threat model.",
+    "- After fixing, re-run the gate. Iterate up to 3 times. If still failing,",
+    "  set `[EVAL LOOP] DECISION = escalate` and surface to operator.",
+    "",
+    "**Hard rules (per `frameworks/THREAT_MODEL_TEACHING_TO_THE_TEST.md`):**",
+    "",
+    `- Do NOT read scenarios under \`${gatePath}/scenarios/\` directly. The gate is a blind eval.`,
+    `- Do NOT modify files under \`${gatePath}/\` — it is the eval reference, not your build target.`,
+    "- Do NOT include any artifact paths or scenario IDs in your code or commit messages.",
+    "",
+  ].join("\n");
+}
+
 export function buildEvalLoopBlock({ tier = "production" } = {}) {
   const minPraise = tier === "cutting-edge" ? 3 : 2;
   const minCritique = tier === "cutting-edge" ? 3 : 2;
@@ -488,22 +527,25 @@ export function buildKickoffWithPhase0({
   nodes = [],
   tier = "production",
   chunkPlan = null,
+  gatePath = null,
 } = {}) {
   const baseKickoff = buildKickoff({ goal, description, packageName, nodes });
   const phase0 = buildPhase0Block({ goal, tier, chunkPlan });
   const compound = buildCompoundBlock();
   const evalLoop = buildEvalLoopBlock({ tier });
+  const scenarioGate = buildScenarioGateBlock({ gatePath });
   const qualityGate = buildQualityGateBlock({ tier });
 
-  // Splice Phase 0 immediately after the title + intro line, before the existing Goal section.
-  // Order at end: Compound mechanisms (per-chunk rituals) → Eval Loop (per-chunk before register) → Quality Gate (final).
+  // Order at end: Compound (per-chunk rituals) → Eval Loop (critique+praise) → Scenario Gate (blind eval if enabled) → Quality Gate (final).
+  const tailBlocks = [compound, evalLoop, scenarioGate, qualityGate].filter(Boolean).join("\n");
+
   const headerEnd = baseKickoff.indexOf("\n## Goal");
   if (headerEnd === -1) {
-    return `${phase0}\n${baseKickoff}\n${compound}\n${evalLoop}\n${qualityGate}`.trim() + "\n";
+    return `${phase0}\n${baseKickoff}\n${tailBlocks}`.trim() + "\n";
   }
   const head = baseKickoff.slice(0, headerEnd);
   const tail = baseKickoff.slice(headerEnd);
-  return `${head}\n\n${phase0}${tail}\n\n${compound}\n${evalLoop}\n${qualityGate}`.trim() + "\n";
+  return `${head}\n\n${phase0}${tail}\n\n${tailBlocks}`.trim() + "\n";
 }
 
 export const TIERS = Object.keys(TIER_DEFS);
@@ -517,6 +559,7 @@ const browserApi = {
   buildPhase0Block,
   buildCompoundBlock,
   buildEvalLoopBlock,
+  buildScenarioGateBlock,
   buildQualityGateBlock,
   TIERS,
 };

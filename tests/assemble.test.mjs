@@ -11,6 +11,7 @@ import {
   buildPhase0Block,
   buildCompoundBlock,
   buildEvalLoopBlock,
+  buildScenarioGateBlock,
   buildQualityGateBlock,
   buildKickoffWithPhase0,
   TIERS,
@@ -116,6 +117,87 @@ test("EVAL LOOP appears between Compound Mechanisms and Quality Gate in KICKOFF"
   assert.ok(compoundIdx > 0, "compound block missing");
   assert.ok(evalIdx > compoundIdx, "eval loop must appear after compound block");
   assert.ok(qgIdx > evalIdx, "quality gate must appear after eval loop");
+});
+
+test("buildScenarioGateBlock returns empty string when no gatePath given", () => {
+  assert.equal(buildScenarioGateBlock({}), "");
+  assert.equal(buildScenarioGateBlock({ gatePath: null }), "");
+});
+
+test("buildScenarioGateBlock contains the path, runner cmd, and threat-model rules", () => {
+  const out = buildScenarioGateBlock({ gatePath: "factory/v1" });
+  assert.match(out, /Scenario Gate/);
+  assert.match(out, /factory\/v1/);
+  assert.match(out, /bash factory\/v1\/scenarios\/runner\.sh --json --timeout 15/);
+  assert.match(out, /Pass policy/);
+  assert.match(out, /Do NOT read scenarios under/);
+  assert.match(out, /Do NOT modify files under/);
+});
+
+test("buildKickoffWithPhase0 includes Scenario Gate block when gatePath is given", () => {
+  const withGate = buildKickoffWithPhase0({
+    goal: "x",
+    nodes: [{ slug: "/x", name: "X" }],
+    tier: "production",
+    gatePath: "factory/v1",
+  });
+  assert.match(withGate, /Scenario Gate/);
+  // Must appear AFTER eval loop and BEFORE quality gate
+  const evalIdx = withGate.indexOf("Eval Loop");
+  const gateIdx = withGate.indexOf("Scenario Gate");
+  const qgIdx = withGate.indexOf("Quality Gate");
+  assert.ok(evalIdx < gateIdx, "scenario gate must appear after eval loop");
+  assert.ok(gateIdx < qgIdx, "scenario gate must appear before quality gate");
+});
+
+test("buildKickoffWithPhase0 omits Scenario Gate block when gatePath is null", () => {
+  const noGate = buildKickoffWithPhase0({
+    goal: "x",
+    nodes: [{ slug: "/x", name: "X" }],
+    tier: "production",
+  });
+  assert.doesNotMatch(noGate, /Scenario Gate/);
+});
+
+test("assemble.mjs --scenario-gate with non-existent path exits 1", () => {
+  const r = spawnSync(
+    process.execPath,
+    [ASSEMBLE, "--goal", "x", "--scenario-gate", "/nonexistent/path-xyz"],
+    { encoding: "utf-8" }
+  );
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /missing required scenarios\/runner\.sh/);
+});
+
+test("assemble.mjs --scenario-gate factory/v1 produces KICKOFF with gate block", () => {
+  if (!existsSync(join(ROOT, "data.json")) && !existsSync(join(ROOT, "data.public.js"))) return;
+  if (!existsSync(join(ROOT, "factory", "v1", "scenarios", "runner.sh"))) return;
+  const tempOut = mkdtempSync(join(tmpdir(), "assemble-gate-test-"));
+  try {
+    const r = spawnSync(
+      process.execPath,
+      [
+        ASSEMBLE,
+        "--goal", "test gated build",
+        "--tier", "production",
+        "--limit", "4",
+        "--auto",
+        "--scenario-gate", "factory/v1",
+        "--out", tempOut,
+      ],
+      { encoding: "utf-8", timeout: 30_000 }
+    );
+    assert.equal(r.status, 0, `expected 0, stderr: ${r.stderr}`);
+    assert.match(r.stdout, /Scenario gate: factory\/v1/);
+    const zipFiles = readdirSync(tempOut).filter((f) => f.endsWith(".zip"));
+    const zipBytes = readFileSync(join(tempOut, zipFiles[0]));
+    const files = parseStoreZip(new Uint8Array(zipBytes));
+    const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
+    assert.match(kickoff, /Scenario Gate/);
+    assert.match(kickoff, /factory\/v1\/scenarios\/runner\.sh/);
+  } finally {
+    rmSync(tempOut, { recursive: true, force: true });
+  }
 });
 
 // ─── CLI integration tests (spawn subprocess) ─────────────────────────────
