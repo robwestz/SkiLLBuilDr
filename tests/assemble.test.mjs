@@ -14,6 +14,7 @@ import {
   buildScenarioGateBlock,
   buildQualityGateBlock,
   buildKickoffWithPhase0,
+  buildDebateBlock,
   TIERS,
 } from "../kickoff-template.mjs";
 
@@ -409,6 +410,121 @@ test("assemble.mjs respects --tier mvp in KICKOFF output", () => {
     const files = parseStoreZip(new Uint8Array(zipBytes));
     const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
     assert.match(kickoff, /\*\*Tier:\*\* MVP/);
+  } finally {
+    rmSync(tempOut, { recursive: true, force: true });
+  }
+});
+
+// ─── Phase C: auto-skill-dev trigger from prefill.skillScan ───────────────
+
+test("buildPhase0Block injects auto-skill-dev block when skillScan='miss'", () => {
+  const md = buildPhase0Block({
+    goal: "g",
+    tier: "mvp",
+    prefill: { skillScan: "miss" },
+  });
+  assert.match(md, /Auto-triggered for this package/);
+  assert.match(md, /\bmiss\b/);
+  assert.match(md, /claude \/plugin-dev:skill-development/);
+});
+
+test("buildPhase0Block injects auto-skill-dev block when skillScan='partial'", () => {
+  const md = buildPhase0Block({
+    goal: "g",
+    tier: "mvp",
+    prefill: { skillScan: "partial" },
+  });
+  assert.match(md, /Auto-triggered for this package/);
+  assert.match(md, /\bpartial\b/);
+});
+
+test("buildPhase0Block does NOT inject auto-skill-dev block when skillScan='perfect-fit'", () => {
+  const md = buildPhase0Block({
+    goal: "g",
+    tier: "mvp",
+    prefill: { skillScan: "perfect-fit" },
+  });
+  assert.doesNotMatch(md, /Auto-triggered for this package/);
+});
+
+// ─── Phase D: EVAL LOOP block carries concrete debate.mjs invocation ──────
+
+test("buildEvalLoopBlock includes concrete factory/v2-personas debate command", () => {
+  const md = buildEvalLoopBlock({ tier: "production" });
+  assert.match(md, /Live debate substrate \(preferred\)/);
+  assert.match(md, /node factory\/v2-personas\/debate\.mjs/);
+  assert.match(md, /operator-ask\.config\.json/);
+});
+
+// ─── Phase B: --debate flag → buildDebateBlock + bundling ─────────────────
+
+test("buildDebateBlock returns empty string when topic is missing or blank", () => {
+  assert.equal(buildDebateBlock({}), "");
+  assert.equal(buildDebateBlock({ topic: "" }), "");
+  assert.equal(buildDebateBlock({ topic: "   " }), "");
+});
+
+test("buildDebateBlock renders Pre-decision Debate section with the topic", () => {
+  const md = buildDebateBlock({ topic: "SemVer or CalVer for releases?" });
+  assert.match(md, /## Pre-decision Debate/);
+  assert.match(md, /SemVer or CalVer for releases\?/);
+  assert.match(md, /node factory\/v2-personas\/debate\.mjs/);
+});
+
+test("buildKickoffWithPhase0 inserts debate block before Compound when debateTopic is set", () => {
+  const k = buildKickoffWithPhase0({
+    goal: "g",
+    packageName: "p",
+    nodes: [],
+    tier: "mvp",
+    debateTopic: "Pick a release cadence",
+  });
+  assert.match(k, /## Pre-decision Debate/);
+  const debateIdx = k.indexOf("## Pre-decision Debate");
+  const compoundIdx = k.indexOf("## Compound Mechanisms");
+  assert.ok(debateIdx > 0, "debate block present");
+  assert.ok(compoundIdx > debateIdx, "debate appears before Compound block");
+});
+
+test("assemble.mjs --debate bundles factory/v2-personas/ and emits debate block", () => {
+  const tempOut = mkdtempSync(join(tmpdir(), "assemble-debate-"));
+  try {
+    const r = spawnSync(
+      process.execPath,
+      [
+        ASSEMBLE,
+        "--goal",
+        "demo debate flow",
+        "--tier",
+        "mvp",
+        "--limit",
+        "3",
+        "--auto",
+        "--debate",
+        "Should we adopt SemVer or CalVer?",
+        "--out",
+        tempOut,
+      ],
+      { encoding: "utf-8", timeout: 30_000 }
+    );
+    assert.equal(r.status, 0, `expected exit 0, got ${r.status}. stderr: ${r.stderr}`);
+    const zipFiles = readdirSync(tempOut).filter((f) => f.endsWith(".zip"));
+    assert.ok(zipFiles.length, "expected a .zip output");
+    const zipBytes = readFileSync(join(tempOut, zipFiles[0]));
+    const files = parseStoreZip(new Uint8Array(zipBytes));
+
+    const kickoff = new TextDecoder().decode(
+      files.find((f) => f.name === "KICKOFF.md").data
+    );
+    assert.match(kickoff, /## Pre-decision Debate/);
+    assert.match(kickoff, /Should we adopt SemVer or CalVer\?/);
+
+    const personaFiles = files.filter((f) => f.name.startsWith("factory/v2-personas/"));
+    assert.ok(personaFiles.length >= 5, `expected ≥5 persona files bundled, got ${personaFiles.length}`);
+    assert.ok(
+      personaFiles.some((f) => f.name === "factory/v2-personas/debate.mjs"),
+      "debate.mjs must be in the bundled package"
+    );
   } finally {
     rmSync(tempOut, { recursive: true, force: true });
   }

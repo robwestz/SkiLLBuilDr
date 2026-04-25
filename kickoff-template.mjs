@@ -315,6 +315,25 @@ export function buildPhase0Block({
     "",
     "Ad-hoc improvisation is **not** acceptable. Either an included skill covers the work, or a new artifact is created and registered before proceeding.",
     "",
+    ...(scanCls === "miss" || scanCls === "partial"
+      ? [
+          "**Auto-triggered for this package** (operator marked 0.2 as " +
+            `\`${scanCls}\`). Run this before any code:`,
+          "",
+          "```bash",
+          "# Open the skill-first fallback procedure",
+          "claude /plugin-dev:skill-development",
+          "",
+          "# Or, if you prefer the in-repo invocable form:",
+          "claude /agent-onboarding   # then jump to Gate 5 → skill-development",
+          "```",
+          "",
+          "Do **not** proceed past 0.6 until at least one new Skill / Rule / Agent /",
+          "Constraint is registered to cover the gap. Ad-hoc improvisation in this",
+          "package would violate the operator's pre-fill contract.",
+          "",
+        ]
+      : []),
     "### 0.4 Definition of Done (write before building)",
     "",
     `**Tier:** ${tierDef.label} — ${tierDef.qualityGateThreshold}`,
@@ -492,9 +511,35 @@ export function buildEvalLoopBlock({ tier = "production" } = {}) {
     "- PRESERVE binds the next chunk: it carries the named patterns forward.",
     "- DECISION = `rework` blocks `[COMPOUND]` register and re-runs this chunk.",
     "- DECISION = `escalate` surfaces to operator and pauses the chain.",
-    "- Multi-persona substrate (when available): assign `Critic` to drive",
-    "  CRITIQUE, `Appreciator` to drive PRAISE, `Decider` to weigh and write",
-    "  DECISION. See `factory/v2-personas/` once shipped.",
+    "",
+    "**Live debate substrate (preferred):** `factory/v2-personas/` is bundled in",
+    "this package. Run a 3-persona Critic/Appreciator/Decider debate instead of",
+    "self-evaluating:",
+    "",
+    "```bash",
+    "# 1. Write a chunk-result proposal JSON (signals keyed by criterion id):",
+    "cat > /tmp/chunk-eval.proposal.json <<'JSON'",
+    "{",
+    "  \"title\": \"Chunk N result review\",",
+    "  \"signals\": {",
+    "    \"acceptance_met\": \"pass\",",
+    "    \"tests_green\": \"pass\",",
+    "    \"open_risks\": \"unknown\"",
+    "  }",
+    "}",
+    "JSON",
+    "",
+    "# 2. Run the debate (uses the operator-ask config by default):",
+    "node factory/v2-personas/debate.mjs \\",
+    "  --config factory/v2-personas/examples/operator-ask.config.json \\",
+    "  --proposal /tmp/chunk-eval.proposal.json --json",
+    "",
+    "# 3. Map the artifact: recommendations → DECISION, criteria comments →",
+    "#    CRITIQUE/PRAISE, escalations → escalate to operator.",
+    "```",
+    "",
+    "If the debate returns `status: \"escalated\"` or `\"no_consensus\"`, the",
+    "DECISION is automatically `escalate` — no agent override.",
     "",
     "**Why this is mandatory, not optional:**",
     "",
@@ -540,6 +585,43 @@ export function buildQualityGateBlock({ tier = "production" } = {}) {
   ].join("\n");
 }
 
+export function buildDebateBlock({ topic = "" } = {}) {
+  if (!topic || typeof topic !== "string" || !topic.trim()) return "";
+  const t = topic.trim();
+  return [
+    "## Pre-decision Debate (factory/v2-personas)",
+    "",
+    `**Topic:** ${t}`,
+    "",
+    "Before committing to a controversial design or risky trade-off in this",
+    "package, run a structured N-persona debate so the decision is recorded",
+    "with rationale and dissent — not just a unilateral agent call.",
+    "",
+    "```bash",
+    "cat > /tmp/debate-topic.proposal.json <<'JSON'",
+    "{",
+    `  "title": ${JSON.stringify(t)},`,
+    `  "question": ${JSON.stringify(t)},`,
+    "  \"signals\": {",
+    "    \"reversibility\": \"unknown\",",
+    "    \"blast_radius\": \"unknown\",",
+    "    \"stakeholder_impact\": \"unknown\"",
+    "  }",
+    "}",
+    "JSON",
+    "",
+    "node factory/v2-personas/debate.mjs \\",
+    "  --config factory/v2-personas/examples/operator-ask.config.json \\",
+    "  --proposal /tmp/debate-topic.proposal.json --json",
+    "```",
+    "",
+    "Attach the resulting `v2-personas.decision.v1` artifact to the chunk's",
+    "`[COMPOUND]` register. If the debate escalates, surface to the operator",
+    "with the artifact instead of pushing the decision through.",
+    "",
+  ].join("\n");
+}
+
 export function buildKickoffWithPhase0({
   goal = "",
   description = "",
@@ -550,6 +632,7 @@ export function buildKickoffWithPhase0({
   gatePath = null,
   prefill = null,
   autoOnboard = false,
+  debateTopic = "",
 } = {}) {
   const baseKickoff = buildKickoff({ goal, description, packageName, nodes });
   const phase0 = buildPhase0Block({ goal, tier, chunkPlan, prefill });
@@ -557,6 +640,7 @@ export function buildKickoffWithPhase0({
   const evalLoop = buildEvalLoopBlock({ tier });
   const scenarioGate = buildScenarioGateBlock({ gatePath });
   const qualityGate = buildQualityGateBlock({ tier });
+  const debate = buildDebateBlock({ topic: debateTopic });
 
   // Optional pre-onboarding banner — operator certifies onboarding occurred upstream
   const onboardingBlock = autoOnboard
@@ -572,8 +656,8 @@ export function buildKickoffWithPhase0({
       ].join("\n")
     : "";
 
-  // Order at end: Compound (per-chunk rituals) → Eval Loop (critique+praise) → Scenario Gate (blind eval if enabled) → Quality Gate (final).
-  const tailBlocks = [compound, evalLoop, scenarioGate, qualityGate].filter(Boolean).join("\n");
+  // Order at end: Debate (pre-decision, optional) → Compound (per-chunk rituals) → Eval Loop (critique+praise) → Scenario Gate (blind eval if enabled) → Quality Gate (final).
+  const tailBlocks = [debate, compound, evalLoop, scenarioGate, qualityGate].filter(Boolean).join("\n");
 
   const headerEnd = baseKickoff.indexOf("\n## Goal");
   if (headerEnd === -1) {
@@ -597,6 +681,7 @@ const browserApi = {
   buildEvalLoopBlock,
   buildScenarioGateBlock,
   buildQualityGateBlock,
+  buildDebateBlock,
   TIERS,
 };
 

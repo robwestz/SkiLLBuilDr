@@ -51,6 +51,7 @@ function parseArgs(argv) {
     chunkPlan: null,
     autoOnboard: false,
     autoPhase0: null,
+    debate: "",
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -66,8 +67,25 @@ function parseArgs(argv) {
     else if (arg === "--scenario-gate") args.scenarioGate = argv[++i] ?? null;
     else if (arg === "--chunk-plan") args.chunkPlan = argv[++i] ?? null;
     else if (arg === "--auto-phase0") args.autoPhase0 = argv[++i] ?? null;
+    else if (arg === "--debate") args.debate = argv[++i] ?? "";
   }
   return args;
+}
+
+// Recursive file collector for bundling subtrees (e.g. factory/v2-personas/).
+// Returns paths relative to `root`, with forward slashes.
+function collectFiles(root) {
+  const out = [];
+  function walk(dir, prefix) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const childAbs = join(dir, entry.name);
+      const childRel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) walk(childAbs, childRel);
+      else if (entry.isFile()) out.push(childRel);
+    }
+  }
+  walk(root, "");
+  return out;
 }
 
 function loadJsonOrDie(path, label) {
@@ -108,6 +126,12 @@ Options:
                           {restatement, skillScan, dod:{acceptanceCriteria,
                           verification, directlyUsable}, signedBy, timestamp}.
                           Executing agent should re-sign 0.6 if it accepts.
+  --debate <topic>        Add a "Pre-decision Debate" block to KICKOFF that
+                          tells the executing agent how to invoke
+                          factory/v2-personas/debate.mjs for this topic
+                          before committing to a controversial decision.
+                          When set, factory/v2-personas/ is bundled into
+                          the ZIP so the substrate travels with the package.
   --help, -h        Show this help
 
 Examples:
@@ -332,6 +356,7 @@ async function main() {
     gatePath: args.scenarioGate,
     prefill,
     autoOnboard: args.autoOnboard,
+    debateTopic: args.debate,
   });
   const claudeMd = buildClaudeMd({ nodes });
   const readme = buildReadme({ goal: args.goal, packageName, nodes });
@@ -354,6 +379,26 @@ async function main() {
     console.log(`📦 Bundled ${fwFiles.length} framework files into package`);
   } else {
     console.warn("⚠  frameworks/ not found — KICKOFF references will be unresolved");
+  }
+
+  // Bundle factory/v2-personas/ when --debate is set so the package is still
+  // self-contained: KICKOFF references debate.mjs and example configs.
+  if (args.debate) {
+    const personasDir = join(__dirname, "factory", "v2-personas");
+    if (existsSync(personasDir)) {
+      const collected = collectFiles(personasDir);
+      for (const rel of collected) {
+        const abs = join(personasDir, rel);
+        const content = readFileSync(abs, "utf-8");
+        zipFiles.push({
+          name: `factory/v2-personas/${rel.replace(/\\/g, "/")}`,
+          content,
+        });
+      }
+      console.log(`💬 Bundled ${collected.length} debate-substrate files (--debate set)`);
+    } else {
+      console.warn("⚠  --debate set but factory/v2-personas/ not found — KICKOFF will reference missing files");
+    }
   }
   const zipBytes = buildZip(zipFiles);
 
