@@ -1,0 +1,4 @@
+Scenario: S-101
+DESC: Healthy twin call returns deterministic success output and writes a full call log.
+STATUS: PASS
+SUMMARY: healthy twin produced deterministic success payload and request log

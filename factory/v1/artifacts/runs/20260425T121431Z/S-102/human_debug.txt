@@ -1,0 +1,4 @@
+Scenario: S-102
+DESC: Rate-limit twin mode returns deterministic 429 classification without leaking assert details to builder feedback.
+STATUS: PASS
+SUMMARY: rate-limit twin produced a stable 429 classification and call log

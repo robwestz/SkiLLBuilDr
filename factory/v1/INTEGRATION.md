@@ -1,6 +1,6 @@
 # Scenario Factory v1 Integration
 
-This workspace implements the blind-eval layer that should run between chunk iterations produced by the parent [`assemble.mjs`](C:/Users/robin/.claude/ecc-browser/assemble.mjs).
+This workspace implements the blind-eval layer that should run between chunk iterations produced by the parent `assemble.mjs` CLI at the repo root (`../../assemble.mjs` relative to this file).
 
 ## Current parent behavior
 
@@ -25,7 +25,7 @@ Recommended lifecycle:
 4. Run:
 
 ```bash
-bash scenarios/runner.sh --json --timeout 15
+bash factory/v1/scenarios/runner.sh --json --timeout 15
 ```
 
 5. Parse the JSON result object:
