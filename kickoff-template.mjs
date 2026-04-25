@@ -8,12 +8,17 @@ function uniqueNodes(nodes = []) {
   });
 }
 
-export function slugifyLabel(text = "") {
-  return String(text)
+export function slugifyLabel(text = "", maxLen = 80) {
+  const slug = String(text)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     || "workspace-package";
+  // Truncate at word boundary to keep filenames cross-platform (Windows 260-char path limit).
+  if (slug.length <= maxLen) return slug;
+  const cut = slug.slice(0, maxLen);
+  const lastDash = cut.lastIndexOf("-");
+  return (lastDash > maxLen / 2 ? cut.slice(0, lastDash) : cut).replace(/-+$/g, "");
 }
 
 function detectProfile(goal = "", description = "", nodes = []) {
@@ -233,11 +238,234 @@ export function buildKickoff({ goal = "", description = "", packageName = "", no
   return lines.join("\n").trim() + "\n";
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Phase 0 — Preflight Contract (per frameworks/COMPOUND.md + QUALITY_GATE.md)
+// ─────────────────────────────────────────────────────────────────────────
+
+const TIER_DEFS = {
+  mvp: {
+    label: "MVP",
+    qualityGateThreshold: "Working end-to-end. Edge cases documented as known. No production polish required.",
+    cuttingEdgeRequired: false,
+  },
+  production: {
+    label: "Production",
+    qualityGateThreshold: "Production-grade. Edge cases handled. Tests cover happy path + critical failures. Maintainable in 3 months.",
+    cuttingEdgeRequired: false,
+  },
+  "cutting-edge": {
+    label: "Cutting-edge",
+    qualityGateThreshold: "Above intermediate. Each file motivates its existence. Cross-model reviewer would call it cutting-edge.",
+    cuttingEdgeRequired: true,
+  },
+};
+
+export function buildPhase0Block({ goal = "", tier = "production", chunkPlan = null } = {}) {
+  const tierDef = TIER_DEFS[tier] || TIER_DEFS.production;
+
+  const lines = [
+    "## Phase 0 — Preflight Contract (MANDATORY)",
+    "",
+    "Before starting work, complete every block below. Do not edit/write code until 0.6 is signed.",
+    "Source: `frameworks/COMPOUND.md` (Gap Scan) + `frameworks/QUALITY_GATE.md`.",
+    "",
+    "### 0.1 Goal restate (your own words, one sentence)",
+    "",
+    `> Original: ${goal || "(no goal provided)"}`,
+    "",
+    "Your restatement: _<fill in before starting>_",
+    "",
+    "### 0.2 Skill-scan (against the loaded catalog)",
+    "",
+    "Match the goal against the included skills (see `CLAUDE.md`). Classify the loadout:",
+    "",
+    "- [ ] **Perfect-fit:** every needed capability is covered by an included skill — proceed to 0.4.",
+    "- [ ] **Partial:** some gaps exist — list them in 0.3, do not skip.",
+    "- [ ] **Miss:** no included skill covers a critical capability — **mandatory** 0.3.",
+    "",
+    "### 0.3 Skill-first fallback (when 0.2 is partial or miss)",
+    "",
+    "**The only sanctioned route out of a gap is to create the missing piece via the skill-development flow.**",
+    "Use `/plugin-dev:skill-development` (or the equivalent in your environment) and choose at least one of:",
+    "",
+    "| Type | Create when… |",
+    "|---|---|",
+    "| Skill | A reusable capability is missing |",
+    "| Rule | A constraint must hold across many tasks |",
+    "| Agent | A specialized role with its own context is needed |",
+    "| Constraint | A hard limit on actions or outputs must be enforced |",
+    "",
+    "Ad-hoc improvisation is **not** acceptable. Either an included skill covers the work, or a new artifact is created and registered before proceeding.",
+    "",
+    "### 0.4 Definition of Done (write before building)",
+    "",
+    `**Tier:** ${tierDef.label} — ${tierDef.qualityGateThreshold}`,
+    "",
+    "Required:",
+    "",
+    "- Acceptance criteria (observable behavior, not implementation):",
+    "  - _<criterion 1>_",
+    "  - _<criterion 2>_",
+    "- Verification method (test / smoke / demo / canary):",
+    "  - _<method>_",
+    "- \"Directly usable\" check: when a user runs the result, what command or action confirms success?",
+    "  - _<command or action>_",
+    "",
+    "### 0.5 Hard gates (what you may NOT do without escalating to operator)",
+    "",
+    "- No destructive ops without explicit confirmation (delete, force-push, drop tables, rm -rf)",
+    "- No new external runtime dependencies without flagging (project rule: zero runtime-deps)",
+    "- No silent skipping of a chunk's verification step",
+    "- No marking phase-complete unless DoD (0.4) is provably met",
+    "- No commits without tests green (where tests exist)",
+    "",
+    "### 0.6 Contract signed",
+    "",
+    "By writing your name/agent-id below, you certify 0.1–0.5 are filled in:",
+    "",
+    "_Signed by: <agent or operator>_",
+    "_Timestamp: <ISO-8601>_",
+    "",
+    "---",
+    "",
+  ];
+
+  if (chunkPlan && Array.isArray(chunkPlan) && chunkPlan.length > 0) {
+    lines.push("## Chunk Plan (logical-order DAG)", "");
+    lines.push(
+      "Plan describes what — not how every detail. Each chunk has its own preflight (re-run 0.1–0.6) before starting.",
+      ""
+    );
+    chunkPlan.forEach((chunk, i) => {
+      lines.push(`### C${i + 1} — ${chunk.name || "Unnamed chunk"}`);
+      if (chunk.dependsOn?.length) {
+        lines.push(`**Depends on:** ${chunk.dependsOn.map((d) => `C${d}`).join(", ")}`);
+      }
+      if (chunk.skills?.length) {
+        lines.push(`**Skills used:** ${chunk.skills.map((s) => `\`${s}\``).join(", ")}`);
+      }
+      if (chunk.done) {
+        lines.push(`**Done when:** ${chunk.done}`);
+      }
+      lines.push("");
+    });
+    lines.push("---", "");
+  }
+
+  return lines.join("\n");
+}
+
+export function buildCompoundBlock() {
+  return [
+    "## Compound Mechanisms (run at every chunk boundary)",
+    "",
+    "Source: `frameworks/COMPOUND.md`. These produce visible output — silent execution does not count.",
+    "",
+    "### Before each chunk: GAP SCAN",
+    "",
+    "```",
+    "[GAP SCAN]",
+    "INTENT REGROUND: <quote the original goal verbatim>",
+    "COMPLETE VERSION: <what a finished, usable result looks like>",
+    "PLAN COVERS: <what is planned>",
+    "PLAN MISSES: <what a complete version needs that isn't planned>",
+    "SHELL CHECK: working component or skeleton/placeholder? If skeleton — STOP, escalate.",
+    "DECISION: critical gaps → surface; important → propose; nice-to-have → defer.",
+    "```",
+    "",
+    "### After each chunk: COMPOUND REGISTER",
+    "",
+    "```",
+    "[COMPOUND]",
+    "BUILT:    <what was completed — concrete>",
+    "GAINED:   <new capability/pattern/infra>",
+    "ENABLES:  <specific upcoming work this enables — must reference real future chunks>",
+    "REUSABLE: <functions/patterns/fixtures to carry forward>",
+    "LEARNED:  <project-specific insight — not generic>",
+    "```",
+    "",
+    "### Every 3rd chunk OR at complexity spike: CONTEXT REFRESH",
+    "",
+    "```",
+    "[CONTEXT REFRESH]",
+    "PROJECT STATE: <restate primary goal verbatim from above; current chunk; completed+verified; remaining>",
+    "DRIFT CHECK: <has direction shifted? am I solving the stated problem?>",
+    "COMPOUND STATUS: <which built capabilities am I actively using? underutilized?>",
+    "EFFICIENCY OBSERVATION: <given what I now know, is there a better approach for next chunk?>",
+    "```",
+    "",
+  ].join("\n");
+}
+
+export function buildQualityGateBlock({ tier = "production" } = {}) {
+  const tierDef = TIER_DEFS[tier] || TIER_DEFS.production;
+  return [
+    "## Quality Gate (run internally before declaring chunk done)",
+    "",
+    `Source: \`frameworks/QUALITY_GATE.md\`. **Tier:** ${tierDef.label} — ${tierDef.qualityGateThreshold}`,
+    "",
+    "**Process (90% build, 10% review — never invert):**",
+    "",
+    "1. Simulate the strongest competing model as reviewer (Claude → simulate GPT-5; GPT → simulate Opus).",
+    "2. Score along the 5 dimensions:",
+    "   - **Correctness** — does it match the spec? edge cases?",
+    "   - **Architecture** — motivated structure? unnecessary layers?",
+    "   - **Cost-efficiency** — same result, cheaper?",
+    "   - **Maintainability** — readable in 3 months?",
+    "   - **Originality** — genuine fit or copy-paste?",
+    "3. Find the 2–3 weakest points.",
+    "4. Fix what's fixable; document the rest as conscious trade-offs.",
+    `5. Decide: would the simulated reviewer call this **${tierDef.label}**-tier?`,
+    "",
+    "**Append at end of chunk delivery:**",
+    "",
+    "```",
+    "## Quality Gate",
+    "Delivery: <one sentence>",
+    "Reviewed against: <Opus 4.7 / GPT-5 / o3> (simulated)",
+    "Weaknesses I fixed: <- what → fix → dimension>",
+    "Remaining weaknesses (honest): <- specific trade-offs>",
+    `${tierDef.label} grade? <Yes/No/Almost — one sentence why>`,
+    "```",
+    "",
+  ].join("\n");
+}
+
+export function buildKickoffWithPhase0({
+  goal = "",
+  description = "",
+  packageName = "",
+  nodes = [],
+  tier = "production",
+  chunkPlan = null,
+} = {}) {
+  const baseKickoff = buildKickoff({ goal, description, packageName, nodes });
+  const phase0 = buildPhase0Block({ goal, tier, chunkPlan });
+  const compound = buildCompoundBlock();
+  const qualityGate = buildQualityGateBlock({ tier });
+
+  // Splice Phase 0 immediately after the title + intro line, before the existing Goal section.
+  const headerEnd = baseKickoff.indexOf("\n## Goal");
+  if (headerEnd === -1) {
+    return `${phase0}\n${baseKickoff}\n${compound}\n${qualityGate}`.trim() + "\n";
+  }
+  const head = baseKickoff.slice(0, headerEnd);
+  const tail = baseKickoff.slice(headerEnd);
+  return `${head}\n\n${phase0}${tail}\n\n${compound}\n${qualityGate}`.trim() + "\n";
+}
+
+export const TIERS = Object.keys(TIER_DEFS);
+
 const browserApi = {
   slugifyLabel,
   buildClaudeMd,
   buildReadme,
   buildKickoff,
+  buildKickoffWithPhase0,
+  buildPhase0Block,
+  buildCompoundBlock,
+  buildQualityGateBlock,
+  TIERS,
 };
 
 if (typeof globalThis !== "undefined" && typeof globalThis.window !== "undefined") {

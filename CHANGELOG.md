@@ -8,9 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`assemble.mjs` CLI** — headless equivalent of `assembler.html`. Takes `--goal "..."` and produces a ZIP package with KICKOFF.md / CLAUDE.md / README.md. Supports `--tier mvp|production|cutting-edge`, `--limit N`, `--auto` (skip interactive review), and `--ai` (Groq/OpenRouter causal rerank when `GROQ_API_KEY`/`OPENROUTER_API_KEY` is set). Registered as `skill-browser-assemble` npm bin.
+- **Phase 0 Preflight Contract baked into KICKOFF** — every generated package now embeds a mandatory pre-work block with goal restate, skill-scan, skill-first fallback (only sanctioned route out of "no-fit"), Definition of Done, hard gates, and contract signature. Sources: `frameworks/COMPOUND.md` + `frameworks/QUALITY_GATE.md`.
+- **Compound Mechanisms block in KICKOFF** — Gap Scan / Compound Register / Context Refresh visible-output triggers per Robin's COMPOUND-ORIGINAL overlay, attached to every chunk boundary.
+- **Quality Gate block in KICKOFF** — cross-model adversarial review with 5 dimensions (correctness / architecture / cost-efficiency / maintainability / originality), tier-aware threshold.
+- **Tier system** — `TIERS = ["mvp", "production", "cutting-edge"]` with distinct Quality Gate thresholds. Exposed in `kickoff-template.mjs` and selectable via `assemble.mjs --tier`.
+- **`frameworks/` directory** — 7 imported reference frameworks (verbatim copies with provenance comments) + `FRAMEWORKS.md` index. Files: COMPOUND.md, QUALITY_GATE.md, SCENARIO_AUTHORING_STANDARD.md, FACTORY_OPERATING_MANUAL.md, THREAT_MODEL_TEACHING_TO_THE_TEST.md, SUBAGENTS.md, MEMORY_ARCHITECT.md. Grouped: Preflight & Compound · Holdout & Eval · Multi-agent runtime.
+- **`FUTURE_WORK.md`** — explicit roadmap for deferred components (token budget tracker, Claude↔Codex handoff bridge, generalized N-persona debate, scenario factory wrappers, MVP-tier Quality Gate, subagent runtime in packages, chunk DAG designer, live eval loop replacing user asks). Each entry: status, why deferred, prerequisites, effort estimate, source-of-truth file.
 - **Playground AI Suggest**: `playground.html` now has a `⚗️ AI Suggest` topbar button that accepts a goal description, runs the local IDF ranker for instant feedback, then silently upgrades to Groq/OpenRouter causal ranking when an API key is configured. Ranked skills are appended directly to the canvas.
 - **Playground LLM Settings modal**: `⚙` button in playground topbar opens a provider/key editor. Reads/writes the shared `assembler-llm-config-v1` localStorage key — configure once in Assembler, Browser, or Playground and it works everywhere.
 - **3 new seed recipes** in `recipes.json` (total 24 entries / 18 ready-made recipes + 6 package templates): `session-handoff`, `repo-strategy-constraints`, and `external-agent-handoff`.
+
+### Changed
+- `kickoff-template.mjs` now exports `buildKickoffWithPhase0`, `buildPhase0Block`, `buildCompoundBlock`, `buildQualityGateBlock`, and `TIERS`. Existing exports (`buildKickoff`, `buildClaudeMd`, `buildReadme`, `slugifyLabel`) unchanged — non-breaking.
+- `package.json` `files[]` whitelist now ships `assemble.mjs`, `frameworks/`, and `FUTURE_WORK.md` for npm publish.
 
 ### Tests
 - `tests/zip-builder.test.mjs` expanded from 2 → 7 tests: empty archive, unicode content, unicode filenames, CRC-32 determinism, and large-file (>64 KB) round-trip.

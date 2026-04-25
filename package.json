@@ -6,7 +6,8 @@
   "bin": {
     "skill-browser": "./launch.mjs",
     "skill-browser-mcp": "./mcp-server.mjs",
-    "skill-browser-cli": "./cli.mjs"
+    "skill-browser-cli": "./cli.mjs",
+    "skill-browser-assemble": "./assemble.mjs"
   },
   "scripts": {
     "build": "node build.mjs",
@@ -35,6 +36,7 @@
     "intent.mjs",
     "kickoff-template.mjs",
     "zip-builder.mjs",
+    "assemble.mjs",
     "launch.sh",
     "launch.mjs",
     "index.html",
@@ -45,6 +47,8 @@
     "llm-client.mjs",
     "cli.mjs",
     "recipes.json",
+    "frameworks/",
+    "FUTURE_WORK.md",
     "README.md",
     "LICENSE"
   ],
