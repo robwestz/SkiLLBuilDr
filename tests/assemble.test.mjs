@@ -141,8 +141,13 @@ test("assemble.mjs --auto produces a valid ZIP with KICKOFF/CLAUDE/README", () =
 
     const zipBytes = readFileSync(join(tempOut, zipFiles[0]));
     const files = parseStoreZip(new Uint8Array(zipBytes));
-    const names = files.map((f) => f.name).sort();
-    assert.deepEqual(names, ["CLAUDE.md", "KICKOFF.md", "README.md"]);
+    const names = files.map((f) => f.name);
+    for (const required of ["CLAUDE.md", "KICKOFF.md", "README.md"]) {
+      assert.ok(names.includes(required), `missing required file: ${required}`);
+    }
+    // Frameworks bundled so the package is self-contained
+    const fwFiles = names.filter((n) => n.startsWith("frameworks/"));
+    assert.ok(fwFiles.length >= 5, `expected at least 5 framework files, got ${fwFiles.length}`);
 
     const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
     assert.match(kickoff, /Phase 0 — Preflight Contract/);

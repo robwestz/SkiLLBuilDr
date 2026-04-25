@@ -20,7 +20,7 @@
  *   2  ranking produced no usable picks
  */
 
-import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync, writeFileSync, readdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
@@ -264,12 +264,26 @@ async function main() {
   const claudeMd = buildClaudeMd({ nodes });
   const readme = buildReadme({ goal: args.goal, packageName, nodes });
 
-  // 6. ZIP it
-  const zipBytes = buildZip([
+  // 6. Bundle frameworks/ into the ZIP so the package is self-contained.
+  // KICKOFF references frameworks/COMPOUND.md, frameworks/QUALITY_GATE.md, etc.
+  // — those files must travel with the package or the contract breaks on extract.
+  const frameworksDir = join(__dirname, "frameworks");
+  const zipFiles = [
     { name: "KICKOFF.md", content: kickoff },
     { name: "CLAUDE.md", content: claudeMd },
     { name: "README.md", content: readme },
-  ]);
+  ];
+  if (existsSync(frameworksDir)) {
+    const fwFiles = readdirSync(frameworksDir).filter((f) => f.endsWith(".md"));
+    for (const f of fwFiles) {
+      const content = readFileSync(join(frameworksDir, f), "utf-8");
+      zipFiles.push({ name: `frameworks/${f}`, content });
+    }
+    console.log(`📦 Bundled ${fwFiles.length} framework files into package`);
+  } else {
+    console.warn("⚠  frameworks/ not found — KICKOFF references will be unresolved");
+  }
+  const zipBytes = buildZip(zipFiles);
 
   // 7. Write to disk
   const outDir = resolve(args.out);
