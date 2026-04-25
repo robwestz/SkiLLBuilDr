@@ -10,6 +10,7 @@ import { parseStoreZip } from "../zip-builder.mjs";
 import {
   buildPhase0Block,
   buildCompoundBlock,
+  buildEvalLoopBlock,
   buildQualityGateBlock,
   buildKickoffWithPhase0,
   TIERS,
@@ -73,7 +74,7 @@ test("buildQualityGateBlock includes 5 dimensions and the chosen tier label", ()
   assert.match(out, /Cutting-edge/);
 });
 
-test("buildKickoffWithPhase0 contains all four required blocks", () => {
+test("buildKickoffWithPhase0 contains all five required blocks", () => {
   const out = buildKickoffWithPhase0({
     goal: "test goal",
     nodes: [{ slug: "/x", name: "X" }],
@@ -81,8 +82,40 @@ test("buildKickoffWithPhase0 contains all four required blocks", () => {
   });
   assert.match(out, /Phase 0 — Preflight Contract/);
   assert.match(out, /Compound Mechanisms/);
+  assert.match(out, /Eval Loop/);
   assert.match(out, /Quality Gate/);
   assert.match(out, /## Goal/); // base buildKickoff still in
+});
+
+test("buildEvalLoopBlock requires both CRITIQUE and PRAISE with minimums", () => {
+  const out = buildEvalLoopBlock({ tier: "production" });
+  assert.match(out, /\[EVAL LOOP/);
+  assert.match(out, /CRITIQUE \(≥2\)/);
+  assert.match(out, /PRAISE   \(≥2\)/);
+  assert.match(out, /PRESERVE/);
+  assert.match(out, /FIX/);
+  assert.match(out, /DEFER/);
+  assert.match(out, /DECISION:.*proceed.*rework.*escalate/);
+});
+
+test("buildEvalLoopBlock raises minimums to 3 for cutting-edge tier", () => {
+  const out = buildEvalLoopBlock({ tier: "cutting-edge" });
+  assert.match(out, /CRITIQUE \(≥3\)/);
+  assert.match(out, /PRAISE   \(≥3\)/);
+});
+
+test("EVAL LOOP appears between Compound Mechanisms and Quality Gate in KICKOFF", () => {
+  const out = buildKickoffWithPhase0({
+    goal: "x",
+    nodes: [{ slug: "/x", name: "X" }],
+    tier: "production",
+  });
+  const compoundIdx = out.indexOf("Compound Mechanisms");
+  const evalIdx = out.indexOf("Eval Loop");
+  const qgIdx = out.indexOf("Quality Gate");
+  assert.ok(compoundIdx > 0, "compound block missing");
+  assert.ok(evalIdx > compoundIdx, "eval loop must appear after compound block");
+  assert.ok(qgIdx > evalIdx, "quality gate must appear after eval loop");
 });
 
 // ─── CLI integration tests (spawn subprocess) ─────────────────────────────

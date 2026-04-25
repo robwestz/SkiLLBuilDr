@@ -397,6 +397,56 @@ export function buildCompoundBlock() {
   ].join("\n");
 }
 
+export function buildEvalLoopBlock({ tier = "production" } = {}) {
+  const minPraise = tier === "cutting-edge" ? 3 : 2;
+  const minCritique = tier === "cutting-edge" ? 3 : 2;
+  return [
+    "## Eval Loop (run BEFORE Compound Register at every chunk boundary)",
+    "",
+    "Pure adversarial review (find weaknesses) without structured praise causes",
+    "agents to drift away from approaches that actually worked. The Eval Loop",
+    "captures both — what to fix AND what to keep doing — so the chunk produces",
+    "a forward-pointing decision, not just a critique.",
+    "",
+    "Source: validated principle from operator's own memory system",
+    "(\"Record from failure AND success\") + extension of",
+    "`frameworks/QUALITY_GATE.md`.",
+    "",
+    "**Run this block visibly at chunk end, BEFORE `[COMPOUND]` register.**",
+    "",
+    "```",
+    "[EVAL LOOP — chunk <N>]",
+    `CRITIQUE (≥${minCritique}):   what is weak / could fail / would surprise a reviewer`,
+    `PRAISE   (≥${minPraise}):   what works genuinely well / should be kept doing`,
+    "PRESERVE:        which patterns from PRAISE must propagate to next chunks",
+    "FIX:             which CRITIQUE items must be fixed before this chunk closes",
+    "DEFER:           CRITIQUE items accepted as conscious trade-offs (logged)",
+    "DECISION:        proceed | rework | escalate",
+    "```",
+    "",
+    "**Rules:**",
+    "",
+    `- CRITIQUE and PRAISE both require ≥${minCritique} concrete entries each. Neither side may be empty.`,
+    "- PRAISE entries must be specific (not \"the code is good\" — instead",
+    "  \"the runner.sh `--json` flag emits a parseable result-per-scenario object",
+    "  that the integration layer can consume directly\").",
+    "- PRESERVE binds the next chunk: it carries the named patterns forward.",
+    "- DECISION = `rework` blocks `[COMPOUND]` register and re-runs this chunk.",
+    "- DECISION = `escalate` surfaces to operator and pauses the chain.",
+    "- Multi-persona substrate (when available): assign `Critic` to drive",
+    "  CRITIQUE, `Appreciator` to drive PRAISE, `Decider` to weigh and write",
+    "  DECISION. See `factory/v2-personas/` once shipped.",
+    "",
+    "**Why this is mandatory, not optional:**",
+    "",
+    "Without PRAISE, agents over-correct on every cycle and lose validated",
+    "approaches. Without DECISION, eval becomes a status report instead of a",
+    "gate. Without PRESERVE, compound effect leaks: each chunk re-discovers",
+    "what the previous chunk already proved.",
+    "",
+  ].join("\n");
+}
+
 export function buildQualityGateBlock({ tier = "production" } = {}) {
   const tierDef = TIER_DEFS[tier] || TIER_DEFS.production;
   return [
@@ -442,16 +492,18 @@ export function buildKickoffWithPhase0({
   const baseKickoff = buildKickoff({ goal, description, packageName, nodes });
   const phase0 = buildPhase0Block({ goal, tier, chunkPlan });
   const compound = buildCompoundBlock();
+  const evalLoop = buildEvalLoopBlock({ tier });
   const qualityGate = buildQualityGateBlock({ tier });
 
   // Splice Phase 0 immediately after the title + intro line, before the existing Goal section.
+  // Order at end: Compound mechanisms (per-chunk rituals) → Eval Loop (per-chunk before register) → Quality Gate (final).
   const headerEnd = baseKickoff.indexOf("\n## Goal");
   if (headerEnd === -1) {
-    return `${phase0}\n${baseKickoff}\n${compound}\n${qualityGate}`.trim() + "\n";
+    return `${phase0}\n${baseKickoff}\n${compound}\n${evalLoop}\n${qualityGate}`.trim() + "\n";
   }
   const head = baseKickoff.slice(0, headerEnd);
   const tail = baseKickoff.slice(headerEnd);
-  return `${head}\n\n${phase0}${tail}\n\n${compound}\n${qualityGate}`.trim() + "\n";
+  return `${head}\n\n${phase0}${tail}\n\n${compound}\n${evalLoop}\n${qualityGate}`.trim() + "\n";
 }
 
 export const TIERS = Object.keys(TIER_DEFS);
@@ -464,6 +516,7 @@ const browserApi = {
   buildKickoffWithPhase0,
   buildPhase0Block,
   buildCompoundBlock,
+  buildEvalLoopBlock,
   buildQualityGateBlock,
   TIERS,
 };
