@@ -1,0 +1,4 @@
+Chunk evaluation summary:
+- upstream request classified and redacted
+- no holdout identifiers present
+- generic retry guidance only

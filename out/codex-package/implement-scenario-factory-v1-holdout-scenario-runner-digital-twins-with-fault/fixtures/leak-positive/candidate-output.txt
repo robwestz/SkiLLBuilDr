@@ -1,0 +1,3 @@
+Diagnostic note:
+- scenario reproduction mentions S-101
+- fixture trace carried FX-HOLDOUT-ALPHA-94721 into builder-visible output
