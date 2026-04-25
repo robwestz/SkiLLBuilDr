@@ -114,6 +114,12 @@
   },
   "hotPaths": [
     {
+      "path": "data.json",
+      "accessCount": 38,
+      "lastAccessed": 1777100653693,
+      "type": "file"
+    },
+    {
       "path": "playground.html",
       "accessCount": 8,
       "lastAccessed": 1776993909967,
@@ -126,15 +132,99 @@
       "type": "file"
     },
     {
+      "path": "",
+      "accessCount": 4,
+      "lastAccessed": 1777090225893,
+      "type": "directory"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 4,
+      "lastAccessed": 1777102905960,
+      "type": "file"
+    },
+    {
       "path": "CHANGELOG.md",
-      "accessCount": 2,
-      "lastAccessed": 1776993951598,
+      "accessCount": 3,
+      "lastAccessed": 1777102987065,
+      "type": "file"
+    },
+    {
+      "path": "kickoff-template.mjs",
+      "accessCount": 3,
+      "lastAccessed": 1777104636886,
       "type": "file"
     },
     {
       "path": "tests\\e2e\\assembler.spec.js",
       "accessCount": 2,
       "lastAccessed": 1776994054694,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\FRAMEWORKS.md",
+      "accessCount": 2,
+      "lastAccessed": 1777100700660,
+      "type": "file"
+    },
+    {
+      "path": "FUTURE_WORK.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090272554,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\COMPOUND.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090587436,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\SUBAGENTS.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090676787,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\MEMORY_ARCHITECT.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090740805,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\QUALITY_GATE.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090760240,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\THREAT_MODEL_TEACHING_TO_THE_TEST.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090792519,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\SCENARIO_AUTHORING_STANDARD.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090819193,
+      "type": "file"
+    },
+    {
+      "path": "frameworks\\FACTORY_OPERATING_MANUAL.md",
+      "accessCount": 1,
+      "lastAccessed": 1777090866515,
+      "type": "file"
+    },
+    {
+      "path": "assemble.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1777101010873,
+      "type": "file"
+    },
+    {
+      "path": "tests\\assemble.test.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1777101120903,
       "type": "file"
     }
   ],
