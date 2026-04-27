@@ -7,7 +7,8 @@
     "skill-browser": "./launch.mjs",
     "skill-browser-mcp": "./mcp-server.mjs",
     "skill-browser-cli": "./cli.mjs",
-    "skill-browser-assemble": "./assemble.mjs"
+    "skill-browser-assemble": "./assemble.mjs",
+    "skill-browser-handoff": "./handoff-bridge.mjs"
   },
   "scripts": {
     "build": "node build.mjs",
@@ -35,6 +36,7 @@
     "query.mjs",
     "intent.mjs",
     "kickoff-template.mjs",
+    "handoff-bridge.mjs",
     "zip-builder.mjs",
     "assemble.mjs",
     "launch.sh",
@@ -48,6 +50,7 @@
     "cli.mjs",
     "recipes.json",
     "frameworks/",
+    "schemas/",
     "FUTURE_WORK.md",
     "README.md",
     "LICENSE"

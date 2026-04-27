@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://buildr.nu/schemas/handoff-contract.v1.json",
+  "title": "Buildr Agent Handoff Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "checkpoint_id",
+    "created_at",
+    "trigger",
+    "from_agent",
+    "to_agent",
+    "task",
+    "context_summary",
+    "completed",
+    "pending",
+    "current_files",
+    "decisions",
+    "risks",
+    "commands_run",
+    "verification",
+    "ledger",
+    "safety"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "handoff-contract.v1"
+    },
+    "checkpoint_id": {
+      "type": "string",
+      "pattern": "^cp-[0-9]{8}T[0-9]{6}Z-[a-z0-9-]+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["manual", "token", "stop-mid-task"]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "from_agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime": {
+          "type": "string"
+        }
+      }
+    },
+    "to_agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target"],
+      "properties": {
+        "target": {
+          "enum": ["claude", "codex"]
+        },
+        "expected_format": {
+          "type": "string"
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "goal", "state", "skills", "dod"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "goal": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dod": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "context_summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pending": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "current_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "commands_run": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_path", "task_current"],
+      "properties": {
+        "task_path": {
+          "type": "string"
+        },
+        "task_current": {
+          "type": ["string", "null"]
+        },
+        "task_updated_at": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shareable", "redactions"],
+      "properties": {
+        "shareable": {
+          "type": "boolean"
+        },
+        "redactions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

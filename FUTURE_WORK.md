@@ -198,4 +198,23 @@ covers the glue inside `assemble.mjs` and `kickoff-template.mjs` so a generated 
 
 ---
 
+## 11. Live Handoff Bridge v1 - IMPLEMENTED 2026-04-27
+
+**Status:** Implemented as manual-trigger v1; manual Robin confirmation remains the final DoD gate.
+**Where it lives:**
+- `handoff-bridge.mjs` - zero-dep checkpoint/resume CLI and exported helpers
+- `.agents/node-runtime.mjs` - local Node runtime resolver for portable `node ...` DoD commands
+- `schemas/handoff-contract.v1.json` - portable handoff contract schema
+- `tests/handoff-bridge.test.mjs` - bridge unit coverage
+- `tests/handoff-roundtrip-sim.mjs` - simulated Codex -> Claude -> Codex ledger roundtrip
+- `tests/node-runtime.test.mjs` - resolver and portable Node command coverage
+- `assemble.mjs --handoff <json>` / `--resume <json>` - thin package integration
+- `.agents/TASKS.json` task `t-001` - active dogfood ledger entry
+
+**What changed from item #2:** Token-budget triggering is still deferred, but the bridge no longer depends on it for v1. The schema already accepts `manual`, `token`, and `stop-mid-task`; only `manual` is expected to fire in v1.
+
+**Remaining work:** real human-observed Codex -> Claude roundtrip, then optional Claude -> Codex port hardening and later token-trigger adapter.
+
+---
+
 *Last updated: 2026-04-27. All estimates are single-engineer, focused-session days.*

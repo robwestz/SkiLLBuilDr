@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **`assemble.mjs` CLI** — headless equivalent of `assembler.html`. Takes `--goal "..."` and produces a ZIP package with KICKOFF.md / CLAUDE.md / README.md. Supports `--tier mvp|production|cutting-edge`, `--limit N`, `--auto` (skip interactive review), and `--ai` (Groq/OpenRouter causal rerank when `GROQ_API_KEY`/`OPENROUTER_API_KEY` is set). Registered as `skill-browser-assemble` npm bin.
+- **Live Handoff Bridge v1** - `handoff-bridge.mjs` creates, validates, checkpoints, and resumes `handoff-contract.v1` artifacts against `.agents/TASKS.json`. Manual trigger ships first; `token` and `stop-mid-task` are schema-level trigger types for later adapters.
+- **Handoff contract schema** - `schemas/handoff-contract.v1.json` defines the portable agent handoff payload for Codex/Claude roundtrips, including task state, pending work, current files, decisions, risks, verification state, and safety checks.
+- **Compound Node runtime resolver** - `.agents/node-runtime.mjs` lets DoD checks keep portable `node ...` commands while `task verify` selects a usable local runtime via `COMPOUND_NODE`/`BUILD_NODE`, current `process.execPath`, PATH, or Windows fallbacks.
+- **`assemble.mjs` CLI** - headless equivalent of `assembler.html`. Takes `--goal "..."` and produces a ZIP package with KICKOFF.md / CLAUDE.md / README.md. Supports `--tier mvp|production|cutting-edge`, `--limit N`, `--auto` (skip interactive review), and `--ai` (Groq/OpenRouter causal rerank when `GROQ_API_KEY`/`OPENROUTER_API_KEY` is set). Registered as `skill-browser-assemble` npm bin.
 - **Phase 0 Preflight Contract baked into KICKOFF** — every generated package now embeds a mandatory pre-work block with goal restate, skill-scan, skill-first fallback (only sanctioned route out of "no-fit"), Definition of Done, hard gates, and contract signature. Sources: `frameworks/COMPOUND.md` + `frameworks/QUALITY_GATE.md`.
 - **Compound Mechanisms block in KICKOFF** — Gap Scan / Compound Register / Context Refresh visible-output triggers per Robin's COMPOUND-ORIGINAL overlay, attached to every chunk boundary.
 - **Quality Gate block in KICKOFF** — cross-model adversarial review with 5 dimensions (correctness / architecture / cost-efficiency / maintainability / originality), tier-aware threshold.
@@ -20,10 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **3 new seed recipes** in `recipes.json` (total 24 entries / 18 ready-made recipes + 6 package templates): `session-handoff`, `repo-strategy-constraints`, and `external-agent-handoff`.
 
 ### Changed
-- `kickoff-template.mjs` now exports `buildKickoffWithPhase0`, `buildPhase0Block`, `buildCompoundBlock`, `buildQualityGateBlock`, and `TIERS`. Existing exports (`buildKickoff`, `buildClaudeMd`, `buildReadme`, `slugifyLabel`) unchanged — non-breaking.
+- `assemble.mjs` now accepts `--handoff <json>` and `--resume <json>` as thin delegating flags. `--handoff` bundles `handoff.json`; `--resume` bundles `handoff.json` plus `RESUME.md`.
+- `package.json` now exposes `skill-browser-handoff` and ships `handoff-bridge.mjs` plus `schemas/`.
+- `.agents/task.mjs verify` now resolves leading `node ...` test commands through the Compound runtime resolver instead of relying directly on PATH.
+- `kickoff-template.mjs` now exports `buildKickoffWithPhase0`, `buildPhase0Block`, `buildCompoundBlock`, `buildQualityGateBlock`, and `TIERS`. Existing exports (`buildKickoff`, `buildClaudeMd`, `buildReadme`, `slugifyLabel`) unchanged - non-breaking.
 - `package.json` `files[]` whitelist now ships `assemble.mjs`, `frameworks/`, and `FUTURE_WORK.md` for npm publish.
 
 ### Tests
+- `tests/handoff-bridge.test.mjs` covers safe contract creation, validation failures, ledger checkpoint persistence, resume prompt behavior, and prompt-file output.
+- `tests/handoff-roundtrip-sim.mjs` simulates a Codex -> Claude -> Codex handoff loop through a persistent ledger.
+- `tests/node-runtime.test.mjs` covers command parsing, runtime candidate order, resolver smoke checks, and portable Node execution.
 - `tests/zip-builder.test.mjs` expanded from 2 → 7 tests: empty archive, unicode content, unicode filenames, CRC-32 determinism, and large-file (>64 KB) round-trip.
 - `tests/e2e/playground.spec.js` expanded from 10 → 13 tests: AI Suggest local fallback, LLM Settings save/load roundtrip, and tier-indicator reflecting configured key. Desktop-only (skipped on mobile viewports where the topbar overflow is a known limitation).
 

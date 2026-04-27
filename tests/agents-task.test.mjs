@@ -28,9 +28,9 @@ function freshLedger() {
 }
 
 function run(ledger, args, extraEnv = {}) {
-  return spawnSync("node", [CLI, ...args], {
+  return spawnSync(process.execPath, [CLI, ...args], {
     encoding: "utf-8",
-    env: { ...process.env, COMPOUND_TASKS_PATH: ledger, ...extraEnv },
+    env: { ...process.env, COMPOUND_NODE: process.execPath, COMPOUND_TASKS_PATH: ledger, ...extraEnv },
   });
 }
 

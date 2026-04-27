@@ -1,8 +1,260 @@
 {
   "version": "1",
   "schema_url": ".agents/PROTOCOL.md",
-  "current": null,
-  "tasks": [],
-  "agents_active": [],
-  "log": []
+  "current": "t-001",
+  "tasks": [
+    {
+      "id": "t-001",
+      "goal": "Live Handoff Bridge v1",
+      "state": "in_progress",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "handoff-bridge.mjs",
+          "passed_at": null
+        },
+        {
+          "check": "artifact",
+          "path": "schemas/handoff-contract.v1.json",
+          "passed_at": null
+        },
+        {
+          "check": "test",
+          "command": "node --test tests\\node-runtime.test.mjs",
+          "passed_at": null
+        },
+        {
+          "check": "test",
+          "command": "node --test tests\\handoff-bridge.test.mjs",
+          "passed_at": null
+        },
+        {
+          "check": "test",
+          "command": "node tests\\handoff-roundtrip-sim.mjs",
+          "passed_at": null
+        },
+        {
+          "check": "manual",
+          "description": "Robin confirms an actual Codex-to-Claude roundtrip",
+          "passed_at": null
+        }
+      ],
+      "skills": [
+        "agent-framework",
+        "harness-engineering",
+        "memory-systems",
+        "advanced-evaluation"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "codex-gpt-5-codex",
+      "started_at": "2026-04-27T19:54:22.448Z",
+      "updated_at": "2026-04-27T21:20:54.328Z",
+      "dod_removed": [
+        {
+          "check": {
+            "check": "test",
+            "command": "& 'C:\\Program Files\\heroku\\client\\bin\\node.exe' --test tests/handoff-bridge.test.mjs",
+            "passed_at": null
+          },
+          "reason": "Replace PowerShell-specific call syntax with shell-portable quoted executable path",
+          "ts": "2026-04-27T20:00:19.414Z"
+        },
+        {
+          "check": {
+            "check": "test",
+            "command": "& 'C:\\Program Files\\heroku\\client\\bin\\node.exe' tests/handoff-roundtrip-sim.mjs",
+            "passed_at": null
+          },
+          "reason": "Replace PowerShell-specific call syntax with shell-portable quoted executable path",
+          "ts": "2026-04-27T20:00:49.817Z"
+        },
+        {
+          "check": {
+            "check": "manual",
+            "description": "Robin bekräftar en faktisk CodexClaude roundtrip",
+            "passed_at": null
+          },
+          "reason": "Run automatic artifact and test DoD before manual Robin confirmation",
+          "ts": "2026-04-27T20:01:29.450Z"
+        },
+        {
+          "check": {
+            "check": "test",
+            "command": "\"C:\\Program Files\\heroku\\client\\bin\\node.exe\" tests\\handoff-roundtrip-sim.mjs",
+            "passed_at": null
+          },
+          "reason": "Replace host-specific node path with Compound runtime resolver",
+          "ts": "2026-04-27T20:48:10.437Z"
+        },
+        {
+          "check": {
+            "check": "test",
+            "command": "\"C:\\Program Files\\heroku\\client\\bin\\node.exe\" --test tests\\handoff-bridge.test.mjs",
+            "passed_at": null
+          },
+          "reason": "Replace host-specific node path with Compound runtime resolver",
+          "ts": "2026-04-27T20:48:26.605Z"
+        },
+        {
+          "check": {
+            "check": "manual",
+            "description": "Robin confirms an actual Codex-to-Claude roundtrip",
+            "passed_at": null
+          },
+          "reason": "Keep manual confirmation after automatic runtime and bridge checks",
+          "ts": "2026-04-27T20:48:36.408Z"
+        }
+      ],
+      "handoffs": [
+        {
+          "checkpoint_id": "cp-20260427T200834Z-t-001",
+          "path": ".omc/state/checkpoints/codex-to-claude-live.handoff.json",
+          "to": "claude",
+          "trigger": "manual",
+          "created_at": "2026-04-27T20:08:34.000Z"
+        },
+        {
+          "checkpoint_id": "cp-20260427T205034Z-t-001",
+          "path": ".omc/state/checkpoints/codex-to-claude-live-v2.handoff.json",
+          "to": "claude",
+          "trigger": "manual",
+          "created_at": "2026-04-27T20:50:34.153Z"
+        },
+        {
+          "checkpoint_id": "cp-20260427T212054Z-t-001",
+          "path": ".omc/state/checkpoints/claude-to-codex-roundtrip-proof.handoff.json",
+          "to": "codex",
+          "trigger": "manual",
+          "created_at": "2026-04-27T21:20:54.328Z"
+        }
+      ],
+      "last_handoff": {
+        "checkpoint_id": "cp-20260427T212054Z-t-001",
+        "path": ".omc/state/checkpoints/claude-to-codex-roundtrip-proof.handoff.json",
+        "to": "codex",
+        "trigger": "manual",
+        "created_at": "2026-04-27T21:20:54.328Z"
+      }
+    }
+  ],
+  "agents_active": [
+    "codex-gpt-5-codex"
+  ],
+  "log": [
+    {
+      "ts": "2026-04-27T19:54:01.219Z",
+      "event": "ack",
+      "task": null,
+      "agent": "codex-gpt-5-codex"
+    },
+    {
+      "ts": "2026-04-27T19:54:22.450Z",
+      "event": "open",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "goal": "Live Handoff Bridge v1"
+    },
+    {
+      "ts": "2026-04-27T20:00:19.417Z",
+      "event": "remove-dod",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "Replace PowerShell-specific call syntax with shell-portable quoted executable path",
+      "removed": {
+        "check": "test",
+        "command": "& 'C:\\Program Files\\heroku\\client\\bin\\node.exe' --test tests/handoff-bridge.test.mjs",
+        "passed_at": null
+      }
+    },
+    {
+      "ts": "2026-04-27T20:00:49.819Z",
+      "event": "remove-dod",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "Replace PowerShell-specific call syntax with shell-portable quoted executable path",
+      "removed": {
+        "check": "test",
+        "command": "& 'C:\\Program Files\\heroku\\client\\bin\\node.exe' tests/handoff-roundtrip-sim.mjs",
+        "passed_at": null
+      }
+    },
+    {
+      "ts": "2026-04-27T20:01:29.453Z",
+      "event": "remove-dod",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "Run automatic artifact and test DoD before manual Robin confirmation",
+      "removed": {
+        "check": "manual",
+        "description": "Robin bekräftar en faktisk CodexClaude roundtrip",
+        "passed_at": null
+      }
+    },
+    {
+      "ts": "2026-04-27T20:08:34.000Z",
+      "event": "handoff-checkpoint",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "checkpoint_id": "cp-20260427T200834Z-t-001",
+      "to": "claude",
+      "path": ".omc/state/checkpoints/codex-to-claude-live.handoff.json"
+    },
+    {
+      "ts": "2026-04-27T20:48:10.439Z",
+      "event": "remove-dod",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "Replace host-specific node path with Compound runtime resolver",
+      "removed": {
+        "check": "test",
+        "command": "\"C:\\Program Files\\heroku\\client\\bin\\node.exe\" tests\\handoff-roundtrip-sim.mjs",
+        "passed_at": null
+      }
+    },
+    {
+      "ts": "2026-04-27T20:48:26.606Z",
+      "event": "remove-dod",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "Replace host-specific node path with Compound runtime resolver",
+      "removed": {
+        "check": "test",
+        "command": "\"C:\\Program Files\\heroku\\client\\bin\\node.exe\" --test tests\\handoff-bridge.test.mjs",
+        "passed_at": null
+      }
+    },
+    {
+      "ts": "2026-04-27T20:48:36.410Z",
+      "event": "remove-dod",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "Keep manual confirmation after automatic runtime and bridge checks",
+      "removed": {
+        "check": "manual",
+        "description": "Robin confirms an actual Codex-to-Claude roundtrip",
+        "passed_at": null
+      }
+    },
+    {
+      "ts": "2026-04-27T20:50:34.153Z",
+      "event": "handoff-checkpoint",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "checkpoint_id": "cp-20260427T205034Z-t-001",
+      "to": "claude",
+      "path": ".omc/state/checkpoints/codex-to-claude-live-v2.handoff.json"
+    },
+    {
+      "ts": "2026-04-27T21:20:54.328Z",
+      "event": "handoff-checkpoint",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "checkpoint_id": "cp-20260427T212054Z-t-001",
+      "to": "codex",
+      "path": ".omc/state/checkpoints/claude-to-codex-roundtrip-proof.handoff.json"
+    }
+  ]
 }

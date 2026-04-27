@@ -1,0 +1,91 @@
+{
+  "schema_version": "handoff-contract.v1",
+  "checkpoint_id": "cp-20260427T200834Z-t-001",
+  "created_at": "2026-04-27T20:08:34.000Z",
+  "trigger": {
+    "type": "manual"
+  },
+  "from_agent": {
+    "id": "codex-gpt-5-codex"
+  },
+  "to_agent": {
+    "target": "claude",
+    "expected_format": "Claude Code startup prompt"
+  },
+  "task": {
+    "id": "t-001",
+    "goal": "Live Handoff Bridge v1",
+    "state": "in_progress",
+    "skills": [
+      "agent-framework",
+      "harness-engineering",
+      "memory-systems",
+      "advanced-evaluation"
+    ],
+    "dod": [
+      {
+        "check": "artifact",
+        "path": "handoff-bridge.mjs",
+        "passed_at": null
+      },
+      {
+        "check": "artifact",
+        "path": "schemas/handoff-contract.v1.json",
+        "passed_at": null
+      },
+      {
+        "check": "test",
+        "command": "\"C:\\Program Files\\heroku\\client\\bin\\node.exe\" --test tests\\handoff-bridge.test.mjs",
+        "passed_at": null
+      },
+      {
+        "check": "test",
+        "command": "\"C:\\Program Files\\heroku\\client\\bin\\node.exe\" tests\\handoff-roundtrip-sim.mjs",
+        "passed_at": null
+      },
+      {
+        "check": "manual",
+        "description": "Robin confirms an actual Codex-to-Claude roundtrip",
+        "passed_at": null
+      }
+    ]
+  },
+  "context_summary": "Codex implemented Live Handoff Bridge v1 and is handing the current checkpoint to Claude for real roundtrip confirmation.",
+  "completed": [
+    "Implemented handoff-bridge.mjs",
+    "Added schemas/handoff-contract.v1.json",
+    "Added bridge unit tests and roundtrip simulation",
+    "Wired assemble.mjs --handoff and --resume"
+  ],
+  "pending": [
+    "Robin confirms an actual Codex-to-Claude roundtrip"
+  ],
+  "current_files": [
+    "handoff-bridge.mjs",
+    "schemas/handoff-contract.v1.json",
+    "tests/handoff-bridge.test.mjs",
+    "tests/handoff-roundtrip-sim.mjs",
+    "assemble.mjs"
+  ],
+  "decisions": [
+    "Manual trigger ships first; token trigger remains an adapter scope",
+    "Codex-to-Claude is the first target; contract stays format-agnostic"
+  ],
+  "risks": [
+    "Manual confirmation remains human-only"
+  ],
+  "commands_run": [],
+  "verification": [
+    "node --test tests/handoff-bridge.test.mjs passed 5/5 with Heroku Node 20",
+    "tests/handoff-roundtrip-sim.mjs passed with Heroku Node 20"
+  ],
+  "ledger": {
+    "task_path": ".agents/TASKS.json",
+    "task_current": "t-001",
+    "task_updated_at": "2026-04-27T20:01:29.453Z"
+  },
+  "safety": {
+    "shareable": true,
+    "redactions": []
+  }
+}

@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
+import { runPortableNodeCommand } from "./node-runtime.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
@@ -209,7 +210,8 @@ function cmdShow(args) {
 
 async function runDodCheck(check) {
   if (check.check === "test") {
-    const r = spawnSync(check.command, [], { shell: true, stdio: "pipe", encoding: "utf-8", cwd: REPO_ROOT });
+    const r = runPortableNodeCommand(check.command, { cwd: REPO_ROOT }) ||
+      spawnSync(check.command, [], { shell: true, stdio: "pipe", encoding: "utf-8", cwd: REPO_ROOT });
     const tail = (r.stdout + r.stderr).trim().split("\n").slice(-5).join("\n");
     return { ok: r.status === 0, exit: r.status, tail };
   }

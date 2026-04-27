@@ -34,6 +34,7 @@ import {
 } from "./kickoff-template.mjs";
 import { buildZip } from "./zip-builder.mjs";
 import { LLMClient } from "./llm-client.mjs";
+import { buildResumePrompt, loadHandoff } from "./handoff-bridge.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -52,6 +53,8 @@ function parseArgs(argv) {
     autoOnboard: false,
     autoPhase0: null,
     debate: "",
+    handoff: null,
+    resume: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -68,6 +71,8 @@ function parseArgs(argv) {
     else if (arg === "--chunk-plan") args.chunkPlan = argv[++i] ?? null;
     else if (arg === "--auto-phase0") args.autoPhase0 = argv[++i] ?? null;
     else if (arg === "--debate") args.debate = argv[++i] ?? "";
+    else if (arg === "--handoff") args.handoff = argv[++i] ?? null;
+    else if (arg === "--resume") args.resume = argv[++i] ?? null;
   }
   return args;
 }
@@ -132,6 +137,11 @@ Options:
                           before committing to a controversial decision.
                           When set, factory/v2-personas/ is bundled into
                           the ZIP so the substrate travels with the package.
+  --handoff <json>        Bundle an existing handoff-contract.v1 JSON as
+                          handoff.json in the package.
+  --resume <json>         Resume from an existing handoff-contract.v1 JSON.
+                          If --goal is omitted, the handoff task goal is used.
+                          Bundles handoff.json plus RESUME.md.
   --help, -h        Show this help
 
 Examples:
@@ -239,6 +249,30 @@ async function reviewPicks(picks, auto) {
 async function main() {
   const args = parseArgs(process.argv);
   if (args.help) { printUsage(); process.exit(0); }
+  if (args.handoff && args.resume) {
+    console.error("Error: use either --handoff or --resume, not both.\n");
+    process.exit(1);
+  }
+
+  let handoffContract = null;
+  let resumePrompt = "";
+  if (args.handoff || args.resume) {
+    const handoffPath = args.resume || args.handoff;
+    try {
+      handoffContract = loadHandoff(handoffPath, __dirname);
+      if (args.resume) {
+        resumePrompt = buildResumePrompt(handoffContract, {
+          target: handoffContract.to_agent?.target,
+        });
+      }
+      if (!args.goal) args.goal = `Resume ${handoffContract.task.goal}`;
+      console.log(`[${args.resume ? "resume handoff" : "handoff"}] ${handoffContract.checkpoint_id}`);
+    } catch (err) {
+      console.error(`Error: invalid handoff file: ${err.message}\n`);
+      process.exit(1);
+    }
+  }
+
   if (!args.goal) {
     console.error("Error: --goal is required.\n");
     printUsage();
@@ -370,6 +404,15 @@ async function main() {
     { name: "CLAUDE.md", content: claudeMd },
     { name: "README.md", content: readme },
   ];
+  if (handoffContract) {
+    zipFiles.push({
+      name: "handoff.json",
+      content: JSON.stringify(handoffContract, null, 2) + "\n",
+    });
+    if (resumePrompt) {
+      zipFiles.push({ name: "RESUME.md", content: resumePrompt });
+    }
+  }
   if (existsSync(frameworksDir)) {
     const fwFiles = readdirSync(frameworksDir).filter((f) => f.endsWith(".md"));
     for (const f of fwFiles) {
