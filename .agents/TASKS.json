@@ -1,42 +1,49 @@
 {
   "version": "1",
   "schema_url": ".agents/PROTOCOL.md",
-  "current": "t-001",
+  "current": null,
   "tasks": [
     {
       "id": "t-001",
       "goal": "Live Handoff Bridge v1",
-      "state": "in_progress",
+      "state": "parked",
       "dod": [
         {
           "check": "artifact",
           "path": "handoff-bridge.mjs",
-          "passed_at": null
+          "passed_at": "2026-04-27T21:27:54.025Z",
+          "artifact_size": 14936
         },
         {
           "check": "artifact",
           "path": "schemas/handoff-contract.v1.json",
-          "passed_at": null
+          "passed_at": "2026-04-27T21:27:54.026Z",
+          "artifact_size": 3736
         },
         {
           "check": "test",
           "command": "node --test tests\\node-runtime.test.mjs",
-          "passed_at": null
+          "passed_at": "2026-04-27T21:27:55.001Z"
         },
         {
           "check": "test",
           "command": "node --test tests\\handoff-bridge.test.mjs",
-          "passed_at": null
+          "passed_at": "2026-04-27T21:27:55.554Z"
         },
         {
           "check": "test",
           "command": "node tests\\handoff-roundtrip-sim.mjs",
-          "passed_at": null
+          "passed_at": "2026-04-27T21:27:55.838Z"
         },
         {
           "check": "manual",
           "description": "Robin confirms an actual Codex-to-Claude roundtrip",
-          "passed_at": null
+          "passed_at": null,
+          "last_failure": {
+            "ts": "2026-04-27T21:27:55.860Z",
+            "ok": false,
+            "confirmer": "Robin"
+          }
         }
       ],
       "skills": [
@@ -47,11 +54,11 @@
       ],
       "blocked_by": null,
       "unlock_command": null,
-      "park_reason": null,
+      "park_reason": "5/6 auto-DoD verified by Claude. Manual DoD awaits Codex bidirectional pickup of .omc/state/checkpoints/claude-to-codex-roundtrip-proof.RESUME.md and Robin confirmation. Roundtrip artifacts exist on disk; closure is async.",
       "parent": null,
       "agent": "codex-gpt-5-codex",
       "started_at": "2026-04-27T19:54:22.448Z",
-      "updated_at": "2026-04-27T21:20:54.328Z",
+      "updated_at": "2026-04-27T21:27:56.231Z",
       "dod_removed": [
         {
           "check": {
@@ -138,10 +145,57 @@
         "trigger": "manual",
         "created_at": "2026-04-27T21:20:54.328Z"
       }
+    },
+    {
+      "id": "t-002",
+      "goal": "Token Budget Tracker — heuristic detector + handoff-bridge adapter",
+      "state": "parked",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "lib/token-budget.mjs",
+          "passed_at": "2026-04-27T21:51:38.166Z",
+          "artifact_size": 4382
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/token-budget.test.mjs",
+          "passed_at": "2026-04-27T21:51:39.000Z"
+        },
+        {
+          "check": "test",
+          "command": "node tests/token-budget-trigger-sim.mjs",
+          "passed_at": "2026-04-27T21:51:39.497Z"
+        },
+        {
+          "check": "manual",
+          "description": "Robin reviews default threshold (85% used) and confirms heuristic accuracy ±15% acceptable for v1",
+          "passed_at": null,
+          "last_failure": {
+            "ts": "2026-04-27T21:51:39.507Z",
+            "ok": false,
+            "confirmer": "Robin"
+          }
+        }
+      ],
+      "skills": [
+        "harness-engineering",
+        "agent-framework",
+        "continuous-agent-loop",
+        "advanced-evaluation"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "3/4 auto-DoD verified by Claude (lib/token-budget.mjs exists, both tests green, sim ran with 2.94% variance well within 5% allowed). Manual DoD awaits Robin's review of default 85% threshold + ±15% heuristic accuracy acceptance.",
+      "parent": null,
+      "agent": "claude-opus-4.7",
+      "started_at": "2026-04-27T21:28:16.742Z",
+      "updated_at": "2026-04-27T21:51:39.949Z"
     }
   ],
   "agents_active": [
-    "codex-gpt-5-codex"
+    "codex-gpt-5-codex",
+    "claude-opus-4.7"
   ],
   "log": [
     {
@@ -255,6 +309,53 @@
       "checkpoint_id": "cp-20260427T212054Z-t-001",
       "to": "codex",
       "path": ".omc/state/checkpoints/claude-to-codex-roundtrip-proof.handoff.json"
+    },
+    {
+      "ts": "2026-04-27T21:27:53.752Z",
+      "event": "ack",
+      "task": null,
+      "agent": "claude-opus-4.7"
+    },
+    {
+      "ts": "2026-04-27T21:27:55.860Z",
+      "event": "verify",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "allPass": false
+    },
+    {
+      "ts": "2026-04-27T21:27:56.232Z",
+      "event": "park",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "5/6 auto-DoD verified by Claude. Manual DoD awaits Codex bidirectional pickup of .omc/state/checkpoints/claude-to-codex-roundtrip-proof.RESUME.md and Robin confirmation. Roundtrip artifacts exist on disk; closure is async."
+    },
+    {
+      "ts": "2026-04-27T21:28:16.743Z",
+      "event": "open",
+      "task": "t-002",
+      "agent": "claude-opus-4.7",
+      "goal": "Token Budget Tracker — heuristic detector + handoff-bridge adapter"
+    },
+    {
+      "ts": "2026-04-27T21:51:14.898Z",
+      "event": "ack",
+      "task": null,
+      "agent": "codex-gpt-5-codex"
+    },
+    {
+      "ts": "2026-04-27T21:51:39.508Z",
+      "event": "verify",
+      "task": "t-002",
+      "agent": "claude-opus-4.7",
+      "allPass": false
+    },
+    {
+      "ts": "2026-04-27T21:51:39.955Z",
+      "event": "park",
+      "task": "t-002",
+      "agent": "claude-opus-4.7",
+      "reason": "3/4 auto-DoD verified by Claude (lib/token-budget.mjs exists, both tests green, sim ran with 2.94% variance well within 5% allowed). Manual DoD awaits Robin's review of default 85% threshold + ±15% heuristic accuracy acceptance."
     }
   ]
 }
