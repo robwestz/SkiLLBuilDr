@@ -166,4 +166,36 @@ covers the glue inside `assemble.mjs` and `kickoff-template.mjs` so a generated 
 
 ---
 
-*Last updated: 2026-04-25. All estimates are single-engineer, focused-session days.*
+## 10. Compound Protocol Harness ✅ SHIPPED 2026-04-27
+
+**Status:** Shipped as `.agents/` (portable across projects).
+**Where it lives:**
+- `.agents/PROTOCOL.md` — activation marker + 4 hard rules (no work without task, no switch without parking, no done without active verification, no block without unlock-path)
+- `.agents/COMPOUND.md` — 3-mechanism overlay (REGISTER / GAP SCAN / CONTEXT REFRESH)
+- `.agents/SKILL_SELECT.md` — skill selection algorithm (perfect-fit / partial / miss → create-new-skill)
+- `.agents/DOD.md` — Definition of Done contract with three check types (test / artifact / manual) and active verification flow
+- `.agents/PLAN_MARKERS.md` — frontmatter + inline-marker spec for plan-document activation
+- `.agents/task.mjs` — zero-dep CLI: status, ack, open, list, show, verify, done, park, resume, block, abandon, update, import + hook handlers (~480 lines)
+- `.agents/activate.mjs` — idempotent installer that wires hooks into `.claude/settings.json`
+- `.agents/TASKS.json` — open-task ledger
+- `tests/agents-task.test.mjs` — 20 tests covering open/park/resume/verify/done/block/import/hooks (all green)
+
+**Hooks installed by `node .agents/activate.mjs`:**
+- `SessionStart` → injects current-task summary as additional context
+- `PreToolUse:Edit|Write` → warns (default) or blocks (`COMPOUND_ENFORCE=1`) when no task in_progress
+- `Stop` → updates `updated_at` checkpoint on current task
+
+**Plan-document activation:** YAML frontmatter `compound: active` + `phases: [...]` or inline `[COMPOUND-PHASE id=... goal=... dod="..." skills="..."]`. Imported via `node .agents/task.mjs import <plan> --apply`.
+
+**Portability:** `cp -r .agents/ /path/to/new-repo/ && node .agents/activate.mjs`. Zero runtime deps, Node 18+.
+
+**What this addresses:** Operator's gap-finding 2026-04-27 — tasks dropping silently between conversations, no DoD enforcement for ad-hoc work, no continuity gate, hooks blocking without unlock-path. Now machine-enforced rather than instruction-followed.
+
+**Next steps (separate work, not blocking):**
+- Wire `assemble.mjs` to emit `compound: active` frontmatter in generated KICKOFF.md (auto plan-marker bridge)
+- Add `task verify` smoke check inside `demo-autonomous-loop.sh` so the loop can't claim done without DoD
+- Promote enforcement mode default after dogfooding stabilizes
+
+---
+
+*Last updated: 2026-04-27. All estimates are single-engineer, focused-session days.*

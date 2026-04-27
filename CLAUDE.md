@@ -14,6 +14,10 @@ The 8 onboarding gates take ~5 minutes. The cost of skipping them is much
 higher than the time saved. New sessions that ignore this routinely repeat
 mistakes that earlier sessions already paid for.
 
+**Compound Protocol is active in this repo.** Read [`.agents/PROTOCOL.md`](./.agents/PROTOCOL.md)
+before any work. Every unit of work is a tracked task with a verified Definition of Done;
+the harness lives in `.agents/` and is portable to other projects.
+
 ---
 
 ## What this project is
@@ -36,10 +40,11 @@ loop.** Most of the infrastructure is in place. What's left is documented in
 
 ## The non-negotiable contracts (read these in order)
 
-1. [`AGENT_ONBOARDING.md`](./AGENT_ONBOARDING.md) — your session-level contract (8 gates, push/commit routine, hard constraints)
-2. [`frameworks/COMPOUND.md`](./frameworks/COMPOUND.md) — your per-task contract (Phase 0 Preflight, Gap Scan, Compound Register, Context Refresh)
-3. [`frameworks/QUALITY_GATE.md`](./frameworks/QUALITY_GATE.md) — your per-deliverable review (5 dimensions, cross-model adversarial)
-4. [`.claude/skills/skill-development/SKILL.md`](./.claude/skills/skill-development/SKILL.md) — how to handle a no-fit (the only sanctioned escape valve)
+1. [`.agents/PROTOCOL.md`](./.agents/PROTOCOL.md) — Compound Protocol activation: task ledger, DoD verification, skill-select, plan-markers (governs ALL agents in this repo)
+2. [`AGENT_ONBOARDING.md`](./AGENT_ONBOARDING.md) — your session-level contract (8 gates, push/commit routine, hard constraints)
+3. [`.agents/COMPOUND.md`](./.agents/COMPOUND.md) — the 3-mechanism overlay (REGISTER / GAP SCAN / CONTEXT REFRESH) referenced by Protocol
+4. [`frameworks/QUALITY_GATE.md`](./frameworks/QUALITY_GATE.md) — your per-deliverable review (5 dimensions, cross-model adversarial)
+5. [`.claude/skills/skill-development/SKILL.md`](./.claude/skills/skill-development/SKILL.md) — how to handle a no-fit (the only sanctioned escape valve)
 
 ---
 
