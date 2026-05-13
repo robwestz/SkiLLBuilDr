@@ -12,9 +12,13 @@
 // = (step_index + 1) on first failure (so it's easy to see which step failed).
 
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync, existsSync, appendFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, appendFileSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+const KB_PROVIDERS = new Set(["file", "portable-kit", "http"]);
+const KB_PROVIDERS_IMPLEMENTED = new Set(["file"]);
+const KB_DEFAULT_LIMIT = 32_000;
 
 import { loadRoutine } from "./lib/routine.mjs";
 
@@ -111,6 +115,51 @@ export function runStep(step, ctx, { execute = false, runDir, runtimeAuthorized 
     return r.status === 0
       ? { ok: true, decision: "executed", detail: { tail: (r.stdout || "").slice(-200) } }
       : { ok: false, decision: "failed", detail: { status: r.status, stderr_head: (r.stderr || "").slice(0, 400) } };
+  }
+
+  if (step.kind === "kb_query") {
+    const provider = step.args?.provider || "file";
+    if (!KB_PROVIDERS.has(provider)) {
+      return { ok: false, decision: "kb-bad-provider", detail: { provider, allowed: [...KB_PROVIDERS] } };
+    }
+    if (!KB_PROVIDERS_IMPLEMENTED.has(provider)) {
+      return {
+        ok: false,
+        decision: "kb-not-implemented",
+        detail: {
+          provider,
+          note: "v1 implements only `file`. portable-kit / http are reserved contract slots — operator must wire them per environment.",
+        },
+      };
+    }
+    const targetPath = step.args?.path || step.ref;
+    if (typeof targetPath !== "string" || targetPath.length === 0) {
+      return { ok: false, decision: "kb-missing-path", detail: { reason: "kb_query.args.path or step.ref required" } };
+    }
+    if (!execute) {
+      return {
+        ok: true,
+        decision: "dry-run",
+        detail: { would_read: targetPath, provider, limit: step.args?.limit || KB_DEFAULT_LIMIT },
+      };
+    }
+    if (!existsSync(targetPath)) {
+      return { ok: false, decision: "kb-missing-file", detail: { path: targetPath } };
+    }
+    const raw = readFileSync(targetPath, "utf-8");
+    const limit = typeof step.args?.limit === "number" ? step.args.limit : KB_DEFAULT_LIMIT;
+    const snippet = raw.length > limit ? raw.slice(0, limit) + "\n\n... [truncated]" : raw;
+    const outPath = join(runDir, `${stepId}.kb.md`);
+    const labelPrefix = step.args?.output_prefix ? `# ${step.args.output_prefix}\n\n` : "";
+    writeFileSync(
+      outPath,
+      labelPrefix +
+        `Source: \`${targetPath}\` (provider: ${provider})\n` +
+        `Bytes read: ${raw.length}; included: ${snippet.length}\n\n` +
+        "---\n\n" +
+        snippet
+    );
+    return { ok: true, decision: "kb-read", detail: { path: outPath, bytes_included: snippet.length, source: targetPath } };
   }
 
   return { ok: false, decision: "unknown-kind", detail: { kind: step.kind } };

@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema_url": ".agents/PROTOCOL.md",
-  "current": "t-014",
+  "current": null,
   "tasks": [
     {
       "id": "t-001",
@@ -569,7 +569,7 @@
     {
       "id": "t-014",
       "goal": "llmlens phase 5: README+examples+integration",
-      "state": "in_progress",
+      "state": "parked",
       "dod": [
         {
           "check": "manual",
@@ -582,11 +582,37 @@
       ],
       "blocked_by": null,
       "unlock_command": null,
-      "park_reason": null,
+      "park_reason": "Not part of the current claude-opus-4-7-fas0 session's Factory v1 work — appears to be a separate llmlens stream that shares the agent-id slot. Parking to free the in_progress lock; resume manually when llmlens work continues.",
       "parent": null,
       "agent": "claude-opus-4-7-fas0",
       "started_at": "2026-05-13T11:45:52.647Z",
-      "updated_at": "2026-05-13T11:45:52.648Z"
+      "updated_at": "2026-05-13T11:56:18.021Z"
+    },
+    {
+      "id": "t-015",
+      "goal": "Fas 5 KB adapter contract: kb_query step-kind + file provider",
+      "state": "done",
+      "dod": [
+        {
+          "check": "test",
+          "command": "node --test tests/routine.test.mjs",
+          "passed_at": "2026-05-13T11:58:58.180Z"
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/routine-runner.test.mjs",
+          "passed_at": "2026-05-13T11:59:00.596Z"
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:56:23.880Z",
+      "updated_at": "2026-05-13T11:59:00.893Z",
+      "completed_at": "2026-05-13T11:59:00.892Z"
     }
   ],
   "agents_active": [
@@ -1053,6 +1079,33 @@
       "task": "t-014",
       "agent": "claude-opus-4-7-fas0",
       "goal": "llmlens phase 5: README+examples+integration"
+    },
+    {
+      "ts": "2026-05-13T11:56:18.022Z",
+      "event": "park",
+      "task": "t-014",
+      "agent": "claude-opus-4-7-fas0",
+      "reason": "Not part of the current claude-opus-4-7-fas0 session's Factory v1 work — appears to be a separate llmlens stream that shares the agent-id slot. Parking to free the in_progress lock; resume manually when llmlens work continues."
+    },
+    {
+      "ts": "2026-05-13T11:56:23.881Z",
+      "event": "open",
+      "task": "t-015",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Fas 5 KB adapter contract: kb_query step-kind + file provider"
+    },
+    {
+      "ts": "2026-05-13T11:59:00.597Z",
+      "event": "verify",
+      "task": "t-015",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T11:59:00.893Z",
+      "event": "done",
+      "task": "t-015",
+      "agent": "claude-opus-4-7-fas0"
     }
   ]
 }

@@ -86,8 +86,8 @@
         "id": { "type": "string" },
         "kind": {
           "type": "string",
-          "enum": ["skill", "command", "shell", "handoff", "assemble"],
-          "description": "skill = invoke a Claude skill by slug; command = invoke a Claude /command; shell = run a shell command via runner; handoff = trigger handoff-bridge; assemble = call assemble_from_goal."
+          "enum": ["skill", "command", "shell", "handoff", "assemble", "kb_query"],
+          "description": "skill = invoke a Claude skill by slug; command = invoke a Claude /command; shell = run a shell command via runner; handoff = trigger handoff-bridge; assemble = call assemble_from_goal; kb_query = read from a knowledge-base via a pluggable provider (file | portable-kit | http — v1 implements file only)."
         },
         "ref": {
           "type": "string",

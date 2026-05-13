@@ -16,7 +16,7 @@ ECC Browser → MCP/CLI → Agentic OS factory.
 - [x] **Fas 2** — Routine manifest v1: commit `3497d48`
 - [x] **Fas 3** — Routine runner with safety grind: commit `2247ad2`
 - [x] **Fas 4** — Local cron installers: commit `3974507`
-- [ ] **Fas 5** — KB adapter contract (no portable-kit hardwire)
+- [x] **Fas 5** — KB adapter contract: `kb_query` step-kind + file provider; portable-kit/http reserved contract slots (commit pending)
 - [ ] **Fas 6** — Minimal factory dashboard (static HTML)
 - [ ] **E2E test** — rank → assemble → routine-run dry-run roundtrip
 - [ ] **CHANGELOG** — v0.x entry covering Fas 0-6

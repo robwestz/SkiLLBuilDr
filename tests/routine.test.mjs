@@ -85,6 +85,17 @@ test("validateRoutine: rejects empty steps", () => {
   assert.ok(r.errors.some((e) => /steps/.test(e)));
 });
 
+test("validateRoutine: accepts kb_query step kind (Fas 5 KB adapter)", () => {
+  const r = validateRoutine({
+    version: 1,
+    id: "demo-kb",
+    title: "KB",
+    cadence: "manual",
+    steps: [{ kind: "kb_query", ref: "docs/PHASE_PLAN_AGENTIC_FACTORY.md", args: { provider: "file" } }],
+  });
+  assert.equal(r.ok, true, `errors: ${r.errors.join("; ")}`);
+});
+
 test("validateRoutine: rejects unknown step.kind", () => {
   const r = validateRoutine({
     version: 1,

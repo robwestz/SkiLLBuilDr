@@ -75,6 +75,99 @@ test("runStep: shell with runtime_authorized=true AND --execute runs the command
   }
 });
 
+// ─── runStep: kb_query (Fas 5 KB adapter) ─────────────────────────────────
+
+test("runStep: kb_query dry-run reports what would be read without touching disk", () => {
+  const runDir = makeRunDir();
+  try {
+    const step = {
+      id: "kb",
+      kind: "kb_query",
+      ref: "some/kb/path.md",
+      args: { provider: "file", limit: 200 },
+    };
+    const r = runStep(step, {}, { runDir, execute: false });
+    assert.equal(r.ok, true);
+    assert.equal(r.decision, "dry-run");
+    assert.equal(r.detail.would_read, "some/kb/path.md");
+    assert.equal(r.detail.provider, "file");
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+  }
+});
+
+test("runStep: kb_query file provider reads and writes a context artifact", () => {
+  const runDir = makeRunDir();
+  try {
+    const sourcePath = join(runDir, "kb-source.md");
+    writeFileSync(sourcePath, "# Hello\n\nLine two.\n");
+    const step = {
+      id: "kb",
+      kind: "kb_query",
+      args: { provider: "file", path: sourcePath, output_prefix: "From KB" },
+    };
+    const r = runStep(step, {}, { runDir, execute: true });
+    assert.equal(r.ok, true, JSON.stringify(r));
+    assert.equal(r.decision, "kb-read");
+    assert.ok(existsSync(r.detail.path), "kb output artifact should exist");
+    const body = readFileSync(r.detail.path, "utf-8");
+    assert.match(body, /# From KB/);
+    assert.match(body, /Hello/);
+    assert.match(body, /Line two/);
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+  }
+});
+
+test("runStep: kb_query rejects unimplemented providers (portable-kit reserved contract slot)", () => {
+  const runDir = makeRunDir();
+  try {
+    const step = {
+      id: "kb",
+      kind: "kb_query",
+      ref: "x",
+      args: { provider: "portable-kit" },
+    };
+    const r = runStep(step, {}, { runDir, execute: true });
+    assert.equal(r.ok, false);
+    assert.equal(r.decision, "kb-not-implemented");
+    assert.equal(r.detail.provider, "portable-kit");
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+  }
+});
+
+test("runStep: kb_query rejects unknown providers entirely", () => {
+  const runDir = makeRunDir();
+  try {
+    const step = { id: "kb", kind: "kb_query", ref: "x", args: { provider: "magic" } };
+    const r = runStep(step, {}, { runDir, execute: true });
+    assert.equal(r.ok, false);
+    assert.equal(r.decision, "kb-bad-provider");
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+  }
+});
+
+test("runStep: kb_query file provider truncates at limit", () => {
+  const runDir = makeRunDir();
+  try {
+    const sourcePath = join(runDir, "big.md");
+    writeFileSync(sourcePath, "x".repeat(5000));
+    const step = {
+      id: "kb",
+      kind: "kb_query",
+      args: { provider: "file", path: sourcePath, limit: 100 },
+    };
+    const r = runStep(step, {}, { runDir, execute: true });
+    assert.equal(r.ok, true);
+    const body = readFileSync(r.detail.path, "utf-8");
+    assert.match(body, /\.\.\. \[truncated\]/);
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+  }
+});
+
 // ─── applyVerify ──────────────────────────────────────────────────────────
 
 test("applyVerify: no verify block returns ok", () => {
