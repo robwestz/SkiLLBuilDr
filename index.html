@@ -38,6 +38,7 @@
         --scope-plugin: #7ec07a;
         --scope-user: #e0b341;
         --scope-project: #ff9874;
+        --scope-extra: #5eb8e0;
         --basket: #d97757;
         --ok: #2a8f5f;
         --row-alt: #1a1e25;
@@ -61,6 +62,7 @@
         --scope-plugin: #3e7a3a;
         --scope-user: #a07a12;
         --scope-project: #c8654a;
+        --scope-extra: #2e7a9a;
         --basket: #c46040;
         --ok: #1e6b44;
         --row-alt: #f5f2ec;
@@ -350,6 +352,7 @@
       .scope-badge.plugin { color: var(--scope-plugin); background: rgba(126,192,122,0.09); border: 1px solid rgba(126,192,122,0.25); }
       .scope-badge.user { color: var(--scope-user); background: rgba(224,179,65,0.09); border: 1px solid rgba(224,179,65,0.25); }
       .scope-badge.project { color: var(--scope-project); background: rgba(255,152,116,0.09); border: 1px solid rgba(255,152,116,0.25); }
+      .scope-badge.extra { color: var(--scope-extra); background: rgba(94,184,224,0.09); border: 1px solid rgba(94,184,224,0.28); }
       .cat {
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
         font-size: 11px;
@@ -639,6 +642,21 @@
         color: var(--fg);
       }
 
+      .sort-select {
+        display: block; width: calc(100% - 12px);
+        margin: 6px 6px 0;
+        background: var(--bg-3); color: var(--fg);
+        border: 1px solid var(--border); border-radius: 5px;
+        padding: 5px 7px; font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .sort-select:focus { outline: 1px solid var(--accent); outline-offset: 0; }
+      #composeSortRow .sort-select {
+        display: inline-block; width: auto; margin: 0;
+        padding: 3px 6px; font-size: 11px;
+      }
+
       ::-webkit-scrollbar { width: 8px; height: 8px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -801,6 +819,40 @@
         touch-action: manipulation; transition: background 80ms;
       }
       .detail-panel-actions button:hover { background: var(--bg-hover); }
+
+      /* "Copy link" floating menu — z-index above the detail panel (300). */
+      .detail-link-menu[hidden] { display: none; }
+      .detail-link-menu {
+        position: fixed; z-index: 310;
+        background: var(--bg-2); border: 1px solid var(--border);
+        border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.35);
+        padding: 4px; min-width: 240px; max-width: 360px;
+        display: flex; flex-direction: column; gap: 2px;
+      }
+      .detail-link-menu .menu-row,
+      .detail-link-menu .menu-row-disabled {
+        display: flex; flex-direction: column; gap: 2px;
+        padding: 7px 10px; border-radius: 4px; cursor: pointer;
+        background: transparent; border: 0; color: var(--fg);
+        font-size: 12px; text-align: left; font-family: inherit;
+      }
+      .detail-link-menu .menu-row:hover { background: var(--bg-hover); }
+      .detail-link-menu .menu-row .menu-label,
+      .detail-link-menu .menu-row-disabled .menu-label {
+        font-weight: 600; font-size: 12px;
+      }
+      .detail-link-menu .menu-row .menu-preview {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+        font-size: 10.5px; color: var(--fg-dim);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .detail-link-menu .menu-row-disabled {
+        cursor: default; opacity: .55;
+      }
+      .detail-link-menu .menu-row-disabled .menu-preview {
+        font-size: 11px; color: var(--fg-dim); white-space: normal;
+      }
+
       .detail-desc-row {
         font-size: 13px; line-height: 1.55; color: var(--fg-mid);
         padding: 2px 0 0;
@@ -911,6 +963,14 @@
           <button data-type="rule">Rules</button>
           <button data-type="workflow">Workflows</button>
         </div>
+        <h2>Sort</h2>
+        <select id="sortSelect" class="sort-select" aria-label="Sort browse list">
+          <option value="default">Default (catalog order)</option>
+          <option value="name">Name (A→Z)</option>
+          <option value="name-desc">Name (Z→A)</option>
+          <option value="source">Source</option>
+          <option value="type">Type</option>
+        </select>
         <h2>Scope</h2>
         <div id="scopes"></div>
         <h2>Source</h2>
@@ -945,6 +1005,17 @@
         <div id="composeTierRow" style="display:none;align-items:center;gap:8px;padding:4px 0">
           <span id="composeTierLocal" class="tier active" title="Local IDF ranking — always available" style="font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--fg-dim)">🏎 Local</span>
           <span id="composeTierAI" class="tier" title="AI causal ranking — set API key in ⚙ Settings" style="font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--fg-dim)">✨ AI</span>
+        </div>
+        <div id="composeSortRow" style="display:none;align-items:center;gap:8px;padding:4px 0">
+          <label for="composeSortSelect" style="font-size:11px;color:var(--fg-dim)">Sort:</label>
+          <select id="composeSortSelect" class="sort-select" aria-label="Sort compose results">
+            <option value="default">Score (default)</option>
+            <option value="score">Score</option>
+            <option value="name">Name (A→Z)</option>
+            <option value="name-desc">Name (Z→A)</option>
+            <option value="source">Source</option>
+            <option value="type">Type</option>
+          </select>
         </div>
       </div>
       <div class="list" id="composeList">
@@ -1006,8 +1077,10 @@
           <div class="detail-panel-actions">
             <button id="detailCopyBtn">Copy slug</button>
             <button id="detailCopyBodyBtn" title="Copy full skill as Markdown">Copy MD</button>
+            <button id="detailCopyLinkBtn" aria-haspopup="menu" aria-expanded="false" title="Copy link to this item">🔗 Copy link <span aria-hidden="true">▾</span></button>
             <button id="detailBasketBtn">+ Basket</button>
           </div>
+          <div id="detailCopyLinkMenu" class="detail-link-menu" role="menu" hidden></div>
           <div class="detail-desc-row" id="detailDesc"></div>
         </div>
         <div class="detail-meta-row" id="detailMetaRow"></div>
@@ -1025,6 +1098,13 @@
     <script src="hash-router.js"></script>
     <script src="data.js"></script>
     <script src="recipes.js"></script>
+    <script type="module">
+      // Bridge lib/copy-link.mjs (pure ESM, also used by node:test) to the
+      // legacy IIFE script below. The detail panel reads window.CopyLink lazily
+      // when the user clicks 🔗, so the async import resolves well before then.
+      import * as CopyLink from "./lib/copy-link.mjs";
+      window.CopyLink = CopyLink;
+    </script>
     <script>
       const STORE_KEY_BASKET = "skillbrowser.basket.v1";
       const STORE_KEY_RECIPES = "skillbrowser.customRecipes.v1";
@@ -1077,7 +1157,7 @@
         activeBundle: null, // { source, category } or null
         seedRecipes: [],
         customRecipes: [],
-        filter: { type: "all", scope: null, source: null, category: null, query: "" },
+        filter: { type: "all", scope: null, source: null, category: null, query: "", sort: "default" },
         selectedIndex: 0,
         filtered: [],
         composed: [],
@@ -1151,7 +1231,8 @@
           scope: state.filter.scope || null,
           source: state.filter.source || null,
           category: state.filter.category || null,
-          tab: state.activeTab && state.activeTab !== "browse" ? state.activeTab : null
+          tab: state.activeTab && state.activeTab !== "browse" ? state.activeTab : null,
+          sort: state.filter.sort && state.filter.sort !== "default" ? state.filter.sort : null
         };
       }
 
@@ -1188,12 +1269,17 @@
           state.filter.source = parsed.source || null;
           state.filter.category = parsed.category || null;
           state.filter.query = parsed.q || "";
+          state.filter.sort = parsed.sort || "default";
 
           const searchEl = document.getElementById("search");
           if (searchEl) searchEl.value = state.filter.query;
           document.querySelectorAll("#typeToggle button").forEach((x) => {
             x.classList.toggle("active", x.dataset.type === state.filter.type);
           });
+          const sortEl = document.getElementById("sortSelect");
+          if (sortEl) sortEl.value = state.filter.sort;
+          const composeSortEl = document.getElementById("composeSortSelect");
+          if (composeSortEl) composeSortEl.value = state.filter.sort;
           updateChipActive();
 
           const targetTab = parsed.tab || "browse";
@@ -1215,7 +1301,8 @@
         let idx = state.filtered.findIndex((x) => x.slug === slug);
         if (idx < 0) {
           // Item is filtered out — clear filters and retry so the link resolves.
-          state.filter = { type: "all", scope: null, source: null, category: null, query: "" };
+          // Sort is a UI preference, not a filter — preserve it across clears.
+          state.filter = { type: "all", scope: null, source: null, category: null, query: "", sort: state.filter.sort || "default" };
           const searchEl = document.getElementById("search");
           if (searchEl) searchEl.value = "";
           document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x.dataset.type === "all"));
@@ -1240,6 +1327,7 @@
           state.filter.source ||
           state.filter.category ||
           state.filter.query ||
+          (state.filter.sort && state.filter.sort !== "default") ||
           (state.activeTab && state.activeTab !== "browse");
         btn.style.display = hasFilters ? "" : "none";
       }
@@ -1490,6 +1578,23 @@
       }
 
       // ---------- browse filter + render ----------
+      // Sort comparators reused by both Browse (applyFilter) and Compose
+      // (renderComposeList). "default" returns null → caller skips sorting and
+      // keeps build.mjs's category/scope/type/name order. "score" is only
+      // meaningful in Compose where _score is populated by the local IDF
+      // matcher or the LLM rerank — elsewhere it falls back to "default".
+      function _sortComparator(sortKey) {
+        switch (sortKey) {
+          case "name":      return (a, b) => a.name.localeCompare(b.name);
+          case "name-desc": return (a, b) => b.name.localeCompare(a.name);
+          case "source":    return (a, b) => (a.source||"").localeCompare(b.source||"") || a.name.localeCompare(b.name);
+          case "type":      return (a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name);
+          case "recent":    return (a, b) => (b.mtime || 0) - (a.mtime || 0) || a.name.localeCompare(b.name);
+          case "score":     return (a, b) => (b._score || 0) - (a._score || 0) || a.name.localeCompare(b.name);
+          default:          return null;
+        }
+      }
+
       function applyFilter() {
         const q = state.filter.query.toLowerCase().trim();
         const tokens = q ? q.split(/\s+/) : [];
@@ -1502,6 +1607,10 @@
           const hay = (it.name + " " + (it.description||"") + " " + it.category + " " + (it.source||"")).toLowerCase();
           return tokens.every((t) => hay.includes(t));
         });
+        // "score" only applies to Compose — in Browse it falls back to default.
+        const browseSort = state.filter.sort === "score" ? "default" : state.filter.sort;
+        const cmp = _sortComparator(browseSort);
+        if (cmp) state.filtered.sort(cmp);
         state.selectedIndex = 0;
         renderBrowseList();
       }
@@ -1514,7 +1623,7 @@
           </div>`;
           const btn = document.getElementById("clearAllFilters");
           if (btn) btn.addEventListener("click", () => {
-            state.filter = { type: "all", scope: null, source: null, category: null, query: "" };
+            state.filter = { type: "all", scope: null, source: null, category: null, query: "", sort: state.filter.sort || "default" };
             state.activeBundle = null;
             document.getElementById("search").value = "";
             document.querySelectorAll("#typeToggle button").forEach((x) => x.classList.toggle("active", x.dataset.type === "all"));
@@ -1646,10 +1755,28 @@ Max 12 items. Reject skills with no direct causal path to the goal. No prose out
         const host = document.getElementById("composeList");
         if (state.composed.length === 0) {
           host.innerHTML = `<div class="empty">No matches. Try different words — shorter, more concrete, or use the example chips above.</div>`;
+          updateComposeSortVisibility();
           return;
         }
+        // Compose defaults to score when _score is populated; honour user
+        // override via state.filter.sort. "default" in Compose means "score" so
+        // the most relevant matches stay on top.
+        const hasScore = state.composed.some((it) => typeof it._score === "number");
+        let composeSort = state.filter.sort;
+        if (composeSort === "default" && hasScore) composeSort = "score";
+        const cmp = _sortComparator(composeSort);
+        if (cmp) state.composed = state.composed.slice().sort(cmp);
         host.innerHTML = state.composed.map((it, i) => rowHtml(it, i, false, true)).join("");
         wireRow(host, (i) => state.composed[i]);
+        updateComposeSortVisibility();
+      }
+
+      function updateComposeSortVisibility() {
+        const row = document.getElementById("composeSortRow");
+        if (!row) return;
+        row.style.display = state.composed.length > 0 ? "flex" : "none";
+        const sel = document.getElementById("composeSortSelect");
+        if (sel) sel.value = state.filter.sort;
       }
 
       // Local scoring mirror of intent.mjs (simplified)
@@ -1906,6 +2033,7 @@ Max 12 items. Reject skills with no direct causal path to the goal. No prose out
       function closeDetail() {
         document.getElementById("detailPanel").classList.remove("open");
         document.getElementById("detailOverlay").classList.remove("show");
+        _hideCopyLinkMenu();
         _detailSlug = null;
       }
       document.getElementById("detailCloseBtn").addEventListener("click", closeDetail);
@@ -1945,6 +2073,130 @@ Max 12 items. Reject skills with no direct causal path to the goal. No prose out
         btn.classList.toggle("added", inBasket);
         if (state.activeTab === "browse") renderBrowseList();
         else if (state.activeTab === "compose") renderComposeList();
+      });
+
+      // ---------- Copy link menu ----------
+      // Three targets: Local file://, Own host, GitHub. Builders live in
+      // lib/copy-link.mjs (also covered by tests/copy-link.test.mjs) and are
+      // bridged onto window.CopyLink by the <script type="module"> shim above.
+      const STORE_KEY_COPY_LINK = "ecc-browser.copy-link.v1";
+
+      function _copyLinkConfig() {
+        try { return JSON.parse(localStorage.getItem(STORE_KEY_COPY_LINK) || "{}"); }
+        catch { return {}; }
+      }
+
+      function _hideCopyLinkMenu() {
+        const menu = document.getElementById("detailCopyLinkMenu");
+        const btn = document.getElementById("detailCopyLinkBtn");
+        if (menu) menu.hidden = true;
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      }
+
+      function _menuRow(label, href, onClick) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "menu-row";
+        b.setAttribute("role", "menuitem");
+        b.title = href;
+        b.innerHTML = `<span class="menu-label">${escapeHtml(label)}</span><span class="menu-preview">${escapeHtml(href)}</span>`;
+        b.addEventListener("click", () => { onClick(); _hideCopyLinkMenu(); });
+        return b;
+      }
+
+      function _menuRowDisabled(label, reason) {
+        const div = document.createElement("div");
+        div.className = "menu-row-disabled";
+        div.setAttribute("role", "menuitem");
+        div.setAttribute("aria-disabled", "true");
+        div.title = reason;
+        div.innerHTML = `<span class="menu-label">${escapeHtml(label)}</span><span class="menu-preview">${escapeHtml(reason)}</span>`;
+        return div;
+      }
+
+      function _populateCopyLinkMenu(it) {
+        const menu = document.getElementById("detailCopyLinkMenu");
+        if (!menu) return;
+        const CL = window.CopyLink;
+        if (!CL) {
+          // Module shim hasn't loaded yet — extremely unlikely by the time the
+          // user clicks 🔗, but surface it cleanly rather than throwing.
+          menu.replaceChildren(_menuRowDisabled("Copy link", "Loading… try again in a moment"));
+          return;
+        }
+        const cfg = _copyLinkConfig();
+        const local = CL.buildLocalLink(it);
+        const host = CL.buildHostLink(it, cfg);
+        const gh = CL.buildGithubLink(it, cfg);
+        const rows = [];
+
+        if (local) {
+          rows.push(_menuRow("Local file", local, () => {
+            copyToClipboard(local);
+            showToast("Local link copied");
+            window.Analytics?.track("copylink.copied", { target: "local" });
+          }));
+        } else if (CL.isPublicOnlyMode(state.items)) {
+          rows.push(_menuRowDisabled("Local file", "Not available — public catalog is sanitised (no item.path)"));
+        } else {
+          rows.push(_menuRowDisabled("Local file", "This item has no path field"));
+        }
+
+        if (host) {
+          rows.push(_menuRow("Own host", host, () => {
+            copyToClipboard(host);
+            showToast("Host link copied");
+            window.Analytics?.track("copylink.copied", { target: "host" });
+          }));
+        } else {
+          rows.push(_menuRowDisabled("Own host",
+            "Set hostBase in localStorage key 'ecc-browser.copy-link.v1' — see README §Copy link"));
+        }
+
+        if (gh) {
+          rows.push(_menuRow("GitHub", gh, () => {
+            copyToClipboard(gh);
+            showToast("GitHub link copied");
+            window.Analytics?.track("copylink.copied", { target: "github" });
+          }));
+        } else {
+          rows.push(_menuRowDisabled("GitHub",
+            "Configure github.owner/repo (+ optional ref/localPrefix or pathMap) in localStorage 'ecc-browser.copy-link.v1'"));
+        }
+
+        menu.replaceChildren(...rows);
+      }
+
+      document.getElementById("detailCopyLinkBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!_detailSlug) return;
+        const btn = e.currentTarget;
+        const menu = document.getElementById("detailCopyLinkMenu");
+        const opening = !!menu.hidden;
+        if (opening) {
+          const it = state.byslug.get(_detailSlug);
+          if (!it) return;
+          _populateCopyLinkMenu(it);
+          // Render once so we have layout, then position relative to the button.
+          menu.hidden = false;
+          btn.setAttribute("aria-expanded", "true");
+          const r = btn.getBoundingClientRect();
+          const menuW = menu.offsetWidth;
+          // Right-align to the button to avoid overflowing the panel.
+          const left = Math.max(8, r.right - menuW);
+          menu.style.top = `${r.bottom + 4}px`;
+          menu.style.left = `${left}px`;
+        } else {
+          _hideCopyLinkMenu();
+        }
+      });
+      // Click-outside dismissal — capture so we close before any nested handler runs.
+      document.addEventListener("click", (e) => {
+        const menu = document.getElementById("detailCopyLinkMenu");
+        const btn = document.getElementById("detailCopyLinkBtn");
+        if (!menu || menu.hidden) return;
+        if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+        _hideCopyLinkMenu();
       });
 
       // ---------- row rendering (shared) ----------
@@ -2435,6 +2687,24 @@ Max 12 items. Reject skills with no direct causal path to the goal. No prose out
         clearTimeout(_searchPushTimer);
         _searchPushTimer = setTimeout(pushHashState, 300);
       });
+      // Sort controls — Browse (sidebar) + Compose (inline). Both write to the
+      // same state.filter.sort key; rerender happens via the active tab's path.
+      function _onSortChange(value) {
+        state.filter.sort = value;
+        // Mirror to the other select so they stay in lockstep when the user
+        // swaps tabs without rerunning intent.
+        const a = document.getElementById("sortSelect");
+        const b = document.getElementById("composeSortSelect");
+        if (a && a.value !== value) a.value = value;
+        if (b && b.value !== value) b.value = value;
+        if (state.activeTab === "compose") renderComposeList();
+        else applyFilter();
+        pushHashState();
+        updateCopyFilterUrlVisibility();
+        window.Analytics?.track("filter.changed", { facet: "sort", value });
+      }
+      document.getElementById("sortSelect").addEventListener("change", (e) => _onSortChange(e.target.value));
+      document.getElementById("composeSortSelect").addEventListener("change", (e) => _onSortChange(e.target.value));
       document.getElementById("typeToggle").addEventListener("click", (e) => {
         const b = e.target.closest("button");
         if (!b) return;
@@ -2507,7 +2777,12 @@ Max 12 items. Reject skills with no direct causal path to the goal. No prose out
         else if (e.key.toLowerCase() === "r") { e.preventDefault(); switchTab("recipes"); }
         else if (e.key.toLowerCase() === "t") { e.preventDefault(); document.getElementById("themeToggle").click(); }
         else if (e.key === "?") { e.preventDefault(); openHelpModal(); }
-        else if (e.key === "Escape") { if (_detailSlug) { closeDetail(); } else { closeModal(); } }
+        else if (e.key === "Escape") {
+          const linkMenu = document.getElementById("detailCopyLinkMenu");
+          if (linkMenu && !linkMenu.hidden) { _hideCopyLinkMenu(); }
+          else if (_detailSlug) { closeDetail(); }
+          else { closeModal(); }
+        }
         else if (e.key === "ArrowLeft" && _detailSlug) { e.preventDefault(); document.getElementById("detailPrevBtn").click(); }
         else if (e.key === "ArrowRight" && _detailSlug) { e.preventDefault(); document.getElementById("detailNextBtn").click(); }
         else if (e.key === "ArrowDown" || (e.key === "j" && state.activeTab === "browse")) {

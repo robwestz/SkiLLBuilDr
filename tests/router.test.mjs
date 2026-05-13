@@ -103,6 +103,39 @@ test("parseHash: tab accepts valid values only", () => {
   assert.equal(R.parseHash("tab=xyz").tab, null);
 });
 
+test("parseHash: sort accepts whitelist only", () => {
+  assert.equal(R.parseHash("sort=name").sort, "name");
+  assert.equal(R.parseHash("sort=name-desc").sort, "name-desc");
+  assert.equal(R.parseHash("sort=source").sort, "source");
+  assert.equal(R.parseHash("sort=type").sort, "type");
+  assert.equal(R.parseHash("sort=recent").sort, "recent");
+  assert.equal(R.parseHash("sort=score").sort, "score");
+  assert.equal(R.parseHash("sort=default").sort, "default");
+  assert.equal(R.parseHash("sort=bogus").sort, null);
+});
+
+test("buildHash: sort=default omitted", () => {
+  assert.equal(R.buildHash({ sort: "default" }), "");
+  assert.equal(R.buildHash({ sort: "name" }), "sort=name");
+});
+
+test("round-trip: sort=name survives", () => {
+  const src = "sort=name&type=skill";
+  const parsed = R.parseHash(src);
+  const built = R.buildHash(parsed);
+  const reparsed = R.parseHash(built);
+  assert.equal(reparsed.sort, "name");
+  assert.equal(reparsed.type, "skill");
+});
+
+test("backward-compat: hash without sort still parses with sort=null", () => {
+  // Adding the sort key must not regress old shared links.
+  const p = R.parseHash("category=Security&type=skill");
+  assert.equal(p.sort, null);
+  assert.equal(p.category, "Security");
+  assert.equal(p.type, "skill");
+});
+
 test("parseHash: source preserves colons and slashes", () => {
   const p = R.parseHash("source=plugin%3Aposthog");
   assert.equal(p.source, "plugin:posthog");

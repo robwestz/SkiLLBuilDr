@@ -12,6 +12,7 @@
 //   category=<name>            URL-encoded category name
 //   item=<slug>                URL-encoded slug to focus/scroll-to in Browse
 //   tab=browse|compose|recipes initial active tab
+//   sort=name|name-desc|source|type|recent|score    sort order (default omitted)
 //
 // Unknown keys are preserved under `_extra` so links can round-trip through
 // future versions without data loss.
@@ -21,6 +22,7 @@
   var TYPE_VALUES = ["all", "skill", "command"];
   var SCOPE_VALUES = ["plugin", "user", "project"];
   var TAB_VALUES = ["browse", "compose", "recipes"];
+  var SORT_VALUES = ["default", "name", "name-desc", "source", "type", "recent", "score"];
 
   function parseHash(hashStr) {
     var out = {
@@ -32,6 +34,7 @@
       category: null,
       item: null,
       tab: null,
+      sort: null,
       _extra: {}
     };
     if (typeof hashStr !== "string" || !hashStr) return out;
@@ -86,6 +89,9 @@
         case "tab":
           out.tab = TAB_VALUES.indexOf(v) >= 0 ? v : null;
           break;
+        case "sort":
+          out.sort = SORT_VALUES.indexOf(v) >= 0 ? v : null;
+          break;
         default:
           out._extra[k] = v;
       }
@@ -124,6 +130,9 @@
     if (typeof state.tab === "string" && state.tab && state.tab !== "browse") {
       parts.push("tab=" + encodeURIComponent(state.tab));
     }
+    if (typeof state.sort === "string" && state.sort && state.sort !== "default") {
+      parts.push("sort=" + encodeURIComponent(state.sort));
+    }
     if (state._extra && typeof state._extra === "object") {
       var keys = Object.keys(state._extra).sort();
       for (var i = 0; i < keys.length; i++) {
@@ -154,7 +163,8 @@
       source: f.source || null,
       category: f.category || null,
       item: appState.focusedItem || null,
-      tab: appState.activeTab && appState.activeTab !== "browse" ? appState.activeTab : null
+      tab: appState.activeTab && appState.activeTab !== "browse" ? appState.activeTab : null,
+      sort: f.sort && f.sort !== "default" ? f.sort : null
     };
   }
 
@@ -165,7 +175,8 @@
     stateToHash: stateToHash,
     TYPE_VALUES: TYPE_VALUES.slice(),
     SCOPE_VALUES: SCOPE_VALUES.slice(),
-    TAB_VALUES: TAB_VALUES.slice()
+    TAB_VALUES: TAB_VALUES.slice(),
+    SORT_VALUES: SORT_VALUES.slice()
   };
 
   if (root) root.HashRouter = api;

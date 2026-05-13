@@ -62,6 +62,40 @@ Every filter, tab, and item is addressable via URL hash. Combinable (AND semanti
 
 Combine freely: `…/index.html#category=Security&type=skill&scope=plugin` lands an agent straight on the skills under Security. Browser back/forward reverts earlier filter states; **🔗 Copy filter URL** in the search bar copies the current view (without basket); **Copy share link** in the basket drawer copies view + basket together. Unknown keys are preserved on round-trip for forward compatibility.
 
+### Sorting
+
+Browse and Compose both have a **Sort** control. Values: `default` (catalog order from `build.mjs`), `name`, `name-desc`, `source`, `type`. Compose adds `score` (default when AI/IDF rerank has populated `_score`). Non-default sorts persist in the URL as `#sort=name` so shared links keep the order.
+
+### Copy link (detail panel)
+
+The detail panel has a **🔗 Copy link** dropdown next to *Copy slug* / *Copy MD*. Three targets:
+
+- **Local file** — `file://` from `item.path`. Disabled when the catalog was built with `--sanitize` (no paths in `data.json`).
+- **Own host** — `<hostBase>/<encoded-slug>`. Disabled with reason if `hostBase` isn't set.
+- **GitHub** — `https://github.com/<owner>/<repo>/blob/<ref>/<repo-relative-path>`. Path derived by stripping `localPrefix` from `item.path`, or from explicit `pathMap[slug]`. Disabled with reason if neither resolves.
+
+Configure host/GitHub via localStorage (run once in DevTools console, then reload):
+
+```js
+localStorage.setItem("ecc-browser.copy-link.v1", JSON.stringify({
+  hostBase: "https://skills.example.com",
+  github: {
+    owner: "you", repo: "ecc-browser", ref: "main",
+    sources: {
+      "plugin:posthog": {
+        owner: "PostHog", repo: "posthog", ref: "main",
+        localPrefix: "C:/Users/you/.claude/plugins/cache/posthog/1.0.0/"
+      },
+      "user": {
+        localPrefix: "C:/Users/you/.claude/"
+      }
+    }
+  }
+}));
+```
+
+Per-source overrides (under `github.sources["<source-id>"]`) win over repo-wide defaults. Each disabled menu row shows the exact missing key as its tooltip.
+
 ## CLI — for agents and humans
 
 Three CLI tools. `query.mjs` for substring filter; `intent.mjs` for natural-language ranking; `cli.mjs` for goal-based assembly with formatted table or JSON output.
