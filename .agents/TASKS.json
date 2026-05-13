@@ -613,6 +613,39 @@
       "started_at": "2026-05-13T11:56:23.880Z",
       "updated_at": "2026-05-13T11:59:00.893Z",
       "completed_at": "2026-05-13T11:59:00.892Z"
+    },
+    {
+      "id": "t-016",
+      "goal": "Fas 6 Minimal factory dashboard: CLI status reporter + static HTML viewer",
+      "state": "done",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "factory-status.mjs",
+          "passed_at": "2026-05-13T12:03:13.357Z",
+          "artifact_size": 5165
+        },
+        {
+          "check": "artifact",
+          "path": "factory-status.html",
+          "passed_at": "2026-05-13T12:03:13.359Z",
+          "artifact_size": 6772
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/factory-status.test.mjs",
+          "passed_at": "2026-05-13T12:03:17.032Z"
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:59:58.483Z",
+      "updated_at": "2026-05-13T12:03:17.431Z",
+      "completed_at": "2026-05-13T12:03:17.429Z"
     }
   ],
   "agents_active": [
@@ -1105,6 +1138,26 @@
       "ts": "2026-05-13T11:59:00.893Z",
       "event": "done",
       "task": "t-015",
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T11:59:58.484Z",
+      "event": "open",
+      "task": "t-016",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Fas 6 Minimal factory dashboard: CLI status reporter + static HTML viewer"
+    },
+    {
+      "ts": "2026-05-13T12:03:17.033Z",
+      "event": "verify",
+      "task": "t-016",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T12:03:17.431Z",
+      "event": "done",
+      "task": "t-016",
       "agent": "claude-opus-4-7-fas0"
     }
   ]

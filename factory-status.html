@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Agentic Factory v1 — Status</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root { color-scheme: dark light; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0; padding: 32px 24px; max-width: 980px; margin-inline: auto;
+    background: #0f1115; color: #e7e9ee;
+  }
+  h1 { margin: 0 0 4px; font-weight: 600; }
+  h2 { margin-top: 32px; border-bottom: 1px solid #2a2f3a; padding-bottom: 4px; font-size: 1.1rem; }
+  .meta { color: #8b95a8; font-size: 0.9rem; }
+  .card { background: #181c23; border: 1px solid #2a2f3a; border-radius: 8px; padding: 16px 18px; margin: 12px 0; }
+  .stat { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #232a35; font-variant-numeric: tabular-nums; margin-right: 6px; font-size: 0.85rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #232a35; }
+  th { color: #8b95a8; font-weight: 500; }
+  code { font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; background: #232a35; padding: 1px 6px; border-radius: 4px; font-size: 0.85em; }
+  .warn { color: #f4b942; background: #2a230f; padding: 12px; border-radius: 6px; border: 1px solid #4a3d1a; }
+  .empty { color: #6b7383; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>Agentic Factory v1 — Status</h1>
+<div class="meta">Read-only dashboard. Source: <code>factory-status.mjs --json</code> / live JSON files.</div>
+
+<div id="warn" class="warn" style="display:none;margin-top:16px;"></div>
+
+<h2>Catalog</h2>
+<div class="card" id="catalog-card">
+  <div class="empty">loading...</div>
+</div>
+
+<h2>Routines</h2>
+<div class="card" id="routines-card">
+  <div class="empty">loading...</div>
+</div>
+
+<h2>Compound task ledger</h2>
+<div class="card" id="ledger-card">
+  <div class="empty">loading...</div>
+</div>
+
+<h2>How this works</h2>
+<div class="card">
+  <p>This page fetches <code>.agents/TASKS.json</code> and the routine
+  manifests directly. It must be served over HTTP (most browsers block
+  <code>file://</code> XHR). Quick options:</p>
+  <ul>
+    <li>From repo root: <code>npx serve .</code> or <code>python -m http.server 8000</code></li>
+    <li>Then visit <code>http://localhost:8000/factory-status.html</code></li>
+    <li>Or run the CLI fallback: <code>node factory-status.mjs</code></li>
+  </ul>
+  <p>For a frozen snapshot, run <code>node factory-status.mjs --json</code>
+  and pipe the output into your monitoring tool of choice.</p>
+</div>
+
+<script>
+async function safeFetchJSON(path) {
+  try {
+    const r = await fetch(path, { cache: "no-store" });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch {
+    return null;
+  }
+}
+
+async function safeFetchText(path) {
+  try {
+    const r = await fetch(path, { cache: "no-store" });
+    if (!r.ok) return null;
+    return await r.text();
+  } catch {
+    return null;
+  }
+}
+
+function el(tag, attrs, ...children) {
+  attrs = attrs || {};
+  const n = document.createElement(tag);
+  for (const k of Object.keys(attrs)) {
+    if (k === "class") n.className = attrs[k];
+    else if (k === "html") n.innerHTML = attrs[k];
+    else n.setAttribute(k, attrs[k]);
+  }
+  for (const c of children) {
+    if (c == null) continue;
+    n.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return n;
+}
+
+async function loadCatalog() {
+  const card = document.getElementById("catalog-card");
+  const data = await safeFetchJSON("./data.json");
+  if (data && Array.isArray(data.items)) {
+    card.innerHTML = "";
+    card.appendChild(el("div", {}, el("span", { class: "stat" }, data.items.length + " items"), " from ", el("code", {}, "data.json")));
+    return;
+  }
+  const publicText = await safeFetchText("./data.public.js");
+  if (publicText) {
+    const match = publicText.match(/"items"\s*:\s*\[([\s\S]*?)\]/);
+    if (match) {
+      let depth = 0, count = 0;
+      for (const c of match[1]) { if (c === "{") { if (!depth) count++; depth++; } else if (c === "}") depth--; }
+      card.innerHTML = "";
+      card.appendChild(el("div", {}, el("span", { class: "stat" }, count + " items"), " from ", el("code", {}, "data.public.js")));
+      return;
+    }
+  }
+  card.innerHTML = "<div class='empty'>Catalog not reachable - try CLI: <code>node factory-status.mjs</code></div>";
+}
+
+const KNOWN_ROUTINES = [
+  "code-review.routine.json",
+  "onboard-repo.routine.json",
+  "security-audit.routine.json",
+];
+
+async function loadRoutines() {
+  const card = document.getElementById("routines-card");
+  const rows = [];
+  for (const file of KNOWN_ROUTINES) {
+    const r = await safeFetchJSON("./routines/" + file);
+    if (r) rows.push(r);
+  }
+  if (rows.length === 0) {
+    card.innerHTML = "<div class='empty'>No routines reachable (need HTTP serve).</div>";
+    return;
+  }
+  const table = el("table", {},
+    el("thead", {}, el("tr", {},
+      el("th", {}, "id"), el("th", {}, "title"), el("th", {}, "cadence"), el("th", {}, "steps"))),
+    el("tbody", {}, ...rows.map((r) => el("tr", {},
+      el("td", {}, el("code", {}, r.id)),
+      el("td", {}, r.title || ""),
+      el("td", {}, r.cadence || ""),
+      el("td", {}, String((r.steps || []).length))
+    )))
+  );
+  card.innerHTML = "";
+  card.appendChild(table);
+}
+
+async function loadLedger() {
+  const card = document.getElementById("ledger-card");
+  const ledger = await safeFetchJSON("./.agents/TASKS.json");
+  if (!ledger) {
+    card.innerHTML = "<div class='empty'>Ledger not reachable.</div>";
+    return;
+  }
+  const tally = { total: (ledger.tasks || []).length, in_progress: 0, parked: 0, done: 0, blocked: 0, abandoned: 0 };
+  for (const t of (ledger.tasks || [])) tally[t.state] = (tally[t.state] || 0) + 1;
+  card.innerHTML = "";
+  const stats = el("div", {},
+    el("span", { class: "stat" }, tally.total + " total"),
+    el("span", { class: "stat" }, tally.in_progress + " in_progress"),
+    el("span", { class: "stat" }, tally.parked + " parked"),
+    el("span", { class: "stat" }, tally.done + " done"),
+    el("span", { class: "stat" }, tally.blocked + " blocked")
+  );
+  card.appendChild(stats);
+  if (ledger.current) {
+    card.appendChild(el("div", { style: "margin-top:10px" }, "Current: ", el("code", {}, ledger.current)));
+  } else {
+    card.appendChild(el("div", { class: "empty", style: "margin-top:10px" }, "No current task"));
+  }
+}
+
+(async () => {
+  try {
+    await Promise.all([loadCatalog(), loadRoutines(), loadLedger()]);
+  } catch (err) {
+    const w = document.getElementById("warn");
+    w.style.display = "block";
+    w.textContent = "Some data could not be loaded: " + err.message;
+  }
+})();
+</script>
+
+</body>
+</html>
