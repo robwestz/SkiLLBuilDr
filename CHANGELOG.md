@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Agentic Factory v1 (Fas 0–6, per `docs/PHASE_PLAN_AGENTIC_FACTORY.md`)
+- **Fas 0 — MCP↔CLI contract parity:** `assemble_package` in `mcp-server.mjs` now builds its KICKOFF via `buildKickoffWithPhase0` (same Phase 0 / Compound / Eval Loop / Quality Gate as `assemble.mjs`). Optional `tier` / `scenarioGate` / `debate` fields on the input schema, backwards-compatible (required still `["goal","slugs"]`). Shared `assembleFromNodes` helper prevents drift.
+- **Fas 1 — One-call assembly pipeline:** new MCP tool `assemble_from_goal({goal, tier?, limit?, scenarioGate?, debate?})` ranks the catalog with local IDF, picks top N (clamped 1..30), and returns a base64 ZIP plus picked slugs+scores. Mirrors `assemble.mjs --auto` without the interactive review.
+- **Fas 2 — Routine manifest v1:** `schemas/routine.v1.json` + `lib/routine.mjs` (`validateRoutine`, `loadRoutine`, `recipeToRoutine`). Three example routines on disk (`routines/code-review`, `onboard-repo`, `security-audit`). All 18 entries in `recipes.json` transform cleanly into valid routines without touching skill bodies.
+- **Fas 3 — Routine runner:** `routine-run.mjs` (CLI + exported `runStep`/`applyVerify`/`runRoutine`). Dry-run by default; `--execute` for side-effects. Three-layer safety grind for shell steps (`--execute` AND `step.args.runtime_authorized`). skill/command steps emit prompt artifacts only — never auto-invoke Claude. JSONL log per run under `.agents/routine-runs/<ts>/`. `on_failure` honors `escalate|continue|retry`.
+- **Fas 4 — Local cron manager:** `cron/README.md` + `cron/install-example.ps1` (Windows Task Scheduler, runs as current user) + `cron/install-example.sh` (Unix crontab). Both ask for confirmation before mutating system state and document anti-patterns explicitly.
+- **Fas 5 — KB adapter contract:** new step kind `kb_query` with pluggable provider (`file` implemented in v1; `portable-kit` and `http` are reserved contract slots). File provider truncates at configurable limit and writes a context artifact with optional `output_prefix`.
+- **Fas 6 — Minimal factory dashboard:** `factory-status.mjs` CLI (`collectStatus()` + text/`--json` rendering) and `factory-status.html` static viewer (vanilla JS, no framework, no build). Reads catalog, routines, and Compound ledger; tolerates missing or malformed inputs.
+- **E2E roundtrip test:** `tests/factory-e2e.test.mjs` exercises rank → assemble_from_goal → routine-run with the real MCP handlers and runner, decoding the assembled ZIP back into a temp workspace and verifying the KICKOFF + kb_query produce expected artifacts.
+- **Compact-resilient progress tracker:** `FACTORY_V1_PROGRESS.md` — authoritative DoD checklist + file-path index + recovery procedure, so a fresh session can resume after a `/compact` by reading three files (`FACTORY_V1_PROGRESS.md`, `git log`, `.agents/TASKS.json`).
+
 ### Added
 - **Live Handoff Bridge v1** - `handoff-bridge.mjs` creates, validates, checkpoints, and resumes `handoff-contract.v1` artifacts against `.agents/TASKS.json`. Manual trigger ships first; `token` and `stop-mid-task` are schema-level trigger types for later adapters.
 - **Handoff contract schema** - `schemas/handoff-contract.v1.json` defines the portable agent handoff payload for Codex/Claude roundtrips, including task state, pending work, current files, decisions, risks, verification state, and safety checks.

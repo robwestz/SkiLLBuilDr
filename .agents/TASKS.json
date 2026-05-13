@@ -646,6 +646,33 @@
       "started_at": "2026-05-13T11:59:58.483Z",
       "updated_at": "2026-05-13T12:03:17.431Z",
       "completed_at": "2026-05-13T12:03:17.429Z"
+    },
+    {
+      "id": "t-017",
+      "goal": "Production v1 final: E2E test + CHANGELOG + FUTURE_WORK + PHASE_PLAN checkboxes + CLAUDE.md ref",
+      "state": "done",
+      "dod": [
+        {
+          "check": "test",
+          "command": "node --test tests/factory-e2e.test.mjs",
+          "passed_at": "2026-05-13T12:10:38.312Z"
+        },
+        {
+          "check": "artifact",
+          "path": "CHANGELOG.md",
+          "passed_at": "2026-05-13T12:10:38.315Z",
+          "artifact_size": 20421
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T12:03:56.673Z",
+      "updated_at": "2026-05-13T12:10:38.739Z",
+      "completed_at": "2026-05-13T12:10:38.737Z"
     }
   ],
   "agents_active": [
@@ -1158,6 +1185,26 @@
       "ts": "2026-05-13T12:03:17.431Z",
       "event": "done",
       "task": "t-016",
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T12:03:56.674Z",
+      "event": "open",
+      "task": "t-017",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Production v1 final: E2E test + CHANGELOG + FUTURE_WORK + PHASE_PLAN checkboxes + CLAUDE.md ref"
+    },
+    {
+      "ts": "2026-05-13T12:10:38.315Z",
+      "event": "verify",
+      "task": "t-017",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T12:10:38.739Z",
+      "event": "done",
+      "task": "t-017",
       "agent": "claude-opus-4-7-fas0"
     }
   ]

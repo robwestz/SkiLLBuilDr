@@ -5,38 +5,33 @@ Nothing here blocks tonight's deliverable; everything here is too important to l
 
 ---
 
-## 1. Token Budget Tracker
+## 1. Token Budget Tracker ✅ SHIPPED 2026-04-27 (t-002)
 
-**Status:** Not started — net new  
-**Why deferred:** Reliably measuring "remaining context tokens" inside a live agent run requires
-either Anthropic API introspection endpoints (not yet stable) or heuristic byte-counting that
-would be dangerously inaccurate. Shipping a wrong trigger is worse than shipping none.  
-**Prerequisites:**
-- Study `anthropic.beta.messages.count_tokens` (available in Anthropic SDK ≥ 0.26).
-- Determine whether Claude Code exposes `$CLAUDE_CONTEXT_REMAINING` or equivalent env.
-- Agree on a conservative safety margin (e.g. trigger at 15 % remaining).
+**Status:** Shipped as `lib/token-budget.mjs` (heuristic detector, ±15 % variance).
+**Where it lives:** `lib/token-budget.mjs` + `tests/token-budget.test.mjs` + `tests/token-budget-trigger-sim.mjs`.
+**Remaining (parked under t-002 awaiting Robin's manual DoD):** Robin confirms 85% default
+threshold + ±15% heuristic accuracy acceptable for v1. Auto-firing into handoff-bridge is
+future work.
 
-**Rough effort:** 1–2 days (research + thin wrapper + unit tests with mock API).  
-**Where this lives:** `[net new]` — suggest `lib/token-budget.mjs`.
+**Follow-up:** Wire detector → handoff-bridge auto-trigger so a long-running agent emits
+a checkpoint automatically when threshold crosses. Currently the detector ships as a
+library only; consumers must subscribe manually.
 
 ---
 
-## 2. Claude ↔ Codex Live Handoff Bridge
+## 2. Claude ↔ Codex Live Handoff Bridge ✅ SHIPPED 2026-04-27 (t-001)
 
-**Status:** Not started — net new  
-**Why deferred:** Requires the Token Budget Tracker (#1) as a trigger signal, plus a stable
-serialization format for mid-task agent state. The triggering mechanism (CLI flag? subagent spawn
-via `sessions_spawn`? cron re-entry?) is still an open design decision.  
-**Prerequisites:**
-- Token Budget Tracker (#1) shipped and proven reliable.
-- Define a **Handoff Contract** artifact: JSON schema with fields `{checkpoint_id, completed_chunks[],
-  pending_chunks[], open_decisions[], context_summary, timestamp}`.
-- Choose trigger mechanism — most likely: `assemble.mjs --resume <handoff.json>` + KICKOFF
-  annotation that Codex picks up on next spawn.
+**Status:** Shipped as `handoff-bridge.mjs` + `schemas/handoff-contract.v1.json`.
+**Where it lives:** `handoff-bridge.mjs` (create/validate/checkpoint/resume) +
+`schemas/handoff-contract.v1.json` + `tests/handoff-bridge.test.mjs` +
+`tests/handoff-roundtrip-sim.mjs`. `assemble.mjs --handoff` / `--resume` ship the
+contract inside generated packages.
+**Remaining (parked under t-001 awaiting Robin's manual confirmation):** Real
+two-agent roundtrip proof (Robin confirms an actual Codex→Claude bidirectional
+exchange completed). Bidirectional roundtrip proof captured in `.omc/state/checkpoints/`.
 
-**Rough effort:** 3–5 days (schema design, serializer, CLI flag, integration test with two
-back-to-back agent runs).  
-**Where this lives:** `[net new]` — suggest `lib/handoff-bridge.mjs` + `schemas/handoff-contract.json`.
+**Follow-up:** Auto-trigger from Token Budget Tracker (#1) when threshold crosses
+— currently manual trigger only.
 
 ---
 
@@ -217,4 +212,38 @@ covers the glue inside `assemble.mjs` and `kickoff-template.mjs` so a generated 
 
 ---
 
-*Last updated: 2026-04-27. All estimates are single-engineer, focused-session days.*
+## 12. Agentic Factory v1 — what shipped vs. what's still deferred (2026-05-13)
+
+**Shipped:** Fas 0–6 per `docs/PHASE_PLAN_AGENTIC_FACTORY.md`. See `FACTORY_V1_PROGRESS.md`
+for the authoritative checklist and `CHANGELOG.md → [Unreleased]` for the per-phase change
+list.
+
+**Still deferred (decisions reserved for the operator):**
+- **KB providers beyond `file`** — `kb_query` has reserved contract slots for
+  `portable-kit` and `http` providers; v1 implements only `file`. Wiring
+  `portable-kit` to a specific KB on disk is operator-owned per-environment.
+- **MCP one-call with AI rerank.** `assemble_from_goal` currently uses local IDF
+  only. The async LLM rerank path needs a handler-dispatch refactor — the
+  synchronous `handleToolCall` signature is the constraint.
+- **Cloud cron / GitHub Actions.** Fas 4 ships local-only (Task Scheduler + crontab).
+  Cloud scheduling stays out of scope until the local path is proven.
+- **Dashboard live mode.** `factory-status.html` polls JSON files when served over
+  HTTP, but there's no SSE/long-poll. A WebSocket / EventSource adapter could
+  give the dashboard sub-second updates.
+- **Routine → recipe inverse transformation.** `recipeToRoutine` exists; the
+  reverse is not implemented because routines are strict supersets.
+- **Cross-CLI fingerprint regression test.** `assemble.mjs` and MCP
+  `assemble_package` are guaranteed identical by `assembleFromNodes` helper, but
+  no byte-comparison test asserts it. Worth adding if KICKOFF format diverges.
+- **Multi-agent lock for `.agents/TASKS.json`.** During this session two
+  parallel agents both used the `claude-opus-4-7-fas0` id slot. No `.lock` file
+  protects against concurrent writes — known issue, deferred until the second
+  agent class is intentional.
+
+**Where this lives:** `FACTORY_V1_PROGRESS.md` (authoritative checklist),
+`docs/PHASE_PLAN_AGENTIC_FACTORY.md` (per-phase context), this list (deferred
+follow-ups).
+
+---
+
+*Last updated: 2026-05-13. All estimates are single-engineer, focused-session days.*

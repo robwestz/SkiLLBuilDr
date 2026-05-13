@@ -91,6 +91,28 @@ KICKOFF.md (Phase 0 lives there).
 
 ---
 
+## Agentic Factory v1 — shipped 2026-05-13
+
+The first version of the Agentic Factory plan (Fas 0–6 per
+[`docs/PHASE_PLAN_AGENTIC_FACTORY.md`](./docs/PHASE_PLAN_AGENTIC_FACTORY.md))
+is live. Authoritative progress + recovery procedure:
+[`FACTORY_V1_PROGRESS.md`](./FACTORY_V1_PROGRESS.md).
+
+What this unlocks:
+- MCP and CLI ship the same Phase 0 KICKOFF contract (`assemble_package`
+  and `assemble_from_goal` both call `buildKickoffWithPhase0`).
+- `routine.v1` is the canonical machine-readable form of a recipe —
+  schema at `schemas/routine.v1.json`, validator at `lib/routine.mjs`,
+  runner at `routine-run.mjs` (dry-run default, 3-layer safety grind).
+- Local cron via `cron/install-example.{ps1,sh}` — operator pre-authorized.
+- Read-only dashboard via `node factory-status.mjs` (or
+  `factory-status.html` when served over HTTP).
+
+Deferred items (operator-owned) are tracked in
+[`FUTURE_WORK.md`](./FUTURE_WORK.md) §12.
+
+---
+
 ## Communication norms with the operator (Robin)
 
 - Be concise. Surface decisions, not deliberation.

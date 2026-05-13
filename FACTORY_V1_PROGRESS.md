@@ -18,11 +18,11 @@ ECC Browser → MCP/CLI → Agentic OS factory.
 - [x] **Fas 4** — Local cron installers: commit `3974507`
 - [x] **Fas 5** — KB adapter contract: `kb_query` step-kind + file provider; portable-kit/http reserved contract slots (commit pending)
 - [x] **Fas 6** — Minimal factory dashboard: `factory-status.mjs` CLI + `factory-status.html` viewer (commit pending)
-- [ ] **E2E test** — rank → assemble → routine-run dry-run roundtrip
-- [ ] **CHANGELOG** — v0.x entry covering Fas 0-6
-- [ ] **FUTURE_WORK.md** — reflect what was done vs deferred
-- [ ] **docs/PHASE_PLAN_AGENTIC_FACTORY.md** — checkboxes Fas 0-6
-- [ ] **CLAUDE.md** — reference to factory v1 completion
+- [x] **E2E test** — `tests/factory-e2e.test.mjs`: rank → assemble_from_goal → routine-run (commit pending)
+- [x] **CHANGELOG** — `[Unreleased]` section now opens with "Added — Agentic Factory v1 (Fas 0–6)"
+- [x] **FUTURE_WORK.md** — items #1, #2 marked SHIPPED; new §12 lists Fas 0-6 deferred items
+- [x] **docs/PHASE_PLAN_AGENTIC_FACTORY.md** — Fas 0-6 headings tagged SHIPPED 2026-05-13 with per-DoD checkboxes
+- [x] **CLAUDE.md** — new "Agentic Factory v1" section links to this file + FUTURE_WORK §12
 
 ## Where the code lives (file:line precision)
 
