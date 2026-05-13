@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "id": "code-review-pipeline",
+  "title": "Code review pipeline",
+  "description": "Review local changes or a PR, then apply security checks, then verify tests exist.",
+  "intent": "review my code thoroughly for quality, security, and tests",
+  "cadence": "manual",
+  "steps": [
+    {
+      "id": "assemble",
+      "kind": "assemble",
+      "ref": "review my code thoroughly for quality, security, and tests",
+      "args": { "tier": "production", "limit": 4 },
+      "verify": { "kind": "artifact", "path": "KICKOFF.md" }
+    },
+    {
+      "id": "code-review",
+      "kind": "skill",
+      "ref": "/everything-claude-code:code-review"
+    },
+    {
+      "id": "security-review",
+      "kind": "skill",
+      "ref": "/everything-claude-code:security-review"
+    },
+    {
+      "id": "tdd-check",
+      "kind": "skill",
+      "ref": "/everything-claude-code:tdd-workflow",
+      "verify": {
+        "kind": "command",
+        "command": "node --test tests/mcp-server.test.mjs"
+      },
+      "on_failure": "escalate"
+    }
+  ],
+  "compound_hooks": {
+    "before_each": "gap_scan",
+    "after_each": "compound_register"
+  },
+  "metadata": {
+    "source_recipe_id": "code-review-pipeline",
+    "tier": "production"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "id": "security-audit",
+  "title": "Security audit pass",
+  "description": "OWASP-level review, secret scan, dependency/auth audit.",
+  "intent": "audit my app for security vulnerabilities",
+  "cadence": "manual",
+  "steps": [
+    {
+      "id": "assemble",
+      "kind": "assemble",
+      "ref": "audit my app for security vulnerabilities",
+      "args": { "tier": "cutting-edge", "limit": 4, "scenarioGate": "factory/v1" },
+      "verify": { "kind": "artifact", "path": "KICKOFF.md" }
+    },
+    {
+      "id": "security-review",
+      "kind": "skill",
+      "ref": "/everything-claude-code:security-review"
+    },
+    {
+      "id": "security-scan",
+      "kind": "skill",
+      "ref": "/everything-claude-code:security-scan",
+      "verify": {
+        "kind": "command",
+        "command": "node --test tests/mcp-server.test.mjs"
+      }
+    },
+    {
+      "id": "bounty-hunter",
+      "kind": "skill",
+      "ref": "/everything-claude-code:security-bounty-hunter",
+      "on_failure": "escalate"
+    }
+  ],
+  "compound_hooks": {
+    "before_each": "gap_scan",
+    "after_each": "compound_register"
+  },
+  "metadata": {
+    "source_recipe_id": "security-audit",
+    "tier": "cutting-edge"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "id": "onboard-unfamiliar-repo",
+  "title": "Onboard an unfamiliar repo",
+  "description": "Analyze the codebase, generate onboarding docs, propose an action plan.",
+  "intent": "I just cloned a repo I don't know; help me understand it",
+  "cadence": "manual",
+  "steps": [
+    {
+      "id": "assemble",
+      "kind": "assemble",
+      "ref": "I just cloned a repo I don't know; help me understand it",
+      "args": { "tier": "production", "limit": 5 },
+      "verify": { "kind": "artifact", "path": "KICKOFF.md" }
+    },
+    {
+      "id": "codebase-onboarding",
+      "kind": "skill",
+      "ref": "/everything-claude-code:codebase-onboarding"
+    },
+    {
+      "id": "ce-onboarding",
+      "kind": "skill",
+      "ref": "/compound-engineering:ce-onboarding",
+      "on_failure": "continue"
+    },
+    {
+      "id": "repo-strategy",
+      "kind": "skill",
+      "ref": "/repo-strategy-orchestrator",
+      "verify": { "kind": "manual" }
+    }
+  ],
+  "compound_hooks": {
+    "before_each": "gap_scan",
+    "after_each": "compound_register",
+    "every_n": { "n": 3, "action": "context_refresh" }
+  },
+  "metadata": {
+    "source_recipe_id": "onboard-unfamiliar-repo",
+    "tier": "production"
+  }
+}

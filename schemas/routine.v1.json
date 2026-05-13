@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecc-browser/schemas/routine.v1.json",
+  "title": "Routine v1",
+  "description": "A versioned, machine-readable routine — the ROUTINE node in the agentic-factory diagram. Mirrors what a recipe expresses for humans, but adds explicit steps, verify gates, and cadence so a runner (Fas 3) can execute it deterministically.",
+  "type": "object",
+  "required": ["version", "id", "title", "cadence", "steps"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Bump on breaking change."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$",
+      "description": "Stable id, kebab-case. Used as filename stem and ledger key."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "intent": {
+      "type": "string",
+      "description": "Natural-language goal — what the routine accomplishes. Carried into KICKOFF for assemble steps."
+    },
+    "cadence": {
+      "type": "string",
+      "enum": ["manual", "cron", "trigger"],
+      "description": "How the routine is invoked. Cron/trigger details live in `triggers`."
+    },
+    "triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["cron", "filesystem", "manual"] },
+          "expression": { "type": "string" },
+          "path": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "compound_hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "before_each": { "type": "string", "enum": ["gap_scan", "none"] },
+        "after_each": { "type": "string", "enum": ["compound_register", "none"] },
+        "every_n": {
+          "type": "object",
+          "properties": {
+            "n": { "type": "integer", "minimum": 1 },
+            "action": { "type": "string", "enum": ["context_refresh"] }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_at": { "type": "string" },
+        "source_recipe_id": { "type": "string" },
+        "owner": { "type": "string" },
+        "tier": { "type": "string", "enum": ["mvp", "production", "cutting-edge"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "required": ["kind", "ref"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": ["skill", "command", "shell", "handoff", "assemble"],
+          "description": "skill = invoke a Claude skill by slug; command = invoke a Claude /command; shell = run a shell command via runner; handoff = trigger handoff-bridge; assemble = call assemble_from_goal."
+        },
+        "ref": {
+          "type": "string",
+          "description": "Slug for skill/command, executable for shell, contract path for handoff, goal text for assemble."
+        },
+        "args": {
+          "type": "object",
+          "description": "Free-form args passed through to the step kind. Schema-checked by the runner per kind."
+        },
+        "verify": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": { "type": "string", "enum": ["command", "exit_zero", "artifact", "manual"] },
+            "command": { "type": "string" },
+            "path": { "type": "string" },
+            "expected_pattern": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "on_failure": {
+          "type": "string",
+          "enum": ["escalate", "retry", "continue"],
+          "default": "escalate"
+        }
+      }
+    }
+  }
+}
