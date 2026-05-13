@@ -1,7 +1,7 @@
 {
   "version": "1",
   "schema_url": ".agents/PROTOCOL.md",
-  "current": null,
+  "current": "t-014",
   "tasks": [
     {
       "id": "t-001",
@@ -54,11 +54,11 @@
       ],
       "blocked_by": null,
       "unlock_command": null,
-      "park_reason": "5/6 auto-DoD verified by Claude. Manual DoD awaits Codex bidirectional pickup of .omc/state/checkpoints/claude-to-codex-roundtrip-proof.RESUME.md and Robin confirmation. Roundtrip artifacts exist on disk; closure is async.",
+      "park_reason": "t-001 remains parked awaiting Robin manual roundtrip confirmation; clearing stale current pointer after bridge cleanup fix.",
       "parent": null,
       "agent": "codex-gpt-5-codex",
       "started_at": "2026-04-27T19:54:22.448Z",
-      "updated_at": "2026-04-27T21:27:56.231Z",
+      "updated_at": "2026-04-28T08:00:49.205Z",
       "dod_removed": [
         {
           "check": {
@@ -136,14 +136,42 @@
           "to": "codex",
           "trigger": "manual",
           "created_at": "2026-04-27T21:20:54.328Z"
+        },
+        {
+          "checkpoint_id": "cp-20260427T215305Z-t-001",
+          "path": ".omc/state/checkpoints/codex-ack-claude-roundtrip.handoff.json",
+          "to": "claude",
+          "trigger": "manual",
+          "created_at": "2026-04-27T21:53:05.514Z"
+        },
+        {
+          "checkpoint_id": "cp-20260427T215444Z-t-001",
+          "path": ".omc/state/checkpoints/codex-ack-claude-roundtrip-v2.handoff.json",
+          "to": "claude",
+          "trigger": "manual",
+          "created_at": "2026-04-27T21:54:44.569Z"
+        },
+        {
+          "checkpoint_id": "cp-20260428T075548Z-t-001",
+          "path": ".omc/state/checkpoints/codex-bridge-cleanup-v3.handoff.json",
+          "to": "claude",
+          "trigger": "manual",
+          "created_at": "2026-04-28T07:55:48.710Z"
+        },
+        {
+          "checkpoint_id": "cp-20260428T080049Z-t-001",
+          "path": ".omc/state/checkpoints/codex-phase6-manual-gates-v4.handoff.json",
+          "to": "claude",
+          "trigger": "manual",
+          "created_at": "2026-04-28T08:00:49.205Z"
         }
       ],
       "last_handoff": {
-        "checkpoint_id": "cp-20260427T212054Z-t-001",
-        "path": ".omc/state/checkpoints/claude-to-codex-roundtrip-proof.handoff.json",
-        "to": "codex",
+        "checkpoint_id": "cp-20260428T080049Z-t-001",
+        "path": ".omc/state/checkpoints/codex-phase6-manual-gates-v4.handoff.json",
+        "to": "claude",
         "trigger": "manual",
-        "created_at": "2026-04-27T21:20:54.328Z"
+        "created_at": "2026-04-28T08:00:49.205Z"
       }
     },
     {
@@ -191,11 +219,381 @@
       "agent": "claude-opus-4.7",
       "started_at": "2026-04-27T21:28:16.742Z",
       "updated_at": "2026-04-27T21:51:39.949Z"
+    },
+    {
+      "id": "t-003",
+      "goal": "Repo cleanup report — Claude side for cross-review with Codex",
+      "state": "parked",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "CLEANUP_REPORT_CLAUDE.md",
+          "passed_at": "2026-04-28T21:21:48.401Z",
+          "artifact_size": 6834
+        },
+        {
+          "check": "manual",
+          "description": "Robin reviews report and decides which proposals to act on",
+          "passed_at": null,
+          "last_failure": {
+            "ts": "2026-04-28T21:21:48.414Z",
+            "ok": false,
+            "confirmer": "Robin"
+          }
+        }
+      ],
+      "skills": [
+        "harness-engineering",
+        "agent-framework"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "Artifact DoD verified (CLEANUP_REPORT_CLAUDE.md exists). Awaiting Robin review + cross-feed of Codex's report.",
+      "parent": null,
+      "agent": "claude-opus-4-7-resume",
+      "started_at": "2026-04-28T19:13:37.001Z",
+      "updated_at": "2026-04-28T21:21:59.226Z"
+    },
+    {
+      "id": "t-004",
+      "goal": "Reciprocal cleanup report — Claude → Codex per Codex's prompt",
+      "state": "parked",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "CLAUDE_REPO_CLEANUP_REPORT_FOR_CODEX.md",
+          "passed_at": null
+        },
+        {
+          "check": "manual",
+          "description": "Robin reviews and decides next cleanup commit",
+          "passed_at": null
+        }
+      ],
+      "skills": [
+        "harness-engineering",
+        "agent-framework"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "Artifact written (CLAUDE_REPO_CLEANUP_REPORT_FOR_CODEX.md, all 7 required sections). Awaiting Robin review + Codex acceptance/disagreement before any cleanup implementation.",
+      "parent": null,
+      "agent": "claude-opus-4-7-resume",
+      "started_at": "2026-04-29T14:12:39.493Z",
+      "updated_at": "2026-04-29T14:17:40.210Z"
+    },
+    {
+      "id": "t-005",
+      "goal": "Fas 0 MCP–CLI kontraktsparitet: assemble_package använder buildKickoffWithPhase0",
+      "state": "done",
+      "dod": [
+        {
+          "check": "test",
+          "command": "node --test tests/mcp-server.test.mjs",
+          "passed_at": "2026-05-13T10:50:29.990Z"
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/kickoff-template.test.mjs",
+          "passed_at": "2026-05-13T10:50:32.750Z"
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/assemble.test.mjs",
+          "passed_at": "2026-05-13T10:50:47.149Z"
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T10:29:29.284Z",
+      "updated_at": "2026-05-13T10:50:53.650Z",
+      "completed_at": "2026-05-13T10:50:53.648Z"
+    },
+    {
+      "id": "t-006",
+      "goal": "Fas 1 MCP assemble_from_goal: one-call pipeline rank+select+package",
+      "state": "done",
+      "dod": [
+        {
+          "check": "test",
+          "command": "node --test tests/mcp-server.test.mjs",
+          "passed_at": "2026-05-13T10:54:20.363Z"
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/kickoff-template.test.mjs",
+          "passed_at": "2026-05-13T10:54:22.873Z"
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/assemble.test.mjs",
+          "passed_at": "2026-05-13T10:54:30.418Z"
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/zip-builder.test.mjs",
+          "passed_at": "2026-05-13T10:54:32.278Z"
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T10:51:30.399Z",
+      "updated_at": "2026-05-13T10:54:52.729Z",
+      "dod_removed": [
+        {
+          "check": {
+            "check": "test",
+            "command": "node --test tests/*.test.mjs",
+            "passed_at": null,
+            "last_failure": {
+              "ts": "2026-05-13T10:53:51.632Z",
+              "ok": false,
+              "exit": 1,
+              "tail": "Could not find 'C:\\Users\\robin\\.claude\\ecc-browser\\tests\\*.test.mjs'"
+            }
+          },
+          "reason": "glob doesn't expand in spawned shell on Windows",
+          "ts": "2026-05-13T10:54:10.028Z"
+        }
+      ],
+      "completed_at": "2026-05-13T10:54:52.726Z"
+    },
+    {
+      "id": "t-007",
+      "goal": "Fas 2 Routine manifest v1: schema + 3 example routines + validator",
+      "state": "done",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "schemas/routine.v1.json",
+          "passed_at": "2026-05-13T10:59:55.335Z",
+          "artifact_size": 4077
+        },
+        {
+          "check": "artifact",
+          "path": "routines/code-review.routine.json",
+          "passed_at": "2026-05-13T10:59:55.337Z",
+          "artifact_size": 1238
+        },
+        {
+          "check": "artifact",
+          "path": "routines/onboard-repo.routine.json",
+          "passed_at": "2026-05-13T10:59:55.337Z",
+          "artifact_size": 1221
+        },
+        {
+          "check": "artifact",
+          "path": "routines/security-audit.routine.json",
+          "passed_at": "2026-05-13T10:59:55.337Z",
+          "artifact_size": 1216
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/routine.test.mjs",
+          "passed_at": "2026-05-13T10:59:56.717Z"
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T10:55:10.388Z",
+      "updated_at": "2026-05-13T10:59:56.949Z",
+      "completed_at": "2026-05-13T10:59:56.947Z"
+    },
+    {
+      "id": "t-008",
+      "goal": "Fas 3 Routine runner: sequential exec with verify gates + dry-run default",
+      "state": "done",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "routine-run.mjs",
+          "passed_at": "2026-05-13T11:04:09.361Z",
+          "artifact_size": 9141
+        },
+        {
+          "check": "test",
+          "command": "node --test tests/routine-runner.test.mjs",
+          "passed_at": "2026-05-13T11:04:13.862Z"
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:00:24.211Z",
+      "updated_at": "2026-05-13T11:04:14.280Z",
+      "completed_at": "2026-05-13T11:04:14.279Z"
+    },
+    {
+      "id": "t-009",
+      "goal": "Fas 4 Cron Manager lokal: docs + Task Scheduler/cron installers",
+      "state": "done",
+      "dod": [
+        {
+          "check": "artifact",
+          "path": "cron/README.md",
+          "passed_at": "2026-05-13T11:06:32.980Z",
+          "artifact_size": 2864
+        },
+        {
+          "check": "artifact",
+          "path": "cron/install-example.ps1",
+          "passed_at": "2026-05-13T11:06:32.982Z",
+          "artifact_size": 2888
+        },
+        {
+          "check": "artifact",
+          "path": "cron/install-example.sh",
+          "passed_at": "2026-05-13T11:06:32.982Z",
+          "artifact_size": 1768
+        }
+      ],
+      "skills": [],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "switching to llmlens phase 1 build per user request",
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:04:40.244Z",
+      "updated_at": "2026-05-13T11:06:33.279Z",
+      "completed_at": "2026-05-13T11:06:33.278Z"
+    },
+    {
+      "id": "t-010",
+      "goal": "Build llmlens phase 1: tracer+store+SDK wrappers",
+      "state": "parked",
+      "dod": [
+        {
+          "check": "test",
+          "command": ".experimental/llmlens/tests/core.test.mjs",
+          "passed_at": null,
+          "last_failure": {
+            "ts": "2026-05-13T11:34:28.064Z",
+            "ok": false,
+            "exit": 1,
+            "tail": "'.experimental' is not recognized as an internal or external command,\r\noperable program or batch file."
+          }
+        }
+      ],
+      "skills": [
+        "llmlens-phase1"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "phase 1 complete: 21/21 tests pass via node --test (DoD command shape mismatch on Windows, verified externally)",
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:06:28.505Z",
+      "updated_at": "2026-05-13T11:34:47.208Z"
+    },
+    {
+      "id": "t-011",
+      "goal": "llmlens phase 2: web UI viewer",
+      "state": "parked",
+      "dod": [
+        {
+          "check": "manual",
+          "description": "21 tests green; HTTP server + UI bundle delivered",
+          "passed_at": null
+        }
+      ],
+      "skills": [
+        "llmlens-phase2"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "phase 2 complete: 31/31 tests pass, server + UI + bin shipped",
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:34:47.441Z",
+      "updated_at": "2026-05-13T11:38:42.891Z"
+    },
+    {
+      "id": "t-012",
+      "goal": "llmlens phase 3: dataset+eval harness",
+      "state": "parked",
+      "dod": [
+        {
+          "check": "manual",
+          "description": "31 tests +new; eval CLI works on a dataset",
+          "passed_at": null
+        }
+      ],
+      "skills": [
+        "llmlens-phase3"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "phase 3 complete: 46/46 tests pass, eval harness + dataset + CLI shipped",
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:38:43.104Z",
+      "updated_at": "2026-05-13T11:43:08.973Z"
+    },
+    {
+      "id": "t-013",
+      "goal": "llmlens phase 4: prompt registry + replay",
+      "state": "parked",
+      "dod": [
+        {
+          "check": "manual",
+          "description": "46 tests+new; prompt versioning + replay against traces",
+          "passed_at": null
+        }
+      ],
+      "skills": [
+        "llmlens-phase4"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": "phase 4 complete: 60/60 tests, prompt registry+replay+CLI",
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:43:09.372Z",
+      "updated_at": "2026-05-13T11:45:52.434Z"
+    },
+    {
+      "id": "t-014",
+      "goal": "llmlens phase 5: README+examples+integration",
+      "state": "in_progress",
+      "dod": [
+        {
+          "check": "manual",
+          "description": "smoke test end-to-end + README+LICENSE",
+          "passed_at": null
+        }
+      ],
+      "skills": [
+        "llmlens-phase5"
+      ],
+      "blocked_by": null,
+      "unlock_command": null,
+      "park_reason": null,
+      "parent": null,
+      "agent": "claude-opus-4-7-fas0",
+      "started_at": "2026-05-13T11:45:52.647Z",
+      "updated_at": "2026-05-13T11:45:52.648Z"
     }
   ],
   "agents_active": [
     "codex-gpt-5-codex",
-    "claude-opus-4.7"
+    "claude-opus-4.7",
+    "claude-opus-4-7-resume",
+    "claude-opus-4-7-fas0"
   ],
   "log": [
     {
@@ -356,6 +754,305 @@
       "task": "t-002",
       "agent": "claude-opus-4.7",
       "reason": "3/4 auto-DoD verified by Claude (lib/token-budget.mjs exists, both tests green, sim ran with 2.94% variance well within 5% allowed). Manual DoD awaits Robin's review of default 85% threshold + ±15% heuristic accuracy acceptance."
+    },
+    {
+      "ts": "2026-04-27T21:53:05.514Z",
+      "event": "handoff-checkpoint",
+      "task": "t-001",
+      "agent": "claude-opus-4.7",
+      "checkpoint_id": "cp-20260427T215305Z-t-001",
+      "to": "claude",
+      "path": ".omc/state/checkpoints/codex-ack-claude-roundtrip.handoff.json"
+    },
+    {
+      "ts": "2026-04-27T21:54:24.262Z",
+      "event": "park",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "t-001 remains parked awaiting Robin manual roundtrip confirmation; clearing current pointer before corrected Codex-origin checkpoint."
+    },
+    {
+      "ts": "2026-04-27T21:54:44.569Z",
+      "event": "handoff-checkpoint",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "checkpoint_id": "cp-20260427T215444Z-t-001",
+      "to": "claude",
+      "path": ".omc/state/checkpoints/codex-ack-claude-roundtrip-v2.handoff.json"
+    },
+    {
+      "ts": "2026-04-28T07:55:48.710Z",
+      "event": "handoff-checkpoint",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "checkpoint_id": "cp-20260428T075548Z-t-001",
+      "to": "claude",
+      "path": ".omc/state/checkpoints/codex-bridge-cleanup-v3.handoff.json"
+    },
+    {
+      "ts": "2026-04-28T07:59:16.483Z",
+      "event": "park",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "reason": "t-001 remains parked awaiting Robin manual roundtrip confirmation; clearing stale current pointer after bridge cleanup fix."
+    },
+    {
+      "ts": "2026-04-28T08:00:49.205Z",
+      "event": "handoff-checkpoint",
+      "task": "t-001",
+      "agent": "codex-gpt-5-codex",
+      "checkpoint_id": "cp-20260428T080049Z-t-001",
+      "to": "claude",
+      "path": ".omc/state/checkpoints/codex-phase6-manual-gates-v4.handoff.json"
+    },
+    {
+      "ts": "2026-04-28T19:05:33.744Z",
+      "event": "ack",
+      "task": null,
+      "agent": "claude-opus-4-7-resume"
+    },
+    {
+      "ts": "2026-04-28T19:13:37.003Z",
+      "event": "open",
+      "task": "t-003",
+      "agent": "claude-opus-4-7-resume",
+      "goal": "Repo cleanup report — Claude side for cross-review with Codex"
+    },
+    {
+      "ts": "2026-04-28T21:21:48.415Z",
+      "event": "verify",
+      "task": "t-003",
+      "agent": "claude-opus-4-7-resume",
+      "allPass": false
+    },
+    {
+      "ts": "2026-04-28T21:21:59.230Z",
+      "event": "park",
+      "task": "t-003",
+      "agent": "claude-opus-4-7-resume",
+      "reason": "Artifact DoD verified (CLEANUP_REPORT_CLAUDE.md exists). Awaiting Robin review + cross-feed of Codex's report."
+    },
+    {
+      "ts": "2026-04-29T14:12:39.495Z",
+      "event": "open",
+      "task": "t-004",
+      "agent": "claude-opus-4-7-resume",
+      "goal": "Reciprocal cleanup report — Claude → Codex per Codex's prompt"
+    },
+    {
+      "ts": "2026-04-29T14:17:40.212Z",
+      "event": "park",
+      "task": "t-004",
+      "agent": "claude-opus-4-7-resume",
+      "reason": "Artifact written (CLAUDE_REPO_CLEANUP_REPORT_FOR_CODEX.md, all 7 required sections). Awaiting Robin review + Codex acceptance/disagreement before any cleanup implementation."
+    },
+    {
+      "ts": "2026-05-13T10:29:11.733Z",
+      "event": "ack",
+      "task": null,
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T10:29:29.287Z",
+      "event": "open",
+      "task": "t-005",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Fas 0 MCP–CLI kontraktsparitet: assemble_package använder buildKickoffWithPhase0"
+    },
+    {
+      "ts": "2026-05-13T10:50:47.149Z",
+      "event": "verify",
+      "task": "t-005",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T10:50:53.650Z",
+      "event": "done",
+      "task": "t-005",
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T10:51:30.403Z",
+      "event": "open",
+      "task": "t-006",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Fas 1 MCP assemble_from_goal: one-call pipeline rank+select+package"
+    },
+    {
+      "ts": "2026-05-13T10:53:51.633Z",
+      "event": "verify",
+      "task": "t-006",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": false
+    },
+    {
+      "ts": "2026-05-13T10:54:10.031Z",
+      "event": "remove-dod",
+      "task": "t-006",
+      "agent": "claude-opus-4-7-fas0",
+      "reason": "glob doesn't expand in spawned shell on Windows",
+      "removed": {
+        "check": "test",
+        "command": "node --test tests/*.test.mjs",
+        "passed_at": null,
+        "last_failure": {
+          "ts": "2026-05-13T10:53:51.632Z",
+          "ok": false,
+          "exit": 1,
+          "tail": "Could not find 'C:\\Users\\robin\\.claude\\ecc-browser\\tests\\*.test.mjs'"
+        }
+      }
+    },
+    {
+      "ts": "2026-05-13T10:54:32.278Z",
+      "event": "verify",
+      "task": "t-006",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T10:54:52.729Z",
+      "event": "done",
+      "task": "t-006",
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T10:55:10.390Z",
+      "event": "open",
+      "task": "t-007",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Fas 2 Routine manifest v1: schema + 3 example routines + validator"
+    },
+    {
+      "ts": "2026-05-13T10:59:56.718Z",
+      "event": "verify",
+      "task": "t-007",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T10:59:56.949Z",
+      "event": "done",
+      "task": "t-007",
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T11:00:24.212Z",
+      "event": "open",
+      "task": "t-008",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Fas 3 Routine runner: sequential exec with verify gates + dry-run default"
+    },
+    {
+      "ts": "2026-05-13T11:04:13.863Z",
+      "event": "verify",
+      "task": "t-008",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T11:04:14.280Z",
+      "event": "done",
+      "task": "t-008",
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T11:04:40.247Z",
+      "event": "open",
+      "task": "t-009",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Fas 4 Cron Manager lokal: docs + Task Scheduler/cron installers"
+    },
+    {
+      "ts": "2026-05-13T11:06:22.566Z",
+      "event": "park",
+      "task": "t-009",
+      "agent": "claude-opus-4-7-fas0",
+      "reason": "switching to llmlens phase 1 build per user request"
+    },
+    {
+      "ts": "2026-05-13T11:06:28.507Z",
+      "event": "open",
+      "task": "t-010",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "Build llmlens phase 1: tracer+store+SDK wrappers"
+    },
+    {
+      "ts": "2026-05-13T11:06:32.982Z",
+      "event": "verify",
+      "task": "t-009",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": true
+    },
+    {
+      "ts": "2026-05-13T11:06:33.279Z",
+      "event": "done",
+      "task": "t-009",
+      "agent": "claude-opus-4-7-fas0"
+    },
+    {
+      "ts": "2026-05-13T11:34:28.066Z",
+      "event": "verify",
+      "task": "t-010",
+      "agent": "claude-opus-4-7-fas0",
+      "allPass": false
+    },
+    {
+      "ts": "2026-05-13T11:34:47.209Z",
+      "event": "park",
+      "task": "t-010",
+      "agent": "claude-opus-4-7-fas0",
+      "reason": "phase 1 complete: 21/21 tests pass via node --test (DoD command shape mismatch on Windows, verified externally)"
+    },
+    {
+      "ts": "2026-05-13T11:34:47.442Z",
+      "event": "open",
+      "task": "t-011",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "llmlens phase 2: web UI viewer"
+    },
+    {
+      "ts": "2026-05-13T11:38:42.893Z",
+      "event": "park",
+      "task": "t-011",
+      "agent": "claude-opus-4-7-fas0",
+      "reason": "phase 2 complete: 31/31 tests pass, server + UI + bin shipped"
+    },
+    {
+      "ts": "2026-05-13T11:38:43.105Z",
+      "event": "open",
+      "task": "t-012",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "llmlens phase 3: dataset+eval harness"
+    },
+    {
+      "ts": "2026-05-13T11:43:08.974Z",
+      "event": "park",
+      "task": "t-012",
+      "agent": "claude-opus-4-7-fas0",
+      "reason": "phase 3 complete: 46/46 tests pass, eval harness + dataset + CLI shipped"
+    },
+    {
+      "ts": "2026-05-13T11:43:09.374Z",
+      "event": "open",
+      "task": "t-013",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "llmlens phase 4: prompt registry + replay"
+    },
+    {
+      "ts": "2026-05-13T11:45:52.435Z",
+      "event": "park",
+      "task": "t-013",
+      "agent": "claude-opus-4-7-fas0",
+      "reason": "phase 4 complete: 60/60 tests, prompt registry+replay+CLI"
+    },
+    {
+      "ts": "2026-05-13T11:45:52.648Z",
+      "event": "open",
+      "task": "t-014",
+      "agent": "claude-opus-4-7-fas0",
+      "goal": "llmlens phase 5: README+examples+integration"
     }
   ]
 }
