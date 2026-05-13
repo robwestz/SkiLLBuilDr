@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildKickoff, buildClaudeMd, buildReadme } from "./kickoff-template.mjs";
+import { buildKickoffWithPhase0, buildClaudeMd, buildReadme, slugifyLabel, TIERS } from "./kickoff-template.mjs";
 import { buildZip } from "./zip-builder.mjs";
 import { LLMClient } from "./llm-client.mjs";
 
@@ -127,7 +127,11 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: "assemble_package",
-    description: "Assemble a ZIP package (base64) from selected skill slugs.",
+    description:
+      "Assemble a ZIP package (base64) from selected skill slugs. " +
+      "KICKOFF.md uses the same Phase 0 — Preflight Contract as `assemble.mjs` " +
+      "(via buildKickoffWithPhase0). Defaults: tier='production', no scenario gate, " +
+      "no pre-decision debate. Pass `tier`, `scenarioGate`, or `debate` to override.",
     inputSchema: {
       type: "object",
       properties: {
@@ -137,6 +141,19 @@ const TOOL_DEFINITIONS = [
           type: "array",
           items: { type: "string" },
           description: "Array of skill slugs to include",
+        },
+        tier: {
+          type: "string",
+          enum: TIERS,
+          description: "Quality tier for KICKOFF/Quality Gate (default: production)",
+        },
+        scenarioGate: {
+          type: "string",
+          description: "Optional path to a scenario gate (e.g. 'factory/v1') — enables blind-eval block in KICKOFF",
+        },
+        debate: {
+          type: "string",
+          description: "Optional pre-decision debate topic — emits Pre-decision Debate block in KICKOFF",
         },
       },
       required: ["goal", "slugs"],
@@ -150,7 +167,89 @@ const TOOL_DEFINITIONS = [
       properties: {},
     },
   },
+  {
+    name: "assemble_from_goal",
+    description:
+      "One-call pipeline: rank catalog by `goal`, pick top N slugs, and assemble a Phase 0 ZIP. " +
+      "Equivalent to `assemble.mjs --goal <x> --auto` but without an interactive review step. " +
+      "Local IDF ranking only — AI causal rerank is a future enhancement (use rank_skills_for_goal + assemble_package for now if a Groq/OpenRouter key is configured at server level).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        goal: { type: "string", description: "Goal to rank against and seed the KICKOFF with" },
+        description: { type: "string", description: "Optional longer description" },
+        tier: {
+          type: "string",
+          enum: TIERS,
+          description: "Quality tier (default: production)",
+        },
+        limit: {
+          type: "number",
+          description: "Max number of skills to include (default: 8, clamped 1..30)",
+        },
+        scenarioGate: {
+          type: "string",
+          description: "Optional path to a scenario gate (e.g. 'factory/v1')",
+        },
+        debate: {
+          type: "string",
+          description: "Optional pre-decision debate topic",
+        },
+      },
+      required: ["goal"],
+    },
+  },
 ];
+
+// Shared assembly path so assemble_package and assemble_from_goal cannot diverge.
+// Returns the tool-call result envelope ({ content: [...] } or { error: ... }).
+function assembleFromNodes({ goal, description, nodes, tier, scenarioGate, debate, picked }) {
+  const effectiveTier = TIERS.includes(tier) ? tier : "production";
+  const packageName = slugifyLabel(goal || description || "");
+
+  let kickoffContent, claudeMdContent, readmeContent;
+  try {
+    kickoffContent = buildKickoffWithPhase0({
+      goal,
+      description: description || "",
+      packageName,
+      nodes,
+      tier: effectiveTier,
+      chunkPlan: null,
+      gatePath: typeof scenarioGate === "string" ? scenarioGate : null,
+      prefill: null,
+      autoOnboard: false,
+      debateTopic: typeof debate === "string" ? debate : "",
+    });
+    claudeMdContent = buildClaudeMd({ nodes });
+    readmeContent = buildReadme({
+      goal,
+      description: description || "",
+      packageName,
+      nodes,
+    });
+  } catch (err) {
+    return { error: { code: -32603, message: err.message } };
+  }
+
+  const files = [
+    { name: "KICKOFF.md", content: kickoffContent },
+    { name: "CLAUDE.md", content: claudeMdContent },
+    { name: "README.md", content: readmeContent },
+  ];
+
+  let zipBytes;
+  try {
+    zipBytes = buildZip(files);
+  } catch (err) {
+    return { error: { code: -32603, message: err.message } };
+  }
+
+  const base64zip = Buffer.from(zipBytes).toString("base64");
+  const payload = { base64zip, files: files.map((f) => f.name) };
+  if (picked) payload.picked = picked;
+  return { content: [{ type: "text", text: JSON.stringify(payload) }] };
+}
 
 // ---------------------------------------------------------------------------
 // Tool handlers — accept catalog as parameter so tests can inject synthetic data
@@ -203,46 +302,38 @@ export function handleToolCall(name, args, catalog) {
       const nodes = args.slugs
         .map((slug) => catalog.find((it) => it.slug === slug))
         .filter(Boolean);
+      return assembleFromNodes({
+        goal: args.goal,
+        description: args.description,
+        nodes,
+        tier: args.tier,
+        scenarioGate: args.scenarioGate,
+        debate: args.debate,
+      });
+    }
 
-      let kickoffContent, claudeMdContent, readmeContent;
-      try {
-        kickoffContent = buildKickoff({
-          goal: args.goal,
-          description: args.description || "",
-          nodes,
-        });
-        claudeMdContent = buildClaudeMd({ nodes });
-        readmeContent = buildReadme({
-          goal: args.goal,
-          description: args.description || "",
-          nodes,
-        });
-      } catch (err) {
-        return { error: { code: -32603, message: err.message } };
+    case "assemble_from_goal": {
+      if (!args || typeof args.goal !== "string") {
+        return { error: { code: -32602, message: "Missing required parameter: goal" } };
       }
-
-      const files = [
-        { name: "KICKOFF.md", content: kickoffContent },
-        { name: "CLAUDE.md", content: claudeMdContent },
-        { name: "README.md", content: readmeContent },
-      ];
-
-      let zipBytes;
-      try {
-        zipBytes = buildZip(files);
-      } catch (err) {
-        return { error: { code: -32603, message: err.message } };
+      const requested = typeof args.limit === "number" ? args.limit : 8;
+      const limit = Math.max(1, Math.min(30, Math.floor(requested) || 8));
+      const ranked = rankItems(args.goal, catalog).slice(0, limit);
+      if (ranked.length === 0) {
+        return { error: { code: -32603, message: "No catalog items matched the goal" } };
       }
-
-      const base64zip = Buffer.from(zipBytes).toString("base64");
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ base64zip, files: files.map((f) => f.name) }),
-          },
-        ],
-      };
+      // Strip score before passing to template builders so KICKOFF stays clean.
+      const nodes = ranked.map(({ score, ...rest }) => rest); // eslint-disable-line no-unused-vars
+      const picked = ranked.map((it) => ({ slug: it.slug, score: it.score }));
+      return assembleFromNodes({
+        goal: args.goal,
+        description: args.description,
+        nodes,
+        tier: args.tier,
+        scenarioGate: args.scenarioGate,
+        debate: args.debate,
+        picked,
+      });
     }
 
     case "list_sources": {

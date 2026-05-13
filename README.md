@@ -17,11 +17,21 @@ The **basket** (bottom drawer, toggle with `B`) lets you select multiple skills,
 
 ## Launch
 
+**Windows (no Bash required):** from the repo directory run `npm start`, or double-click `launch.cmd`, or:
+
+```powershell
+node launch.mjs
+```
+
+**macOS / Linux / Git Bash:**
+
 ```bash
 bash ~/.claude/ecc-browser/launch.sh
 ```
 
 Rebuilds the manifest from installed plugins (includes project-level `.claude/` if invoked from a project dir) and opens in the default browser. First launch shows a welcome overlay; dismiss with *Got it*.
+
+To index the **current** project's `.claude/` skills, run `launch.mjs` / `npm start` / `launch.cmd` from **that project’s root** (not from inside `ecc-browser`): the launcher passes `--project <cwd>` when `.\.claude` exists.
 
 Suggested alias:
 
@@ -96,7 +106,11 @@ Install in `~/.claude/mcp.json` to expose the catalog to any MCP-compatible clie
 }
 ```
 
-Five tools: `search_skills`, `rank_skills_for_goal`, `get_skill`, `assemble_package`, `list_sources`. Zero npm deps — pure Node.js stdio JSON-RPC 2.0.
+Six tools: `search_skills`, `rank_skills_for_goal`, `get_skill`, `assemble_package`, `assemble_from_goal`, `list_sources`. Zero npm deps — pure Node.js stdio JSON-RPC 2.0.
+
+**Headless parity:** `assemble_package` and `assemble_from_goal` both produce the same Phase 0 — Preflight Contract KICKOFF as `assemble.mjs` (all call `buildKickoffWithPhase0` from `kickoff-template.mjs`). Defaults: `tier="production"`, no scenario gate, no debate; override via optional `tier` / `scenarioGate` / `debate` args.
+
+**One-call assembly:** `assemble_from_goal({goal, limit?, tier?})` mirrors `assemble.mjs --goal <x> --auto` — ranks the catalog locally (IDF), picks top N (default 8, clamped 1..30), and returns a base64 ZIP plus the picked slugs/scores. No explicit slug list required.
 
 ## Files
 
@@ -157,9 +171,22 @@ For this repo, the live URLs are:
 node build.mjs                # global sources (plugins + ~/.claude/{skills,commands})
 node build.mjs --verbose      # log all discovered sources
 node build.mjs --project /p   # include project's .claude/{skills,commands}
+node build.mjs --extra /path/to/clone   # repeat for each local repo / ZIP root (see below)
 node bundle.mjs               # rebuild + produce dist/ single-file
 bash test.sh                  # run the test suite
 ```
+
+### Extra local catalogs (`--extra`)
+
+Index skills/commands from other checkouts (e.g. downloaded GitHub zips) **without** installing them as plugins:
+
+- **CLI:** `node build.mjs --extra "C:\Users\robin\Downloads\oh-my-claudecode-main" --extra "C:\Users\robin\Downloads\antigravity-awesome-skills-main"`
+- **Config file:** copy `ecc-browser.extras.sample.json` → `ecc-browser.extras.json` (gitignored) and list paths in `paths`. They are merged automatically on every `node build.mjs`.
+- **Env:** `ECC_BROWSER_EXTRAS` (or `SKILL_BROWSER_EXTRAS`) — Windows: separate paths with `;`, macOS/Linux: use `:`.
+
+Resolution rules: each path must contain either a **`skills/`**, **`commands/`**, **`agents/`**, **`rules/`**, or **`.archon/workflows/`** tree at that folder, inside a nested **`.claude/`**, **or** one directory down (common for `repo-main/repo-main/skills`). Items appear in the UI under scope **`extra`** with slug namespace from the folder name you passed.
+
+If a repo has **no** such layout (e.g. upstream `claude-code` without packaged skills), the build prints a warning and skips that path.
 
 ## Architecture notes
 

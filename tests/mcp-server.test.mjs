@@ -10,6 +10,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { handleToolCall, listTools } from "../mcp-server.mjs";
+import { parseStoreZip } from "../zip-builder.mjs";
 
 // ---------------------------------------------------------------------------
 // Synthetic catalog — no data.json needed
@@ -26,15 +27,17 @@ const CATALOG = [
 // ---------------------------------------------------------------------------
 // 1. listTools returns array of 5 tool definitions
 // ---------------------------------------------------------------------------
-test("listTools returns array of 5 tool definitions", () => {
+test("listTools returns array of 6 tool definitions", () => {
   const tools = listTools();
   assert.ok(Array.isArray(tools), "listTools should return an array");
-  assert.equal(tools.length, 5, "should have exactly 5 tools");
+  assert.equal(tools.length, 6, "should have exactly 6 tools");
   for (const t of tools) {
     assert.ok(typeof t.name === "string", "each tool should have a name");
     assert.ok(typeof t.description === "string", "each tool should have a description");
     assert.ok(t.inputSchema && typeof t.inputSchema === "object", "each tool should have inputSchema");
   }
+  // Spot-check the new one is listed
+  assert.ok(tools.some((t) => t.name === "assemble_from_goal"), "should expose assemble_from_goal");
 });
 
 // ---------------------------------------------------------------------------
@@ -157,4 +160,132 @@ test("rank_skills_for_goal with missing goal returns -32602 error", () => {
   const result = handleToolCall("rank_skills_for_goal", {}, CATALOG);
   assert.ok(result.error, "should return an error object");
   assert.equal(result.error.code, -32602, "error code should be -32602");
+});
+
+// ---------------------------------------------------------------------------
+// 11. assemble_package KICKOFF.md contains Phase 0 — Preflight Contract
+// (parity with assemble.mjs / buildKickoffWithPhase0)
+// ---------------------------------------------------------------------------
+test("assemble_package KICKOFF.md contains Phase 0 — Preflight Contract", () => {
+  const result = handleToolCall("assemble_package", {
+    goal: "build a Python code review tool",
+    slugs: ["/ecc:python-reviewer", "/ecc:tdd-guide"],
+  }, CATALOG);
+  assert.ok(!result.error, `should not error: ${result.error?.message}`);
+  const payload = JSON.parse(result.content[0].text);
+  const zipBytes = Buffer.from(payload.base64zip, "base64");
+  const files = parseStoreZip(new Uint8Array(zipBytes));
+  const kickoffEntry = files.find((f) => f.name === "KICKOFF.md");
+  assert.ok(kickoffEntry, "KICKOFF.md must exist in the ZIP");
+  const kickoff = new TextDecoder().decode(kickoffEntry.data);
+  assert.match(kickoff, /Phase 0 — Preflight Contract/);
+  assert.match(kickoff, /### 0\.1 Goal restate/);
+  assert.match(kickoff, /Compound Mechanisms/);
+  assert.match(kickoff, /Quality Gate/);
+});
+
+// ---------------------------------------------------------------------------
+// 12. assemble_package respects tier="mvp" override in KICKOFF
+// ---------------------------------------------------------------------------
+test("assemble_package respects tier='mvp' override in KICKOFF", () => {
+  const result = handleToolCall("assemble_package", {
+    goal: "minimal cli",
+    slugs: ["/ecc:tdd-guide"],
+    tier: "mvp",
+  }, CATALOG);
+  assert.ok(!result.error, `should not error: ${result.error?.message}`);
+  const payload = JSON.parse(result.content[0].text);
+  const zipBytes = Buffer.from(payload.base64zip, "base64");
+  const files = parseStoreZip(new Uint8Array(zipBytes));
+  const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
+  assert.match(kickoff, /\*\*Tier:\*\* MVP/);
+});
+
+// ---------------------------------------------------------------------------
+// 13. assemble_package inputSchema exposes tier/scenarioGate/debate
+// ---------------------------------------------------------------------------
+test("assemble_package inputSchema exposes tier/scenarioGate/debate as optional", () => {
+  const tools = listTools();
+  const assemble = tools.find((t) => t.name === "assemble_package");
+  assert.ok(assemble, "assemble_package tool should be listed");
+  const props = assemble.inputSchema.properties;
+  assert.ok(props.tier, "tier should be in inputSchema");
+  assert.ok(props.scenarioGate, "scenarioGate should be in inputSchema");
+  assert.ok(props.debate, "debate should be in inputSchema");
+  // None of the new fields are required (backwards-compatible)
+  assert.deepEqual(assemble.inputSchema.required, ["goal", "slugs"]);
+});
+
+// ---------------------------------------------------------------------------
+// 14. assemble_package ignores invalid tier (falls back to production default)
+// ---------------------------------------------------------------------------
+test("assemble_package falls back to production tier on invalid tier arg", () => {
+  const result = handleToolCall("assemble_package", {
+    goal: "x",
+    slugs: ["/ecc:tdd-guide"],
+    tier: "bogus-tier",
+  }, CATALOG);
+  assert.ok(!result.error, `should not error on invalid tier: ${result.error?.message}`);
+  const payload = JSON.parse(result.content[0].text);
+  const zipBytes = Buffer.from(payload.base64zip, "base64");
+  const files = parseStoreZip(new Uint8Array(zipBytes));
+  const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
+  assert.match(kickoff, /\*\*Tier:\*\* Production/);
+});
+
+// ---------------------------------------------------------------------------
+// 15. assemble_from_goal one-call: rank+select+package returns Phase 0 ZIP
+// ---------------------------------------------------------------------------
+test("assemble_from_goal ranks catalog and assembles a Phase 0 package in one call", () => {
+  const result = handleToolCall("assemble_from_goal", {
+    goal: "review python code security",
+    limit: 3,
+  }, CATALOG);
+  assert.ok(!result.error, `should not error: ${result.error?.message}`);
+  const payload = JSON.parse(result.content[0].text);
+  assert.ok(Array.isArray(payload.picked), "should return picked array");
+  assert.ok(payload.picked.length > 0 && payload.picked.length <= 3, "picked length within limit");
+  for (const p of payload.picked) {
+    assert.ok(typeof p.slug === "string");
+    assert.ok(typeof p.score === "number");
+  }
+  const zipBytes = Buffer.from(payload.base64zip, "base64");
+  const files = parseStoreZip(new Uint8Array(zipBytes));
+  const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
+  assert.match(kickoff, /Phase 0 — Preflight Contract/);
+  assert.match(kickoff, /### 0\.1 Goal restate/);
+});
+
+// ---------------------------------------------------------------------------
+// 16. assemble_from_goal clamps limit and rejects missing goal
+// ---------------------------------------------------------------------------
+test("assemble_from_goal rejects missing goal with -32602", () => {
+  const result = handleToolCall("assemble_from_goal", {}, CATALOG);
+  assert.ok(result.error, "should return error");
+  assert.equal(result.error.code, -32602);
+});
+
+test("assemble_from_goal returns -32603 when no items match the goal", () => {
+  const result = handleToolCall("assemble_from_goal", {
+    goal: "zzznosuchwordzzz qqqq",
+  }, CATALOG);
+  assert.ok(result.error, "should return error when nothing matches");
+  assert.equal(result.error.code, -32603);
+});
+
+// ---------------------------------------------------------------------------
+// 17. assemble_from_goal respects tier override
+// ---------------------------------------------------------------------------
+test("assemble_from_goal respects tier='cutting-edge' override", () => {
+  const result = handleToolCall("assemble_from_goal", {
+    goal: "review python code",
+    tier: "cutting-edge",
+    limit: 2,
+  }, CATALOG);
+  assert.ok(!result.error, `should not error: ${result.error?.message}`);
+  const payload = JSON.parse(result.content[0].text);
+  const zipBytes = Buffer.from(payload.base64zip, "base64");
+  const files = parseStoreZip(new Uint8Array(zipBytes));
+  const kickoff = new TextDecoder().decode(files.find((f) => f.name === "KICKOFF.md").data);
+  assert.match(kickoff, /\*\*Tier:\*\* Cutting-edge/);
 });
