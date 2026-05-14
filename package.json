@@ -14,7 +14,7 @@
     "build": "node build.mjs",
     "bundle": "node bundle.mjs",
     "test": "bash test.sh",
-    "start": "bash launch.sh",
+    "start": "node launch.mjs",
     "e2e": "playwright test"
   },
   "engines": {
@@ -40,6 +40,7 @@
     "zip-builder.mjs",
     "assemble.mjs",
     "launch.sh",
+    "launch.cmd",
     "launch.mjs",
     "index.html",
     "playground.html",
@@ -48,9 +49,11 @@
     "mcp-server.mjs",
     "llm-client.mjs",
     "cli.mjs",
+    "factory-status.mjs",
     "recipes.json",
     "frameworks/",
     "schemas/",
+    "ecc-browser.extras.sample.json",
     "FUTURE_WORK.md",
     "README.md",
     "LICENSE"
