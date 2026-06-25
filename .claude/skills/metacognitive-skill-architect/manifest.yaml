@@ -1,0 +1,35 @@
+# manifest.yaml — declared file inventory for metacognitive-skill-architect.
+# Validated for G4 parity by scripts/validate_skill_package.mjs (Commit 4):
+# every file listed here must exist, and every non-trivial file on disk must be listed.
+# This manifest is updated each build commit to stay in parity.
+
+name: metacognitive-skill-architect
+version: 0.1.0
+skill_number: 0
+governs:
+  - skill-development            # layers the AIC gate + package standards on top
+
+files:
+  required:
+    - SKILL.md
+    - manifest.yaml
+    - ASSUMPTIONS.md
+  recommended:
+    - README.md
+    - CHANGELOG.md
+  references:
+    - references/skill_standard.md
+    - references/reference_standard.md
+    - references/artifact_intent_card_standard.md
+    - references/process_standard.md
+  templates:
+    - templates/new_skill/SKILL.md.template
+    - templates/new_skill/manifest.yaml.template
+    - templates/new_skill/README.md.template
+    - templates/new_skill/artifact_intent_cards.yaml.template
+    - templates/new_reference/reference.md.template
+  scripts: []                   # added in Commit 4 (dependency-free Node .mjs)
+  tests: []                     # added in Commit 4 (node --test)
+  examples: []                  # added in Commit 3 / 5
+
+artifact_intent_cards: artifact_intent_cards.yaml
