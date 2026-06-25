@@ -1,0 +1,23 @@
+# {{SKILL_NAME}} (Skill #{{N}})
+
+{{ONE_PARAGRAPH: what this skill is and why it exists in the snowball.}}
+
+## Orientation (read in this order)
+
+1. `SKILL.md` — the contract.
+2. `ASSUMPTIONS.md` — inheritable decisions (if any).
+3. `references/` — supporting standards/examples.
+
+## How to use
+
+1. {{STEP_1}}
+2. {{STEP_2}}
+3. {{STEP_3}}
+
+## Relationship to other skills
+
+- {{WHICH_EXISTING_SKILLS this one references/governs/extends, and how.}}
+
+## Constraints
+
+- Local, laptop-friendly, no GPU, no new runtime dependency (repo policy).

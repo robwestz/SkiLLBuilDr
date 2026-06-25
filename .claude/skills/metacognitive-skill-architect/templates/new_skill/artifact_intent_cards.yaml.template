@@ -1,0 +1,21 @@
+# artifact_intent_cards.yaml — one card per non-trivial file in {{SKILL_NAME}}.
+# Schema + pass/fail rules: references/artifact_intent_card_standard.md
+# A file may not be created until its card passes (all 16 fields, no placeholders).
+# Copy the block below once per artifact; separate documents with `---`.
+
+artifact_name: {{FILE_BASENAME}}
+artifact_path: {{PATH_RELATIVE_TO_REPO_ROOT}}
+artifact_type: {{skill|doc|script|schema|template|reference|test|config|example|other}}
+why_this_artifact_must_exist: {{justification — not "seems reasonable"}}
+problem_it_prevents: {{the concrete failure avoided}}
+future_artifact_or_workflow_it_enables: {{the specific downstream artifact/workflow}}
+intended_consumer: [{{human|Claude|future_agent|future_skill|validation_script|CLI_workflow|test_runner}}]
+required_inputs: {{what must exist to author this}}
+expected_outputs: {{what it yields, including format}}
+interface_contract: {{the shape consumers rely on}}
+definition_of_done: {{the condition that makes it complete}}
+validation_method: {{script name or manual checklist}}
+failure_modes: {{how it could go wrong}}
+what_should_not_be_included: {{explicit scope boundary}}
+assumptions: {{inheritable decisions; cross-link ASSUMPTIONS.md}}
+downstream_snowball_effect: {{names a SPECIFIC future artifact/workflow it improves}}
