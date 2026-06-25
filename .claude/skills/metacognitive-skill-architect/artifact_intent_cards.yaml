@@ -257,3 +257,95 @@ failure_modes: Author omits the type line, making the per-type DoD unenforceable
 what_should_not_be_included: Real reference content for a specific skill.
 assumptions: References are stored as files in references/.
 downstream_snowball_effect: Produces every future skill's references consistently.
+
+# ============================ Commit 3 (references + examples) ============================
+
+---
+artifact_name: canonical_skill_package.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/canonical_skill_package.md
+artifact_type: reference
+why_this_artifact_must_exist: Defines the package shape the templates and validator both target.
+problem_it_prevents: Divergent package layouts that the validator cannot reason about.
+future_artifact_or_workflow_it_enables: validate_skill_package parity logic and the scaffold step.
+intended_consumer: [human, future_agent, validation_script]
+required_inputs: skill_standard.md anatomy and the minimum-viable-skill decision.
+expected_outputs: A canonical tree plus the smallest package that passes G1-G7.
+interface_contract: A directory-tree block treated as the target shape.
+definition_of_done: A reader can tell required vs optional dirs and the minimum passing set.
+validation_method: Cross-checked against example_good_skill and the validator (Commit 4).
+failure_modes: Implying every optional dir is mandatory.
+what_should_not_be_included: Per-file content rules (those are in skill_standard.md).
+assumptions: Packages live under .claude/skills/<name>/.
+downstream_snowball_effect: Gives validate_skill_package.mjs a concrete shape to assert against.
+
+---
+artifact_name: anti_patterns.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/anti_patterns.md
+artifact_type: reference
+why_this_artifact_must_exist: Names the failure modes the gate exists to reject (system-DoD #5 support).
+problem_it_prevents: Vague "bad quality" judgments with no shared definition of bad.
+future_artifact_or_workflow_it_enables: example_bad_skill and the validator failure messages.
+intended_consumer: [human, future_agent, validation_script]
+required_inputs: The operator principles and repo constraints.
+expected_outputs: A table of AP1-AP10 with harm and the catching gate.
+interface_contract: Table {id, anti-pattern, why harmful, caught by}.
+definition_of_done: Each common failure maps to a specific gate or review.
+validation_method: Manual review; AP1-AP4/AP7 automated in Commit 4.
+failure_modes: Becoming an unbounded wishlist instead of the high-frequency set.
+what_should_not_be_included: Fixes/remedies (those belong in the standards).
+assumptions: Anti-patterns evolve; new ones get appended.
+downstream_snowball_effect: example_bad_skill instantiates these so the validator can prove FAIL.
+
+---
+artifact_name: example_good_skill.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/example_good_skill.md
+artifact_type: example
+why_this_artifact_must_exist: Provides the canonical PASS the system-DoD #4 requires.
+problem_it_prevents: No concrete reference for what "good" actually looks like.
+future_artifact_or_workflow_it_enables: tests/fixtures/valid_skill_package and the validator PASS assertion.
+intended_consumer: [human, future_agent, validation_script]
+required_inputs: canonical_skill_package.md and skill_standard.md.
+expected_outputs: A minimal skill plus a gate-by-gate explanation of why it passes.
+interface_contract: Abridged SKILL.md/manifest plus a gate-mapping table.
+definition_of_done: It passes its standard end-to-end and the validator returns PASS on its fixture.
+validation_method: validate_skill_package.mjs on tests/fixtures/valid_skill_package (Commit 4).
+failure_modes: Being too elaborate, blurring the contrast with the anti-example.
+what_should_not_be_included: Deliberate faults (those belong in example_bad_skill).
+assumptions: The runnable fixture is added in Commit 4.
+downstream_snowball_effect: Becomes the regression fixture proving the validator accepts good packages.
+
+---
+artifact_name: example_bad_skill.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/example_bad_skill.md
+artifact_type: example
+why_this_artifact_must_exist: Provides the anti-example system-DoD #5 requires, contrasting the good one.
+problem_it_prevents: A good example with nothing to prove the gate actually rejects bad input.
+future_artifact_or_workflow_it_enables: tests/fixtures/invalid_skill_package and the validator FAIL assertions.
+intended_consumer: [human, future_agent, validation_script]
+required_inputs: anti_patterns.md and example_good_skill.md.
+expected_outputs: A plausible-but-failing package with named failing dimensions mapped to gates.
+interface_contract: A faults table {dimension, gate, anti-pattern, expected message}.
+definition_of_done: It fails its standard on >=1 named, validatable dimension (here, six).
+validation_method: validate_skill_package.mjs + validate_artifact_cards.mjs report FAIL (Commit 4).
+failure_modes: Differing only cosmetically from the good example (AP4).
+what_should_not_be_included: Random garbage; every fault must be deliberate and named.
+assumptions: The runnable fixture is added in Commit 4.
+downstream_snowball_effect: Becomes the regression fixture proving the validator rejects bad packages.
+
+---
+artifact_name: skill_1_creation_walkthrough.md
+artifact_path: .claude/skills/metacognitive-skill-architect/examples/skill_1_creation_walkthrough.md
+artifact_type: example
+why_this_artifact_must_exist: Demonstrates the end-to-end method so a novice can build the next skill.
+problem_it_prevents: Standards existing but nobody knowing how to apply them in sequence.
+future_artifact_or_workflow_it_enables: dogfood_rehearsal.md (Commit 5) and real Skill #1 creation.
+intended_consumer: [human, future_agent, CLI_workflow]
+required_inputs: All Commit 1-3 standards, templates, and examples.
+expected_outputs: A 6-step worked process with a before/after accuracy comparison.
+interface_contract: Numbered steps mirroring SKILL.md Steps, with runnable commands.
+definition_of_done: A novice can reproduce the process and reach a passing package.
+validation_method: Manual reproduction; commands match the Commit 4 script paths.
+failure_modes: Drifting from SKILL.md steps if the workflow changes.
+what_should_not_be_included: The actual Skill #1 implementation (deferred by design).
+assumptions: Validator script paths from Commit 4 are stable.
+downstream_snowball_effect: Turns the method into a repeatable recipe consumed by Commit 5 and beyond.

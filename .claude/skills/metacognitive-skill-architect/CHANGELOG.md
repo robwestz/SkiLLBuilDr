@@ -5,6 +5,14 @@ versions track the dogfood-snowball build commits.
 
 ## [Unreleased]
 
+### Commit 3 — References and examples
+- Added `references/canonical_skill_package.md` (package shape + minimum viable skill).
+- Added `references/anti_patterns.md` (AP1–AP10 with the gate that catches each).
+- Added `references/example_good_skill.md` (canonical PASS) and
+  `references/example_bad_skill.md` (anti-example failing on 6 named dimensions).
+- Added `examples/skill_1_creation_walkthrough.md` (how Skill #0 builds Skill #1).
+- Updated `manifest.yaml` and `artifact_intent_cards.yaml` for the new files.
+
 ### Commit 2 — Skill #0 skeleton
 - Added `SKILL.md` (9 required elements per skill_standard).
 - Added `README.md` orientation and `CHANGELOG.md`.
