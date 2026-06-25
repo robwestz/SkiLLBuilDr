@@ -22,6 +22,10 @@ files:
     - references/reference_standard.md
     - references/artifact_intent_card_standard.md
     - references/process_standard.md
+    - references/canonical_skill_package.md
+    - references/anti_patterns.md
+    - references/example_good_skill.md
+    - references/example_bad_skill.md
   templates:
     - templates/new_skill/SKILL.md.template
     - templates/new_skill/manifest.yaml.template
@@ -30,6 +34,8 @@ files:
     - templates/new_reference/reference.md.template
   scripts: []                   # added in Commit 4 (dependency-free Node .mjs)
   tests: []                     # added in Commit 4 (node --test)
-  examples: []                  # added in Commit 3 / 5
+  examples:
+    - examples/skill_1_creation_walkthrough.md
+    # examples/dogfood_rehearsal.md added in Commit 5
 
 artifact_intent_cards: artifact_intent_cards.yaml
