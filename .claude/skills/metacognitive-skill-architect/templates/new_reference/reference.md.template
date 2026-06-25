@@ -1,0 +1,19 @@
+# Reference: {{REFERENCE_TITLE}}
+
+> Type: {{template|example_input|example_output|anti_example|fixture|script|checklist|schema|mini_doc|convention|comparison|prompt_fragment|validation_rule|walkthrough}}
+> Per-type DoD: see references/reference_standard.md
+
+{{ONE_PARAGRAPH: what this reference is and which skill/workflow consumes it.}}
+
+## Content
+
+{{THE_REFERENCE_ITSELF — the template, example, checklist, schema, etc.}}
+
+## How it is consumed
+
+- Consumed by: {{which artifact(s) point to this reference}}
+- Validation signal: {{how a validator or reviewer confirms it meets its DoD}}
+
+## What this reference is NOT
+
+- {{explicit scope boundary — what belongs elsewhere}}

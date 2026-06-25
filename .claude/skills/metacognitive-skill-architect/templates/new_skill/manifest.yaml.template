@@ -1,0 +1,24 @@
+# manifest.yaml — declared file inventory for {{SKILL_NAME}}
+# The validator checks this list against the filesystem (G4 parity):
+# every file listed must exist, and every non-trivial file on disk must be listed.
+
+name: {{SKILL_NAME}}
+version: 0.1.0
+skill_number: {{N}}            # position in the dogfood snowball
+governs: []                   # other skills this one references/governs (e.g. [skill-development])
+
+files:
+  required:
+    - SKILL.md
+    - manifest.yaml
+  recommended:
+    - README.md
+    - ASSUMPTIONS.md           # required if the skill makes inheritable decisions
+  references: []               # e.g. references/foo.md
+  templates: []                # e.g. templates/new_x/foo.template
+  scripts: []                  # dependency-free Node .mjs only
+  tests: []                    # node --test files
+  examples: []                 # canonical example + anti-example
+
+# Every entry above must have a corresponding Artifact Intent Card.
+artifact_intent_cards: artifact_intent_cards.yaml

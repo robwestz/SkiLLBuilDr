@@ -1,0 +1,10 @@
+name: invalid_skill_package
+version: 0.1.0
+skill_number: 1
+files:
+  required:
+    - SKILL.md
+    - manifest.yaml
+  references:
+    - references/notes.md
+artifact_intent_cards: artifact_intent_cards.yaml

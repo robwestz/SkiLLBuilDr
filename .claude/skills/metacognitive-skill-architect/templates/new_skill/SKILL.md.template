@@ -1,0 +1,37 @@
+---
+name: {{SKILL_NAME}}            # kebab-case; MUST equal the directory name
+description: {{ONE_SENTENCE_WHAT_AND_WHEN}}   # <= 200 chars, specific; ranker uses this verbatim
+---
+
+# {{Title Case Name}}
+
+{{ONE_PARAGRAPH: the WHAT and the WHEN, concrete. No marketing.}}
+
+## When to use
+
+- {{TRIGGER_1}}
+- {{TRIGGER_2}}                  # at least two explicit triggers
+
+## Inputs
+
+- {{REQUIRED_INPUT_1 — with type/shape}}
+- {{REQUIRED_INPUT_2}}
+
+## Outputs
+
+- {{WHAT_IS_PRODUCED — including format}}
+
+## Steps
+
+1. {{VERB_LED_ACTION with visible output}}
+2. {{NEXT_ACTION}}
+3. {{VERIFICATION_STEP}}         # last step must verify
+
+## Validation
+
+- [ ] {{CHECK_1 — binary pass/fail}}
+- [ ] {{CHECK_2}}
+
+## Examples
+
+{{AT_LEAST_ONE concrete input -> output example}}

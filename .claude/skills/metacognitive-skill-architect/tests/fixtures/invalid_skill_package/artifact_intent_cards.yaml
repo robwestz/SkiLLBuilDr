@@ -1,0 +1,34 @@
+---
+artifact_name: SKILL.md
+artifact_path: .claude/skills/invalid_skill_package/SKILL.md
+artifact_type: skill
+why_this_artifact_must_exist: TODO
+problem_it_prevents: An unusable skill with no triggers.
+future_artifact_or_workflow_it_enables: The frontmatter check before commit.
+intended_consumer: [human, validation_script]
+required_inputs: The skill_standard required structure.
+expected_outputs: A SKILL.md with the required elements.
+interface_contract: Numbered headings the validator maps to checks.
+definition_of_done: All required headings present and description under 200 chars.
+validation_method: validate_skill_package.mjs on this fixture.
+failure_modes: Missing headings or over-long description.
+what_should_not_be_included: Domain examples beyond one case.
+assumptions: SKILL.md uses YAML frontmatter.
+downstream_snowball_effect: Becomes the FAIL fixture proving the validator rejects bad cards.
+---
+artifact_name: manifest.yaml
+artifact_path: .claude/skills/invalid_skill_package/manifest.yaml
+artifact_type: config
+why_this_artifact_must_exist: Declares the file inventory the validator checks.
+problem_it_prevents: Manifest drift where files and declarations disagree.
+future_artifact_or_workflow_it_enables: The G4 parity check.
+intended_consumer: [validation_script]
+required_inputs: The list of files shipped by this fixture.
+expected_outputs: A manifest whose entries should match disk (here, deliberately not).
+interface_contract: A files: block plus an artifact_intent_cards: pointer.
+definition_of_done: Every listed file exists and every file on disk is listed.
+validation_method: validate_skill_package.mjs parity check.
+failure_modes: Listing a phantom file or omitting a real one.
+what_should_not_be_included: Build metadata unrelated to inventory.
+assumptions: Manifest is the single source of declared inventory.
+downstream_snowball_effect: Lets the validator demonstrate phantom and orphan detection.
