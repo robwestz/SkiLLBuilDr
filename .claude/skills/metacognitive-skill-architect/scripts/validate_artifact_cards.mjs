@@ -46,11 +46,6 @@ const PLACEHOLDERS = ['todo', 'tbd', '???', 'seems reasonable', 'figure out late
 // Generic snowball claims that fail the "name a specific artifact/workflow" rule.
 const GENERIC_SNOWBALL = ['makes things better', 'improves quality', 'better quality', 'general improvement'];
 
-function stripInlineComment(value) {
-  const i = value.indexOf(' #');
-  return (i === -1 ? value : value.slice(0, i)).trim();
-}
-
 // Parse a multi-document AIC YAML file into an array of flat card objects.
 // Each `---` on its own line starts a new card.
 export function parseCards(text) {
@@ -69,7 +64,9 @@ export function parseCards(text) {
     if (!m) continue; // ignore non key:value lines (free prose, list items)
     if (!current) current = {};
     const key = m[1];
-    const value = stripInlineComment(m[2].trim());
+    // Card values are free-text and may legitimately contain '#'
+    // (e.g. "Skill #1", "system-DoD #1"), so no inline-comment stripping here.
+    const value = m[2].trim();
     current[key] = value;
   }
   if (current && Object.keys(current).length > 0) cards.push(current);

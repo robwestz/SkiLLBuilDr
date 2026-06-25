@@ -50,7 +50,7 @@ export function parseManifest(text) {
 
     if (!inFiles) continue;
 
-    const inlineList = line.match(/^\s*[A-Za-z_]+:\s*\[(.*)\]\s*$/);
+    const inlineList = line.match(/^\s*[A-Za-z_]+:\s*\[(.*?)\]\s*(?:#.*)?$/);
     if (inlineList) {
       for (const item of inlineList[1].split(',')) {
         const v = stripQuotes(stripInlineComment(item.trim()));
