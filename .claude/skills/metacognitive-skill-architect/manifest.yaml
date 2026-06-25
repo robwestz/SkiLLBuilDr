@@ -32,8 +32,12 @@ files:
     - templates/new_skill/README.md.template
     - templates/new_skill/artifact_intent_cards.yaml.template
     - templates/new_reference/reference.md.template
-  scripts: []                   # added in Commit 4 (dependency-free Node .mjs)
-  tests: []                     # added in Commit 4 (node --test)
+  scripts:
+    - scripts/validate_skill_package.mjs
+    - scripts/validate_artifact_cards.mjs
+  tests:
+    - tests/validate_skill_package.test.mjs
+    - tests/validate_artifact_cards.test.mjs
   examples:
     - examples/skill_1_creation_walkthrough.md
     # examples/dogfood_rehearsal.md added in Commit 5

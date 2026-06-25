@@ -38,7 +38,7 @@ Legend: **(R)** required, **(O)** optional. Enum fields list allowed values.
 
 ## Pass/fail rules (a card is VALID iff)
 
-- [ ] All 15 required fields are present and non-empty.
+- [ ] All 16 required fields are present and non-empty.
 - [ ] `artifact_type` is a single value from its enum.
 - [ ] `intended_consumer` is a non-empty list, each value from its enum.
 - [ ] No required field contains a non-justification placeholder

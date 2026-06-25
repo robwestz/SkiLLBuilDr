@@ -31,7 +31,7 @@ SCOPE:    project-local
 
 Using `templates/new_skill/artifact_intent_cards.yaml.template`, fill one card
 for each of: `SKILL.md`, `manifest.yaml`, `scripts/lint.mjs`, `tests/lint.test.mjs`.
-Each card must satisfy all 15 fields with no placeholders.
+Each card must satisfy all 16 fields with no placeholders.
 
 > Snowball effect: because `artifact_intent_card_standard.md` already exists, you
 > are filling a known schema, not inventing one. This is where Skill #0 pays off.
