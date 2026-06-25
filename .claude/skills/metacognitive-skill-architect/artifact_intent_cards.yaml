@@ -423,3 +423,21 @@ what_should_not_be_included: Network or filesystem writes; non-deterministic dat
 assumptions: REQUIRED_FIELDS stays the source of truth for field count.
 validation_method: node --test on this file.
 downstream_snowball_effect: Guarantees the card gate stays correct as the schema evolves.
+
+---
+artifact_name: dogfood_rehearsal.md
+artifact_path: .claude/skills/metacognitive-skill-architect/examples/dogfood_rehearsal.md
+artifact_type: example
+why_this_artifact_must_exist: Proves the dogfood-snowball claim by running Skill #0's method against a concrete Skill #1, plan only.
+problem_it_prevents: A method that sounds good on paper but never demonstrates it improves the next step.
+future_artifact_or_workflow_it_enables: The actual Skill #1 build, which starts from a pre-validated plan.
+intended_consumer: [human, future_agent]
+required_inputs: skill_1_creation_walkthrough.md, the AIC template, and the process_standard gates.
+expected_outputs: A filled rehearsal AIC set, a dry-run gate table, and a named problem caught before code.
+interface_contract: Markdown narrative; section per snowball/AIC/gate/catch/verdict.
+definition_of_done: Shows five of six Skill #1 decisions inherited and at least one issue caught pre-code, with no Skill #1 files created.
+validation_method: Manual review against process_standard G6; G4 parity via validate_skill_package.mjs.
+failure_modes: Drifting into an actual Skill #1 implementation; vague snowball claims without a concrete catch.
+what_should_not_be_included: Any file under .claude/skills/frontmatter-linter/; new runtime deps.
+assumptions: Skill #1 is the frontmatter-linter candidate (illustrative, revisit_required).
+downstream_snowball_effect: Gives the next builder a worked, validated starting plan instead of a cold start.

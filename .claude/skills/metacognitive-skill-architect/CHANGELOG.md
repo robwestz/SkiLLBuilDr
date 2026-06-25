@@ -5,6 +5,13 @@ versions track the dogfood-snowball build commits.
 
 ## [Unreleased]
 
+### Commit 5 — Dogfood rehearsal
+- Added `examples/dogfood_rehearsal.md`: runs Skill #0's method against a
+  concrete Skill #1 (`frontmatter-linter`), plan only — filled AIC set, a
+  dry-run of gates G1–G7, and a problem caught before any code. No Skill #1
+  files are created.
+- Updated `manifest.yaml` and `artifact_intent_cards.yaml` for the new file.
+
 ### Commit 4 — Validators
 - Added `scripts/validate_skill_package.mjs` (gates G1/G2/G3/G4/G7 + SKILL.md DoD)
   and `scripts/validate_artifact_cards.mjs` (16-field AIC schema enforcement).
@@ -36,7 +43,7 @@ versions track the dogfood-snowball build commits.
   `reference_standard.md`, `artifact_intent_card_standard.md`,
   `process_standard.md`.
 
-### Deferred
-- Commit 3: canonical good example + anti-example + walkthroughs.
-- Commit 4: dependency-free Node validators (`scripts/`) + `tests/`.
-- Commit 5: dogfood rehearsal (Skill #1 plan).
+### Deferred (beyond this build)
+- Skill #1 (`frontmatter-linter`) implementation — rehearsed only, see
+  `examples/dogfood_rehearsal.md`.
+- Wiring `validate_skill_package.mjs` into repo CI / a pre-commit hook.

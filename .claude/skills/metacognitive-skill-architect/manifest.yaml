@@ -40,6 +40,6 @@ files:
     - tests/validate_artifact_cards.test.mjs
   examples:
     - examples/skill_1_creation_walkthrough.md
-    # examples/dogfood_rehearsal.md added in Commit 5
+    - examples/dogfood_rehearsal.md
 
 artifact_intent_cards: artifact_intent_cards.yaml
