@@ -230,7 +230,7 @@ why_this_artifact_must_exist: Gives authors a per-file card scaffold so the crea
 problem_it_prevents: Authors skipping AICs because writing them from scratch feels heavy.
 future_artifact_or_workflow_it_enables: Step 2 (write cards) of the workflow + validate_artifact_cards.mjs.
 intended_consumer: [human, Claude, future_agent, validation_script]
-required_inputs: The 15-field schema from artifact_intent_card_standard.md.
+required_inputs: The 16-field schema from artifact_intent_card_standard.md.
 expected_outputs: A copy-per-artifact YAML block with every required field present.
 interface_contract: YAML documents separated by --- with enum hints inline.
 definition_of_done: Filling it yields cards that pass validate_artifact_cards.mjs.
@@ -349,3 +349,77 @@ failure_modes: Drifting from SKILL.md steps if the workflow changes.
 what_should_not_be_included: The actual Skill #1 implementation (deferred by design).
 assumptions: Validator script paths from Commit 4 are stable.
 downstream_snowball_effect: Turns the method into a repeatable recipe consumed by Commit 5 and beyond.
+
+# ============================ Commit 4 (validators + tests) ============================
+
+---
+artifact_name: validate_skill_package.mjs
+artifact_path: .claude/skills/metacognitive-skill-architect/scripts/validate_skill_package.mjs
+artifact_type: script
+why_this_artifact_must_exist: Automates gates G1/G2/G3/G4/G7 so package quality is machine-checked, not eyeballed.
+problem_it_prevents: Manual gate checks drifting or being skipped under time pressure.
+future_artifact_or_workflow_it_enables: The pre-commit grind and CI check for every future skill.
+intended_consumer: [validation_script, future_agent, CLI_workflow, test_runner]
+required_inputs: A skill package dir with manifest.yaml and artifact_intent_cards.yaml.
+expected_outputs: PASS (exit 0) or FAIL (exit 1) with one line per problem.
+interface_contract: CLI arg = package dir; exported validatePackage(root) returns {errors}.
+definition_of_done: Exits 0 on valid_skill_package, non-zero on invalid_skill_package, and self-validates this skill.
+validation_method: tests/test_validate_skill_package.mjs via node --test.
+failure_modes: False positives on legitimate files; missing a real orphan/phantom.
+what_should_not_be_included: Any third-party dependency; network or write access.
+assumptions: Dependency-free Node ESM; manifest stays flat per the standard.
+downstream_snowball_effect: Turns process_standard gates into a reusable executable check for Skill #1+.
+
+---
+artifact_name: validate_artifact_cards.mjs
+artifact_path: .claude/skills/metacognitive-skill-architect/scripts/validate_artifact_cards.mjs
+artifact_type: script
+why_this_artifact_must_exist: Enforces the AIC standard (16 fields, enums, no placeholders) mechanically.
+problem_it_prevents: Cards that look filled but contain placeholders or out-of-enum values.
+future_artifact_or_workflow_it_enables: The create-time gate and validate_skill_package G3 reuse.
+intended_consumer: [validation_script, future_agent, test_runner]
+required_inputs: An artifact_intent_cards.yaml file (one document per card).
+expected_outputs: PASS (exit 0) or FAIL (exit 1) listing each invalid field.
+interface_contract: CLI arg = cards file; exports parseCards, validateCard, validateCardsFile.
+definition_of_done: Exits 0 on valid fixture cards, non-zero when any required field is missing/placeholder/out-of-enum.
+validation_method: tests/test_validate_artifact_cards.mjs via node --test.
+failure_modes: Parser mishandling inline comments or list values.
+what_should_not_be_included: A full YAML library; deep-nesting support.
+assumptions: Cards are flat and line-oriented per the AIC standard.
+downstream_snowball_effect: Lets validate_skill_package reuse one card validator across all skills.
+
+---
+artifact_name: validate_skill_package.test.mjs
+artifact_path: .claude/skills/metacognitive-skill-architect/tests/validate_skill_package.test.mjs
+artifact_type: test
+why_this_artifact_must_exist: Proves the package validator accepts good and rejects bad packages.
+problem_it_prevents: A silently broken validator that passes everything (or nothing).
+future_artifact_or_workflow_it_enables: Regression safety as the validator evolves.
+intended_consumer: [test_runner, future_agent]
+required_inputs: The valid/invalid fixtures and validate_skill_package.mjs exports.
+expected_outputs: node --test cases asserting PASS/FAIL and the six named failures.
+interface_contract: node:test cases importing validatePackage and parseManifest.
+definition_of_done: All cases pass under node --test, including the dogfood self-validation case.
+validation_method: node --test on this file.
+failure_modes: Asserting on messages that drift if wording changes.
+what_should_not_be_included: Network or filesystem writes; non-deterministic data.
+assumptions: Fixtures remain the canonical PASS/FAIL pair.
+downstream_snowball_effect: Locks validator behavior so future skills can trust it.
+
+---
+artifact_name: validate_artifact_cards.test.mjs
+artifact_path: .claude/skills/metacognitive-skill-architect/tests/validate_artifact_cards.test.mjs
+artifact_type: test
+why_this_artifact_must_exist: Proves the AIC validator enforces every pass/fail rule in the standard.
+problem_it_prevents: An AIC validator that misses placeholders, enums, or missing fields.
+future_artifact_or_workflow_it_enables: Confidence to reuse the card validator inside the package validator.
+intended_consumer: [test_runner, future_agent]
+required_inputs: The valid/invalid card fixtures and validate_artifact_cards.mjs exports.
+expected_outputs: node --test cases covering each validation rule.
+interface_contract: node:test cases importing parseCards, validateCard, validateCardsFile.
+definition_of_done: All cases pass under node --test.
+failure_modes: Over-fitting assertions to exact wording.
+what_should_not_be_included: Network or filesystem writes; non-deterministic data.
+assumptions: REQUIRED_FIELDS stays the source of truth for field count.
+validation_method: node --test on this file.
+downstream_snowball_effect: Guarantees the card gate stays correct as the schema evolves.
