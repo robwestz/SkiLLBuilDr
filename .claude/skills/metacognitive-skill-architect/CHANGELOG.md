@@ -5,6 +5,17 @@ versions track the dogfood-snowball build commits.
 
 ## [Unreleased]
 
+### Commit 4 — Validators
+- Added `scripts/validate_skill_package.mjs` (gates G1/G2/G3/G4/G7 + SKILL.md DoD)
+  and `scripts/validate_artifact_cards.mjs` (16-field AIC schema enforcement).
+  Both dependency-free Node ESM, runnable as CLIs and importable for tests.
+- Added `tests/validate_skill_package.test.mjs` and
+  `tests/validate_artifact_cards.test.mjs` (12 `node --test` cases, incl. dogfood
+  self-validation of this package).
+- Added canonical fixtures `tests/fixtures/valid_skill_package/` (PASS) and
+  `tests/fixtures/invalid_skill_package/` (FAIL on the 6 named dimensions).
+- Updated `manifest.yaml` and `artifact_intent_cards.yaml` for the new files.
+
 ### Commit 3 — References and examples
 - Added `references/canonical_skill_package.md` (package shape + minimum viable skill).
 - Added `references/anti_patterns.md` (AP1–AP10 with the gate that catches each).

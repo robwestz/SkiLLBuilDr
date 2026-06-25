@@ -1,6 +1,6 @@
 # artifact_intent_cards.yaml — one card per non-trivial file in {{SKILL_NAME}}.
 # Schema + pass/fail rules: references/artifact_intent_card_standard.md
-# A file may not be created until its card passes (all 15 fields, no placeholders).
+# A file may not be created until its card passes (all 16 fields, no placeholders).
 # Copy the block below once per artifact; separate documents with `---`.
 
 artifact_name: {{FILE_BASENAME}}

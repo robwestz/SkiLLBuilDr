@@ -41,7 +41,7 @@ files:
 artifact_intent_cards: artifact_intent_cards.yaml
 ```
 
-### artifact_intent_cards.yaml — one VALID card per file (all 15 fields filled).
+### artifact_intent_cards.yaml — one VALID card per file (all 16 fields filled).
 
 ## Why it PASSES (mapped to gates)
 
@@ -49,7 +49,7 @@ artifact_intent_cards: artifact_intent_cards.yaml
 |------|---------------|
 | G1 required files present | SKILL.md + manifest.yaml + cards all exist |
 | G2 AIC present | every file has a card |
-| G3 AIC valid | all 15 fields, no placeholders, enum values valid |
+| G3 AIC valid | all 16 fields, no placeholders, enum values valid |
 | G4 manifest parity | manifest lists exactly the files on disk |
 | G5 example divergence | n/a for this minimal skill (it IS the good example) |
 | G6 snowball reachability | SKILL.md describes how the next linter variant is created |

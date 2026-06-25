@@ -1,0 +1,34 @@
+---
+artifact_name: SKILL.md
+artifact_path: .claude/skills/valid_skill_package/SKILL.md
+artifact_type: skill
+why_this_artifact_must_exist: Defines the skill contract and how it is invoked.
+problem_it_prevents: An unusable skill with no triggers, inputs, or steps.
+future_artifact_or_workflow_it_enables: The frontmatter check invoked before each commit.
+intended_consumer: [human, future_agent, validation_script]
+required_inputs: The skill_standard required structure.
+expected_outputs: A SKILL.md with all nine required elements.
+interface_contract: Numbered headings the validator maps 1:1 to file checks.
+definition_of_done: All required headings present and the description is under 200 chars.
+validation_method: validate_skill_package.mjs on this fixture.
+failure_modes: Missing a required heading or an over-long description.
+what_should_not_be_included: Domain examples beyond the single illustrative case.
+assumptions: SKILL.md uses YAML frontmatter (repo convention).
+downstream_snowball_effect: Becomes the canonical PASS fixture the test suite asserts on.
+---
+artifact_name: manifest.yaml
+artifact_path: .claude/skills/valid_skill_package/manifest.yaml
+artifact_type: config
+why_this_artifact_must_exist: Declares the file inventory the validator checks for parity.
+problem_it_prevents: Manifest drift where files and declarations disagree.
+future_artifact_or_workflow_it_enables: The G4 parity check in validate_skill_package.mjs.
+intended_consumer: [validation_script, future_agent]
+required_inputs: The list of files shipped by this fixture.
+expected_outputs: A manifest whose entries match the files on disk.
+interface_contract: A files: block plus an artifact_intent_cards: pointer.
+definition_of_done: Every listed file exists and every file on disk is listed.
+validation_method: validate_skill_package.mjs parity check on this fixture.
+failure_modes: Listing a phantom file or omitting a real one.
+what_should_not_be_included: Build metadata unrelated to file inventory.
+downstream_snowball_effect: Lets validate_skill_package.mjs prove parity on the PASS fixture.
+assumptions: Manifest is the single source of declared inventory.
