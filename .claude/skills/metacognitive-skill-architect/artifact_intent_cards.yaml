@@ -1,0 +1,259 @@
+# Artifact Intent Cards for metacognitive-skill-architect's own files.
+# This is dogfood: Skill #0 documents its own artifacts under its own gate.
+# Schema + pass/fail rules: references/artifact_intent_card_standard.md
+# Validated by scripts/validate_artifact_cards.mjs (Commit 4).
+
+# ============================ Commit 1 (meta-spec) ============================
+
+artifact_name: ASSUMPTIONS.md
+artifact_path: .claude/skills/metacognitive-skill-architect/ASSUMPTIONS.md
+artifact_type: doc
+why_this_artifact_must_exist: Centralizes every inheritable architecture/format/validation decision so future skills do not re-discover them.
+problem_it_prevents: Silent assumptions that later prove wrong and force expensive rework in Skill #1+.
+future_artifact_or_workflow_it_enables: Every later artifact can reference or challenge a recorded assumption instead of guessing.
+intended_consumer: [human, future_agent, future_skill]
+required_inputs: Decisions taken this session (repo choice, dependency-free policy, GPU-free profile).
+expected_outputs: A status-tagged table of assumptions (locked | revisit_required) with affected scope.
+interface_contract: Markdown table; each row = {assumption, rationale, status, affects}.
+definition_of_done: All session architecture/format/validation assumptions are listed and status-tagged.
+validation_method: Manual checklist now; later cross-checked against manifest by validate_skill_package.
+failure_modes: Becomes a dumping ground without status, or is documented but not followed.
+what_should_not_be_included: Implementation detail, code, task todo lists.
+assumptions: Assumptions change over time, hence the status field and revisit log.
+downstream_snowball_effect: Skill #1 starts from a known foundation instead of re-deriving decisions.
+
+---
+artifact_name: skill_standard.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/skill_standard.md
+artifact_type: reference
+why_this_artifact_must_exist: Defines what a skill is and its minimum Definition of Done (system-DoD #1).
+problem_it_prevents: Inconsistent, half-finished skills with no shared baseline.
+future_artifact_or_workflow_it_enables: templates/new_skill/SKILL.md.template and scripts/validate_skill_package.mjs.
+intended_consumer: [human, future_agent, future_skill, validation_script]
+required_inputs: Existing repo SKILL.md frontmatter convention; the skill definition.
+expected_outputs: Canonical skill anatomy + mandatory SKILL.md sections + DoD checklist.
+interface_contract: Numbered section list the validator maps 1:1 to file checks.
+definition_of_done: A novice can read it and know exactly what a complete skill requires.
+validation_method: Cross-checked against example_good_skill (Commit 3) and validate_skill_package (Commit 4).
+failure_modes: Too abstract to validate against; or duplicates skill-development without referencing it.
+what_should_not_be_included: Domain-specific examples (those live in examples/).
+assumptions: SKILL.md with YAML frontmatter is the format (repo convention).
+downstream_snowball_effect: Every future skill is measured against one source instead of ad-hoc judgment.
+
+---
+artifact_name: reference_standard.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/reference_standard.md
+artifact_type: reference
+why_this_artifact_must_exist: Makes references first-class artifacts with their own DoD (system-DoD #2).
+problem_it_prevents: References degrading into decorative filler with no quality bar.
+future_artifact_or_workflow_it_enables: templates/new_reference/reference.md.template and the validator's reference checks.
+intended_consumer: [human, future_agent, future_skill, validation_script]
+required_inputs: The broad references definition (templates, fixtures, anti-examples, schemas, ...).
+expected_outputs: A taxonomy of reference types plus a minimum DoD and validation signal per type.
+interface_contract: Table {reference_type, purpose, minimum_DoD, validation_signal}.
+definition_of_done: Every reference type in the taxonomy has a measurable quality requirement.
+validation_method: Manual checklist now; validator coupling in Commit 4.
+failure_modes: Lists types but gives no DoD, making them impossible to validate.
+what_should_not_be_included: Actual reference instances (those are created in Commit 3).
+assumptions: References are stored as files in references/ unless an exception is stated.
+downstream_snowball_effect: Skill #1's references become reviewable from day one.
+
+---
+artifact_name: artifact_intent_card_standard.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/artifact_intent_card_standard.md
+artifact_type: reference
+why_this_artifact_must_exist: Canonizes the AIC format the entire gate mechanism rests on (system-DoD #3).
+problem_it_prevents: Files created because they "seem reasonable" without justification.
+future_artifact_or_workflow_it_enables: templates/new_skill/artifact_intent_cards.yaml.template and scripts/validate_artifact_cards.mjs.
+intended_consumer: [human, Claude, future_agent, validation_script]
+required_inputs: The AIC schema from the operator prompt.
+expected_outputs: Field spec (required/optional), enum values, fill rules, and pass/fail rules with examples.
+interface_contract: A YAML-schema description a validator can interpret mechanically.
+definition_of_done: An AIC can be ruled pass/fail using only this document.
+validation_method: Dogfooded directly — this file's own example/anti-example demonstrate pass and fail.
+failure_modes: Ambiguous fields the validator cannot decide pass/fail on.
+what_should_not_be_included: Tool-specific parsing code (belongs in Commit 4).
+assumptions: AICs are stored as YAML.
+downstream_snowball_effect: Every future file begins with a verifiable card, feeding validate_artifact_cards.
+
+---
+artifact_name: process_standard.md
+artifact_path: .claude/skills/metacognitive-skill-architect/references/process_standard.md
+artifact_type: reference
+why_this_artifact_must_exist: Collects the DoD matrix, dependency graph, validation gates, and commit rules in one place.
+problem_it_prevents: Process rules living implicitly/scattered and being unreviewable.
+future_artifact_or_workflow_it_enables: The pre-commit gate and the dogfood rehearsal (Commit 5).
+intended_consumer: [human, future_agent, CLI_workflow]
+required_inputs: The operator commit plan, the gate checklist, and repo commit/test rules (AGENT_ONBOARDING Section A).
+expected_outputs: DoD matrix, dependency-graph notation, gate checklist G1-G7, commit format, assumptions policy.
+interface_contract: Tables plus a plain-text dependency-graph notation (A -> B).
+definition_of_done: Every commit in the plan can show its DoD and validation evidence from this file.
+validation_method: Manual gate now; referenced by the validator scripts in Commit 4.
+failure_modes: Conflicting with repo commit rules (zero-dep, tests-green) instead of harmonizing.
+what_should_not_be_included: The validator code itself.
+assumptions: Dependency-free Node validators (not Python) per repo zero-runtime-dep policy.
+downstream_snowball_effect: All later commits inherit one provable process, enabling the Commit 5 rehearsal.
+
+# ============================ Commit 2 (skeleton) ============================
+
+---
+artifact_name: SKILL.md
+artifact_path: .claude/skills/metacognitive-skill-architect/SKILL.md
+artifact_type: skill
+why_this_artifact_must_exist: It is the contract clients invoke; without it the package is not a skill.
+problem_it_prevents: A package of docs with no invocable entrypoint, triggers, or DoD.
+future_artifact_or_workflow_it_enables: Invocation by agents and the catalog ranker; drives the create-next-skill workflow.
+intended_consumer: [human, Claude, future_agent, CLI_workflow]
+required_inputs: skill_standard.md (required sections) and aic_standard.md (the gate it enforces).
+expected_outputs: A SKILL.md with all 9 required elements and a 7-step gated procedure.
+interface_contract: YAML frontmatter (name, description) + the 9 standard headings.
+definition_of_done: Passes skill_standard.md DoD; directory name equals frontmatter name.
+validation_method: validate_skill_package.mjs (Commit 4); manual heading checklist now.
+failure_modes: description over 200 chars; missing a required heading; name/dir mismatch.
+what_should_not_be_included: The standards themselves (they live in references/).
+assumptions: SKILL.md frontmatter is required by the repo catalog ranker.
+downstream_snowball_effect: Every future skill is scaffolded to mirror this contract shape.
+
+---
+artifact_name: README.md
+artifact_path: .claude/skills/metacognitive-skill-architect/README.md
+artifact_type: doc
+why_this_artifact_must_exist: Gives a human a reading order and the create-next-skill quickstart.
+problem_it_prevents: A novice not knowing where to start in a multi-file package.
+future_artifact_or_workflow_it_enables: Onboarding a human/agent to use the skill correctly.
+intended_consumer: [human, future_agent]
+required_inputs: The package layout and the relationship to existing repo skills.
+expected_outputs: Orientation reading order, usage steps, layout, constraints.
+interface_contract: Markdown with a fixed "read in this order" list and a usage section.
+definition_of_done: A novice can follow it to create the next skill without reading source.
+validation_method: Manual review against README.md.template.
+failure_modes: Drifting out of sync with SKILL.md/manifest as the package grows.
+what_should_not_be_included: Normative standards (those are references/), duplicate of SKILL.md.
+assumptions: Dialogue is Swedish but artifacts are English (revisit_required A10).
+downstream_snowball_effect: README.md.template is generalized from this file for future skills.
+
+---
+artifact_name: CHANGELOG.md
+artifact_path: .claude/skills/metacognitive-skill-architect/CHANGELOG.md
+artifact_type: doc
+why_this_artifact_must_exist: Records the snowball build history so reviewers can see how each commit advanced DoD.
+problem_it_prevents: Losing the rationale/order of the dogfood build across commits.
+future_artifact_or_workflow_it_enables: Auditing dogfood-quality progression; release notes for Skill #0.
+intended_consumer: [human, future_agent]
+required_inputs: The commit plan and what each commit shipped/deferred.
+expected_outputs: Keep-a-Changelog-style entries per build commit, plus a Deferred section.
+interface_contract: Markdown sections keyed by commit with Added/Deferred subsections.
+definition_of_done: Each commit that changes the package adds a corresponding entry.
+validation_method: Manual review; entry present for the current commit.
+failure_modes: Not updated per commit, going stale.
+what_should_not_be_included: Full diffs (git holds those).
+assumptions: One changelog per skill package.
+downstream_snowball_effect: Establishes the per-skill changelog habit reused by Skill #1+.
+
+---
+artifact_name: manifest.yaml
+artifact_path: .claude/skills/metacognitive-skill-architect/manifest.yaml
+artifact_type: config
+why_this_artifact_must_exist: Declares the file inventory the validator checks for parity (G4).
+problem_it_prevents: Phantom files in docs or orphan files on disk drifting from the package's stated contents.
+future_artifact_or_workflow_it_enables: scripts/validate_skill_package.mjs parity check.
+intended_consumer: [validation_script, human, future_agent]
+required_inputs: The actual files on disk after each build commit.
+expected_outputs: A categorized list (required/recommended/references/templates/scripts/tests/examples).
+interface_contract: Flat YAML with named lists the validator parses without a YAML dependency.
+definition_of_done: Manifest exactly matches the filesystem at commit time.
+validation_method: validate_skill_package.mjs (Commit 4); manual diff now.
+failure_modes: Forgetting to update it when files are added/removed.
+what_should_not_be_included: File contents or per-file documentation (those are AICs).
+assumptions: A simple line parser is enough; cards live in artifact_intent_cards.yaml.
+downstream_snowball_effect: manifest.yaml.template generalizes this for every future skill.
+
+---
+artifact_name: SKILL.md.template
+artifact_path: .claude/skills/metacognitive-skill-architect/templates/new_skill/SKILL.md.template
+artifact_type: template
+why_this_artifact_must_exist: Lets the next skill be scaffolded with the 9 required elements and no blanks left ambiguous.
+problem_it_prevents: Hand-rolled SKILL.md files that miss required sections or frontmatter.
+future_artifact_or_workflow_it_enables: Step 4 (scaffold) of the create-next-skill workflow.
+intended_consumer: [human, Claude, future_agent]
+required_inputs: skill_standard.md required-section list.
+expected_outputs: A fill-in template whose placeholders are named and explained.
+interface_contract: Mustache-style {{PLACEHOLDER}} tokens mapping to standard sections.
+definition_of_done: Filling all placeholders yields a SKILL.md that passes skill_standard.md.
+validation_method: Filled instance run through validate_skill_package.mjs (Commit 4).
+failure_modes: Drifting from skill_standard.md if the standard changes.
+what_should_not_be_included: Real content for any specific skill.
+assumptions: {{...}} placeholder convention is used across all templates.
+downstream_snowball_effect: Directly produces every future skill's SKILL.md.
+
+---
+artifact_name: manifest.yaml.template
+artifact_path: .claude/skills/metacognitive-skill-architect/templates/new_skill/manifest.yaml.template
+artifact_type: template
+why_this_artifact_must_exist: Scaffolds a parity-checkable manifest for each new skill.
+problem_it_prevents: New skills shipping without a declared inventory, defeating G4.
+future_artifact_or_workflow_it_enables: Step 4 scaffold + later G4 parity validation.
+intended_consumer: [human, Claude, future_agent, validation_script]
+required_inputs: The manifest field shape from manifest.yaml.
+expected_outputs: A fill-in manifest with all category lists present.
+interface_contract: Same flat YAML shape as manifest.yaml with {{placeholders}}.
+definition_of_done: Filling it produces a manifest that passes parity for the new skill.
+validation_method: validate_skill_package.mjs on the filled instance.
+failure_modes: Categories omitted, causing under-declared inventories.
+what_should_not_be_included: Real file lists of any specific skill.
+assumptions: Same parser assumptions as manifest.yaml.
+downstream_snowball_effect: Produces every future skill's manifest.
+
+---
+artifact_name: README.md.template
+artifact_path: .claude/skills/metacognitive-skill-architect/templates/new_skill/README.md.template
+artifact_type: template
+why_this_artifact_must_exist: Scaffolds a consistent orientation doc for each new skill.
+problem_it_prevents: Inconsistent or missing human orientation across skills.
+future_artifact_or_workflow_it_enables: Step 4 scaffold of the create-next-skill workflow.
+intended_consumer: [human, future_agent]
+required_inputs: The README shape from this package's README.md.
+expected_outputs: A fill-in README with reading order, usage, relationships, constraints.
+interface_contract: Markdown with {{placeholders}} for the standard sections.
+definition_of_done: Filling it yields a README a novice can follow.
+failure_modes: Becoming a marketing blurb instead of orientation.
+validation_method: Manual review against reference_standard template DoD.
+what_should_not_be_included: Normative standards.
+assumptions: Placeholder convention {{...}}.
+downstream_snowball_effect: Produces every future skill's README.
+
+---
+artifact_name: artifact_intent_cards.yaml.template
+artifact_path: .claude/skills/metacognitive-skill-architect/templates/new_skill/artifact_intent_cards.yaml.template
+artifact_type: template
+why_this_artifact_must_exist: Gives authors a per-file card scaffold so the create-time gate is easy to satisfy.
+problem_it_prevents: Authors skipping AICs because writing them from scratch feels heavy.
+future_artifact_or_workflow_it_enables: Step 2 (write cards) of the workflow + validate_artifact_cards.mjs.
+intended_consumer: [human, Claude, future_agent, validation_script]
+required_inputs: The 15-field schema from artifact_intent_card_standard.md.
+expected_outputs: A copy-per-artifact YAML block with every required field present.
+interface_contract: YAML documents separated by --- with enum hints inline.
+definition_of_done: Filling it yields cards that pass validate_artifact_cards.mjs.
+validation_method: validate_artifact_cards.mjs on the filled instance (Commit 4).
+failure_modes: Drifting from the AIC standard if fields change.
+what_should_not_be_included: Real cards for a specific skill.
+assumptions: AICs are YAML; flat fields per the standard.
+downstream_snowball_effect: Every future file's gate card starts here.
+
+---
+artifact_name: reference.md.template
+artifact_path: .claude/skills/metacognitive-skill-architect/templates/new_reference/reference.md.template
+artifact_type: template
+why_this_artifact_must_exist: Scaffolds a typed, DoD-aware reference so references stay first-class.
+problem_it_prevents: Ad-hoc references with no declared type or validation signal.
+future_artifact_or_workflow_it_enables: Authoring any references/ artifact for future skills.
+intended_consumer: [human, Claude, future_agent]
+required_inputs: The reference taxonomy and per-type DoD from reference_standard.md.
+expected_outputs: A fill-in reference with type, content, consumption, and scope-boundary sections.
+interface_contract: Markdown with {{placeholders}} and a declared type line.
+definition_of_done: Filling it yields a reference that clears its per-type DoD.
+validation_method: Manual checklist against reference_standard.md.
+failure_modes: Author omits the type line, making the per-type DoD unenforceable.
+what_should_not_be_included: Real reference content for a specific skill.
+assumptions: References are stored as files in references/.
+downstream_snowball_effect: Produces every future skill's references consistently.
