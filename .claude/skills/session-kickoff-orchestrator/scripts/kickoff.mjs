@@ -57,11 +57,17 @@ export function lockedPackages(lockText) {
 // Dependencies declared in package.json but absent from the lockfile.
 // This is precisely the drift that makes `npm ci` fail with
 // "Missing: <pkg> from lock file" — the failure this skill exists to pre-empt.
+// A null/empty lockText means package-lock.json is absent: with declared deps
+// `npm ci` would fail with "requires an existing lockfile", so that is reported
+// as drift (noLockfile) rather than as a falsely-clean GREEN state.
 export function detectLockfileDrift(pkgText, lockText) {
   const declared = declaredDependencies(pkgText);
+  if (lockText == null || lockText === '') {
+    return { missing: declared.slice().sort(), inSync: declared.length === 0, declaredCount: declared.length, noLockfile: true };
+  }
   const locked = lockedPackages(lockText);
   const missing = declared.filter((name) => !locked.has(name)).sort();
-  return { missing, inSync: missing.length === 0, declaredCount: declared.length };
+  return { missing, inSync: missing.length === 0, declaredCount: declared.length, noLockfile: false };
 }
 
 // Parse `git status --porcelain` output into a dirty-tree summary.
@@ -109,7 +115,8 @@ export function renderCard(report) {
   const { timestamp, branch, ahead, behind, drift, tree, contracts,
     openTasks, revisit, recentCommits, previousCard } = report;
   const warn = [];
-  if (drift && !drift.inSync) warn.push(`lockfile drift: ${drift.missing.length} dep(s) missing from lockfile`);
+  if (drift && drift.noLockfile && !drift.inSync) warn.push('package-lock.json missing (npm ci would fail)');
+  else if (drift && !drift.inSync) warn.push(`lockfile drift: ${drift.missing.length} dep(s) missing from lockfile`);
   if (tree && tree.dirty) warn.push(`working tree dirty: ${tree.count} change(s)`);
   for (const c of (contracts || [])) if (!c.present) warn.push(`missing contract: ${c.path}`);
   const health = warn.length === 0 ? 'GREEN' : 'ATTENTION';
@@ -122,9 +129,14 @@ export function renderCard(report) {
   if (previousCard) L.push(`- previous card: \`${previousCard}\``);
   L.push('');
   L.push('## (a) Health check');
-  if (drift) L.push(drift.inSync
-    ? `- lockfile: in sync (${drift.declaredCount} deps declared)`
-    : `- lockfile: **DRIFT** — missing from lockfile: ${drift.missing.join(', ')}`);
+  if (drift) {
+    if (drift.noLockfile) L.push(drift.inSync
+      ? '- lockfile: none needed (no deps declared)'
+      : `- lockfile: **MISSING** — package-lock.json absent; npm ci would fail (${drift.declaredCount} deps declared)`);
+    else L.push(drift.inSync
+      ? `- lockfile: in sync (${drift.declaredCount} deps declared)`
+      : `- lockfile: **DRIFT** — missing from lockfile: ${drift.missing.join(', ')}`);
+  }
   if (tree) L.push(tree.dirty ? `- working tree: **${tree.count} uncommitted change(s)**` : '- working tree: clean');
   for (const c of (contracts || [])) L.push(`- contract ${c.path}: ${c.present ? 'present' : '**MISSING**'}`);
   L.push('');
@@ -202,7 +214,7 @@ function previousCardPath(root) {
 function collect(root) {
   const pkgText = readIf(join(root, 'package.json'));
   const lockText = readIf(join(root, 'package-lock.json'));
-  const drift = pkgText && lockText ? detectLockfileDrift(pkgText, lockText) : null;
+  const drift = pkgText ? detectLockfileDrift(pkgText, lockText) : null;
 
   const tree = parsePorcelain(git(root, ['status', '--porcelain']));
   const branch = git(root, ['rev-parse', '--abbrev-ref', 'HEAD']).trim();

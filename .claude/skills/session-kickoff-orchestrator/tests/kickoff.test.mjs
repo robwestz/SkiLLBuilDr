@@ -60,6 +60,34 @@ test('detectLockfileDrift catches the @xenova/transformers e2e failure', () => {
   assert.deepEqual(d.missing, ['@xenova/transformers']);
 });
 
+test('detectLockfileDrift flags an absent lockfile (with deps) as drift, not GREEN', () => {
+  const d = detectLockfileDrift(PKG, null);
+  assert.equal(d.noLockfile, true);
+  assert.equal(d.inSync, false);
+  assert.equal(d.declaredCount, 3);
+});
+
+test('detectLockfileDrift with no deps and no lockfile is in sync', () => {
+  const d = detectLockfileDrift('{}', null);
+  assert.equal(d.noLockfile, true);
+  assert.equal(d.inSync, true);
+});
+
+test('renderCard reports a MISSING lockfile and ATTENTION', () => {
+  const card = renderCard({
+    timestamp: '2026-01-01T00:00:00.000Z',
+    branch: 'main',
+    drift: detectLockfileDrift(PKG, null),
+    tree: parsePorcelain(''),
+    contracts: [{ path: 'CLAUDE.md', present: true }],
+    openTasks: [],
+    revisit: [],
+    recentCommits: [],
+  });
+  assert.match(card, /health: \*\*ATTENTION\*\*/);
+  assert.match(card, /lockfile: \*\*MISSING\*\*/);
+});
+
 test('parsePorcelain distinguishes clean from dirty', () => {
   assert.equal(parsePorcelain('').dirty, false);
   const dirty = parsePorcelain(' M a.js\n?? b.js\n');
