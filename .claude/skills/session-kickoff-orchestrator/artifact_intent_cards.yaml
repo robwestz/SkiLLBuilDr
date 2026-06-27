@@ -1,0 +1,129 @@
+# Artifact Intent Cards for session-kickoff-orchestrator (Skill #1).
+# One document per artifact, separated by '---'. Validated by
+# metacognitive-skill-architect/scripts/validate_artifact_cards.mjs (G3).
+
+---
+artifact_name: SKILL.md
+artifact_path: .claude/skills/session-kickoff-orchestrator/SKILL.md
+artifact_type: skill
+why_this_artifact_must_exist: It is the contract that makes the kickoff ritual a discoverable, rankable skill.
+problem_it_prevents: Ad-hoc, undocumented session-start steps that drift and cannot be validated.
+future_artifact_or_workflow_it_enables: The blueprint session-start hook and the v2 model-council extension.
+intended_consumer: [human, Claude, future_agent, validation_script]
+required_inputs: skill_standard.md structure; the kickoff behaviour defined in scripts/kickoff.mjs.
+expected_outputs: A SKILL.md with all 9 required elements and a kebab-case name matching the directory.
+interface_contract: Frontmatter name/description plus the six required H2 sections.
+definition_of_done: validate_skill_package.mjs reports no SKILL.md structural errors.
+validation_method: validate_skill_package.mjs against this package.
+failure_modes: Description over 200 chars; a missing required heading; name not matching the directory.
+what_should_not_be_included: Implementation code or model-council (v2) instructions.
+assumptions: SKILL.md with YAML frontmatter is the format (Skill #0 convention).
+downstream_snowball_effect: Lets the catalog ranker surface this skill so future sessions auto-run the kickoff.
+
+---
+artifact_name: README.md
+artifact_path: .claude/skills/session-kickoff-orchestrator/README.md
+artifact_type: doc
+why_this_artifact_must_exist: Gives a human the run commands and the why before reading the code.
+problem_it_prevents: An operator not knowing how to invoke the kickoff or what v1 deliberately excludes.
+future_artifact_or_workflow_it_enables: Onboarding of the operator to the session-start ritual.
+intended_consumer: [human]
+required_inputs: The CLI usage of scripts/kickoff.mjs and the v1/v2 scope split.
+expected_outputs: A short orientation doc with copy-pasteable run commands.
+interface_contract: Markdown with a Run-it section and a v1-scope section.
+definition_of_done: A novice can run the kickoff from the README alone.
+validation_method: Manual checklist; commands copy-run without edits.
+failure_modes: Stale commands that drift from the actual CLI flags.
+what_should_not_be_included: Field-by-field API docs (those live in code comments).
+assumptions: Run from repo root with node >= 18.
+downstream_snowball_effect: Reduces ramp time for wiring kickoff.mjs into the blueprint.
+
+---
+artifact_name: manifest.yaml
+artifact_path: .claude/skills/session-kickoff-orchestrator/manifest.yaml
+artifact_type: config
+why_this_artifact_must_exist: Declares the file inventory the validator checks for parity.
+problem_it_prevents: Silent drift between files on disk and the skill's declared contents.
+future_artifact_or_workflow_it_enables: G4 parity validation and reproducible packaging.
+intended_consumer: [validation_script, future_agent]
+required_inputs: The set of files actually shipped by this skill.
+expected_outputs: A YAML inventory plus the artifact_intent_cards pointer.
+interface_contract: A files: block and an artifact_intent_cards: key the validator parses.
+definition_of_done: validate_skill_package.mjs reports no phantom and no orphan files.
+validation_method: validate_skill_package.mjs G4 parity check.
+failure_modes: A new file added without a manifest entry; or a listed file deleted.
+what_should_not_be_included: Build logic or non-file metadata.
+assumptions: The line-oriented manifest parser in Skill #0 handles this shape.
+downstream_snowball_effect: Keeps the package machine-verifiable as v2 adds council files.
+
+---
+artifact_name: ASSUMPTIONS.md
+artifact_path: .claude/skills/session-kickoff-orchestrator/ASSUMPTIONS.md
+artifact_type: doc
+why_this_artifact_must_exist: Records inheritable decisions (offline v1, card storage path, drift definition).
+problem_it_prevents: Future sessions silently re-litigating or violating locked decisions.
+future_artifact_or_workflow_it_enables: The kickoff's own revisit_required surfacing and the v2 council design.
+intended_consumer: [human, future_agent, future_skill]
+required_inputs: Decisions taken while building Skill #1.
+expected_outputs: A status-tagged table of assumptions (locked or revisit_required).
+interface_contract: Markdown table rows of {id, assumption, rationale, status, affects}.
+definition_of_done: Every architecture/format/validation decision in this skill is listed with a status.
+validation_method: Manual checklist; the kickoff itself parses revisit_required rows.
+failure_modes: Becoming a dumping ground without status tags.
+what_should_not_be_included: Implementation detail or task lists.
+assumptions: Assumptions change, so each carries a status field.
+downstream_snowball_effect: Feeds parseRevisitAssumptions so the next session sees open decisions.
+
+---
+artifact_name: kickoff.mjs
+artifact_path: .claude/skills/session-kickoff-orchestrator/scripts/kickoff.mjs
+artifact_type: script
+why_this_artifact_must_exist: It is the deterministic engine that performs the health-check and knowledge-load.
+problem_it_prevents: Starting a session blind to lockfile drift, a dirty tree, or carry-over tasks.
+future_artifact_or_workflow_it_enables: The blueprint session-start hook and the v2 model-council layer.
+intended_consumer: [CLI_workflow, future_agent, test_runner]
+required_inputs: A repo root; package.json, package-lock.json, .agents/TASKS.json, ASSUMPTIONS files, git metadata.
+expected_outputs: A Session Intent Card printed to stdout, optionally written under .agents/kickoffs/.
+interface_contract: Exported pure functions (detectLockfileDrift, parsePorcelain, parseRevisitAssumptions, parseOpenTasks, renderCard) plus a CLI main.
+definition_of_done: node --test passes and the CLI prints a card; zero runtime deps.
+validation_method: tests/kickoff.test.mjs via node --test; G7 import hygiene.
+failure_modes: A crash on missing files; a false GREEN when drift exists.
+what_should_not_be_included: Any network or model API call (v2 concern).
+assumptions: Lockfile drift is presence-based; the process exits 0 even on health problems.
+downstream_snowball_effect: Produces the Session Intent Card that the next session's kickoff links as previous card.
+
+---
+artifact_name: kickoff.test.mjs
+artifact_path: .claude/skills/session-kickoff-orchestrator/tests/kickoff.test.mjs
+artifact_type: test
+why_this_artifact_must_exist: Proves the deterministic core behaves, especially drift detection.
+problem_it_prevents: Regressions that would let the kickoff miss drift or mislabel health.
+future_artifact_or_workflow_it_enables: Safe extension of kickoff.mjs toward the v2 council.
+intended_consumer: [test_runner, future_agent]
+required_inputs: The exported pure functions of scripts/kickoff.mjs.
+expected_outputs: node --test cases asserting drift, porcelain, task, assumption, and render behaviour.
+interface_contract: node:test + node:assert, importing only from ../scripts/kickoff.mjs.
+definition_of_done: node --test tests/*.test.mjs is green with zero dependencies.
+validation_method: node --test run locally and in CI.
+failure_modes: Testing the CLI/git instead of pure functions, making tests flaky.
+what_should_not_be_included: Real git or filesystem fixtures (pure-function inputs only).
+assumptions: Pure functions accept strings so tests stay deterministic.
+downstream_snowball_effect: Guards detectLockfileDrift so the v2 council can rely on a trusted health core.
+
+---
+artifact_name: session_intent_card.md.template
+artifact_path: .claude/skills/session-kickoff-orchestrator/templates/session_intent_card.md.template
+artifact_type: template
+why_this_artifact_must_exist: Documents the canonical shape of the card renderCard emits.
+problem_it_prevents: Divergent, hand-rolled session cards that cannot be compared across sessions.
+future_artifact_or_workflow_it_enables: A stable card format the v2 council and dashboards can extend.
+intended_consumer: [human, future_agent]
+required_inputs: The sections produced by renderCard in scripts/kickoff.mjs.
+expected_outputs: A markdown template with placeholders for every rendered field.
+interface_contract: Headed sections (health, knowledge, suggested focus) matching renderCard output.
+definition_of_done: The template mirrors the live renderCard sections one-to-one.
+validation_method: Manual checklist against renderCard output.
+failure_modes: Drifting from renderCard so the template misleads.
+what_should_not_be_included: Live data or logic.
+assumptions: The card stays markdown for human and agent readability.
+downstream_snowball_effect: Gives the v2 council a known card schema to append model findings to.

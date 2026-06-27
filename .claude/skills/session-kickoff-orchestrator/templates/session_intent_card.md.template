@@ -1,0 +1,27 @@
+# Session Intent Card — {{ISO_TIMESTAMP}}
+
+- branch: `{{BRANCH}}` (ahead {{AHEAD}}, behind {{BEHIND}})
+- health: **{{GREEN_or_ATTENTION}}**
+- previous card: `{{PATH_TO_PREVIOUS_CARD_or_omit}}`
+
+## (a) Health check
+
+- lockfile: {{in sync (N deps) | DRIFT — missing from lockfile: <names>}}
+- working tree: {{clean | N uncommitted change(s)}}
+- contract CLAUDE.md: {{present | MISSING}}
+- contract AGENT_ONBOARDING.md: {{present | MISSING}}
+- contract .agents/PROTOCOL.md: {{present | MISSING}}
+
+## (b) Knowledge load
+
+- open tasks: {{N}}
+  - [{{status}}] {{id}}: {{title}}
+- revisit_required assumptions: {{N}}
+  - {{assumption row}}
+- recent commits:
+  - {{oneline commit}}
+
+## Suggested focus
+
+{{If ATTENTION: list each health item to resolve first.
+  If GREEN: proceed to the highest-priority open task above.}}

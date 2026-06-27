@@ -1,0 +1,25 @@
+# manifest.yaml — declared file inventory for session-kickoff-orchestrator.
+# G4 parity is checked by metacognitive-skill-architect/scripts/validate_skill_package.mjs:
+# every file listed here must exist, and every non-trivial file on disk must be listed.
+
+name: session-kickoff-orchestrator
+version: 0.1.0
+skill_number: 1
+built_with:
+  - metacognitive-skill-architect   # authored under its AIC gate (Skill #0)
+
+files:
+  required:
+    - SKILL.md
+    - manifest.yaml
+    - ASSUMPTIONS.md
+  recommended:
+    - README.md
+  scripts:
+    - scripts/kickoff.mjs
+  tests:
+    - tests/kickoff.test.mjs
+  templates:
+    - templates/session_intent_card.md.template
+
+artifact_intent_cards: artifact_intent_cards.yaml
